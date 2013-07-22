@@ -11,100 +11,64 @@
 //---------------------------------------------------------------------------//
 // CONSTRUCTOR
 //---------------------------------------------------------------------------//
-TallyEvent::TallyEvent(double energy, double weight)
-    : particle_energy(energy), particle_weight(weight), tally_multiplier(1),
-      position(moab::CartVect(0, 0, 0)), direction(moab::CartVect(0, 0, 0))
+TallyEvent::TallyEvent()
+    : track_length(0.0), position(moab::CartVect(0.0, 0.0, 0.0)),
+      direction(moab::CartVect(0.0, 0.0, 0.0)), total_cross_section(0.0),
+      particle_energy(0.0), particle_weight(1.0), tally_multiplier(1.0)
 {
     // set this tally event to begin with no type
-    event_type = NONE;
-    event_value = 0;
+    type = NONE;
 }
 //---------------------------------------------------------------------------//
 // PUBLIC INTERFACE
 //---------------------------------------------------------------------------//
-void TallyEvent::set_track_event(const TrackData& data)
+void TallyEvent::set_track_event(double track_length,
+                                 double x, double y, double z,
+                                 double u, double v, double w,
+                                 double particle_energy,
+                                 double particle_weight)
 {
-    if (event_type != NONE)
+    if (type != NONE)
     {
         std::cerr << "Error: Tally event has already been set" << std::endl;
         exit(EXIT_FAILURE);
     }
 
     // set variables for track-based event
-    event_value = data.track_length;
-    position = data.start_point;
-    direction = data.direction;
+    this->track_length = track_length;
+    this->position = moab::CartVect(x, y, z);
+    this->direction = moab::CartVect(u, v, w);
+    this->particle_energy = particle_energy;
+    this->particle_weight = particle_weight;
 
     // set event type
-    event_type = TRACK;
-  
-    return;
+    type = TRACK;
 }
 //---------------------------------------------------------------------------//
-void TallyEvent::set_collision_event(const CollisionData& data)
+void TallyEvent::set_collision_event(double total_cross_section,
+                                     double x, double y, double z,
+                                     double particle_energy,
+                                     double particle_weight)
 {
-    if (event_type != NONE)
+    if (type != NONE)
     {
         std::cerr << "Error: Tally event has already been set" << std::endl;
         exit(EXIT_FAILURE);
     }
 
     // set variables for collision event
-    event_value = data.total_cross_section;
-    position = data.collision_point;
+    this->total_cross_section = total_cross_section;
+    this->position = moab::CartVect(x, y, z);
+    this->particle_energy = particle_energy;
+    this->particle_weight = particle_weight;
 
     // set event type
-    event_type = COLLISION;
-  
-    return;
+    type = COLLISION;
 }
 //---------------------------------------------------------------------------//
 void TallyEvent::set_tally_multiplier(double value)
 {
     tally_multiplier = value;
-    return;
-}
-//---------------------------------------------------------------------------//
-// TALLY EVENT ACCESS METHODS
-//---------------------------------------------------------------------------//
-std::pair<double, double> TallyEvent::get_particle_data() const
-{
-    return std::make_pair(particle_energy, particle_weight);
-}
-//---------------------------------------------------------------------------//
-bool TallyEvent::get_track_data(TrackData& data) const
-{
-    if (event_type == TRACK)
-    {
-        // copy variables for track-based event
-        data.track_length = event_value;
-        data.start_point = position;
-        data.direction = direction;
-
-        return true;
-    }
-    else
-    {
-        // Not a valid track-based event
-        return false;
-    }
-}
-//---------------------------------------------------------------------------//
-bool TallyEvent::get_collision_data(CollisionData& data) const
-{
-    if (event_type == COLLISION)
-    {
-        // copy variables for collision event
-        data.total_cross_section = event_value;
-        data.collision_point = position;
- 
-        return true;
-    }
-    else
-    {
-        // Not a valid collision event
-        return false;
-    }
 }
 //---------------------------------------------------------------------------//
 double TallyEvent::get_tally_multiplier() const
@@ -115,11 +79,6 @@ double TallyEvent::get_tally_multiplier() const
 double TallyEvent::get_weighting_factor() const
 {
     return tally_multiplier * particle_weight;
-}
-//---------------------------------------------------------------------------//
-TallyEvent::EventType TallyEvent::get_event_type() const
-{
-    return event_type;
 }
 //---------------------------------------------------------------------------//
 
