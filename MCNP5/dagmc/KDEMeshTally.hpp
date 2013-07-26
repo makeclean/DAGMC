@@ -148,7 +148,7 @@ class KDEMeshTally : public MeshTally
  
     /**
      * \brief Write tally and error results to the mesh tally's output file
-     * \param num_particles the number of source particles tracked
+     * \param num_histories the number of source particles tracked
      * \param multiplier an optional constant multiplication factor
      *
      * The write_data() method writes the current tally and relative standard error
@@ -161,7 +161,7 @@ class KDEMeshTally : public MeshTally
      * same as the standard tally multiplier, which is typically applied to
      * individual scores instead.
      */
-    virtual void write_data(double num_particles);
+    virtual void write_data(double num_histories);
 
   private:
     /// Copy constructor and operator= methods are not implemented
