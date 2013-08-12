@@ -4,6 +4,7 @@
 #define DAGMC_MESH_TALLY_HPP
 
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -98,7 +99,7 @@ class MeshTally
     /**
      * \brief Updates tally information when a particle history ends
      */
-    virtual void end_history() = 0;
+    virtual void end_history();
 
     /**
      * \brief Write tally and error results to the mesh tally's output file
@@ -156,7 +157,20 @@ class MeshTally
     /// Data array for storing sum of scores for a single history
     std::vector<double> temp_tally_data;
 
+    /// Entity handles updated in current history; cleared by end_history()
+    std::set<moab::EntityHandle> visited_this_history;
+
     // >>> PROTECTED METHODS
+
+    /** 
+     * \brief Add score to the tally for the given tally point
+     * \param tally_point entity handle representing tally point
+     * \param score the contribution to add to the tally
+     * \param ebin the energy bin to which the score will be added
+     */
+    virtual void add_score_to_tally(moab::EntityHandle tally_point,
+                                    double score,
+                                    int ebin);
 
     /**
      * \brief Resize data arrays to hold all of the mesh tally data

@@ -146,11 +146,6 @@ class KDEMeshTally : public MeshTally
      * \param ebin index representing energy bin
      */
     virtual void compute_score(const TallyEvent& event, int ebin);
- 
-    /**
-     * \brief Updates tally information when a particle history ends
-     */
-    virtual void end_history();
 
     /**
      * \brief Write tally and error results to the mesh tally's output file
@@ -211,9 +206,6 @@ class KDEMeshTally : public MeshTally
     /// If true, another instance already set the random number generator seed
     static bool seed_is_set;
 
-    /// Entity handles updated in current history; cleared by end_history()
-    std::set<moab::EntityHandle> visited_this_history;
-
     // >>> PRIVATE METHODS
 
     /**
@@ -272,16 +264,6 @@ class KDEMeshTally : public MeshTally
      */
     moab::CartVect get_optimal_bandwidth() const;
   
-    /** 
-     * \brief Add score to the tally for the given tally point
-     * \param tally_point entity handle representing tally point
-     * \param score the contribution to add to the tally
-     * \param ebin the energy bin to which the score will be added
-     */
-    virtual void add_score_to_tally(moab::EntityHandle tally_point,
-                                    double score,
-                                    int ebin);
-
     // >>> KDE ESTIMATOR METHODS
 
     // Defines common data needed for computing score for a calculation point
