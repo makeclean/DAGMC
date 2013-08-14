@@ -75,7 +75,7 @@ KDEMeshTally::KDEMeshTally(const MeshTallyInput& input,
 
     if (rval != moab::MB_SUCCESS)
     {
-        std::cout << "Error: Could not load mesh data for KDE mesh tally "
+        std::cerr << "Error: Could not load mesh data for KDE mesh tally "
                   << input_data.tally_id << " from input file "
                   << input_data.input_filename << std::endl;
         exit(EXIT_FAILURE);
