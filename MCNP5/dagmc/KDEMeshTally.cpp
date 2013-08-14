@@ -464,7 +464,6 @@ double KDEMeshTally::evaluate_kernel(const CalculationPoint& X,
             kernel_value *= kernel->evaluate(u, bandwidth[i],
                                              X.distance_data[i],
                                              X.boundary_data[i]) / bandwidth[i];
-
         }
         else // use standard kernel for this direction
         {
@@ -567,7 +566,7 @@ double KDEMeshTally::subtrack_score(const CalculationPoint& X,
             score += evaluate_kernel(X, *i);
         }
 
-        // normalie by the total number of sub-track points
+        // normalize by the total number of sub-track points
         score /= points.size();
     }
 
