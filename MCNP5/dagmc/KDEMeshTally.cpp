@@ -108,7 +108,7 @@ void KDEMeshTally::compute_score(const TallyEvent& event)
     // set up tally event based on KDE mesh tally type
     std::vector<moab::CartVect> subtrack_points;
 
-    if (event.type == TallyEvent::TRACK)
+    if (event.type == TallyEvent::TRACK && estimator != COLLISION)
     {
         if (estimator == SUB_TRACK)
         {
