@@ -405,8 +405,9 @@ void dagmc_fmesh_score_( int *fmesh_index, double *x, double *y, double *z,
     event.set_track_event(*d, *x, *y, *z, *u, *v, *w, *erg, *wgt);
 
 #ifdef MESHTAL_DEBUG
-    std::cout << "meshtal particle: " << start_point << " " << direction;
-    std::cout << " " << *d << std::endl;
+    std::cout << "meshtal particle loc: " << *x << ", " << *y << ", " << *z << std::endl;
+    std::cout << "meshtal particle dir: " << *u << ", " << *v << ", " << *w << std::endl;
+    std::cout << "meshtal track length: " << *d << std::endl;
 #endif
 
     // TODO temporary until dagmc_mesh_score has been modified
