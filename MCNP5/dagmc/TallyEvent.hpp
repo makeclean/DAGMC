@@ -2,9 +2,22 @@
 
 #ifndef DAGMC_TALLY_EVENT_HPP
 #define DAGMC_TALLY_EVENT_HPP
-#include "moab/CartVect.hpp"
- 
 
+#include "moab/CartVect.hpp"
+
+//===========================================================================//
+/**
+ * \struct TallyEvent
+ * \brief Data structure for storing event data to be tallied
+ *
+ * Data stored in this struct is set by TallyManager and read by the different
+ * Tally implementations.  The variables that will be used by each Tally depend
+ * on the type of event that is defined.  All events set type, particle_energy
+ * and particle_weight. Collision events add the current_cell, position
+ * (i.e. collision point) and total_cross_section.  Track events add the
+ * current_cell, position (i.e. start of track), direction and track_length.
+ */
+//===========================================================================//
 struct TallyEvent
 {
     /**
@@ -18,7 +31,7 @@ struct TallyEvent
 
     EventType type;
     
-    /// Cell at the point of the event
+    /// Geometric cell in which the event occurred
     int current_cell;
 
     /// Total length of track segment
@@ -30,8 +43,7 @@ struct TallyEvent
     /// Direction in which particle is traveling (u, v, w)
     moab::CartVect direction;
 
-    /// Collision: Total macroscopic cross section for cell in 
-    /// which collision occurred
+    /// Total macroscopic cross section for cell in which collision occurred
     double total_cross_section;
 
     /// Energy and weight of particle when event occurred
