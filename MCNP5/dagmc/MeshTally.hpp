@@ -10,7 +10,7 @@
 
 #include "moab/Range.hpp"
 
-#include "TallyEvent.hpp"
+#include "Tally.hpp"
 
 // forward declaration
 namespace moab {
@@ -19,46 +19,22 @@ namespace moab {
 
 //===========================================================================//
 /**
- * \struct MeshTallyInput
- * \brief Input data needed to set up a mesh tally
- */
-//===========================================================================//
-struct MeshTallyInput
-{
-    /// Typedef for map that stores optional mesh tally input parameters
-    typedef std::multimap<std::string, std::string> TallyOptions;
-
-    /// User-specified ID for this mesh tally
-    unsigned int tally_id;
-
-    /// Energy bin boundaries defined for all mesh tally points
-    std::vector<double> energy_bin_bounds;
-
-    /// If true, add an extra energy bin to tally all energy levels
-    bool total_energy_bin;
-
-    /// Name of input file containing mesh data
-    std::string input_filename;
-
-    /// Optional input parameters requested by user
-    TallyOptions options;
-};
-
-//===========================================================================//
-/**
  * \class MeshTally
- * \brief Defines a basic mesh tally interface
+ * \brief Defines an abstract MeshTally interface
  *
- * MeshTally is a Base class that defines the variables and methods that are
- * typically needed to implement a mesh tally for use in Monte Carlo particle
- * transport codes.  Some basic functionality is already included but the
- * following methods must be implemented in all Derived classes
- * 
- *     1) compute_score
- *     2) end_history
- *     3) print
+ * MeshTally is an abstract class derived from Tally that defines all the
+ * variables and methods needed to implement a generic MeshTally for use in
+ * Monte Carlo particle transport codes.  All Derived classes must implement
+ * the following methods from Tally
  *
- * Note that three arrays are available for storing mesh tally data
+ *     1) compute_score(const TallyEvent& event)
+ *     2) write_data(double num_histories)
+ *
+ * A simple version of the end_history() method is already included, so this
+ * does not need to be implemented unless additional or alternative actions
+ * are required by a Derived class.
+ *
+ * Note that three arrays are available for storing the mesh tally data
  *
  *    1) tally_data: stores sum of scores for all particle histories
  *    2) error_data: stores data needed to determine error in tally results
@@ -67,18 +43,17 @@ struct MeshTallyInput
  * Each element in these three data arrays represents one tally point and
  * one energy bin.  They are ordered first by tally point, and then by energy
  * bin.  Derived classes can easily access/modify individual elements using
- * the get_data() method.
+ * the protected get_data() method.
  */
 //===========================================================================//
-class MeshTally
+class MeshTally : public Tally
 {
-
   protected:
     /**
      * \brief Constructor
      * \param input user-defined input parameters for this mesh tally
      */
-    explicit MeshTally(const MeshTallyInput& input);
+    explicit MeshTally(const TallyInput& input);
 
   public:
     /**
@@ -86,27 +61,12 @@ class MeshTally
      */
     virtual ~MeshTally(){}
 
-    // >>> PUBLIC INTERFACE
+    // >>> DERIVED PUBLIC INTERFACE from Tally.hpp
 
     /**
-     * \brief Computes mesh tally scores for the given tally event
-     * \param event the parameters needed to compute the mesh tally scores
-     * \param ebin index representing energy bin
-     * TODO remove ebin as parameter since this can be computed from energy?
-     */
-    virtual void compute_score(const TallyEvent& event, int ebin) = 0;
-
-    /**
-     * \brief Updates tally information when a particle history ends
+     * \brief Updates MeshTally when a particle history ends
      */
     virtual void end_history();
-
-    /**
-     * \brief Write tally and error results to the mesh tally's output file
-     * \param num_particles the number of source particles tracked
-     * \param multiplier an optional constant multiplication factor
-     */
-    virtual void print(double num_particles, double multiplier = 1.0) = 0;
 
     // >>> TALLY DATA ACCESS METHODS
 
@@ -128,14 +88,11 @@ class MeshTally
     virtual void zero_tally_data();
 
   protected:
-    /// Input data defined by user for this mesh tally
-    MeshTallyInput input_data;
-
-    /// Number of energy bins implemented in the data arrays
-    unsigned int num_energy_bins; 
-
     /// Name of file to which the final tally results will be written
     std::string output_filename;
+
+    /// Name of file that contains the mesh description (separate from geometry)
+    std::string input_filename;
 
     /// Entity handle for the MOAB mesh data used for this mesh tally
     moab::EntityHandle tally_mesh_set;

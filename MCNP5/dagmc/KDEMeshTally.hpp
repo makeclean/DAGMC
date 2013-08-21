@@ -3,7 +3,6 @@
 #ifndef DAGMC_KDE_MESH_TALLY_HPP
 #define DAGMC_KDE_MESH_TALLY_HPP
 
-#include <set>
 #include <utility>
 #include <vector>
 
@@ -11,7 +10,6 @@
 
 #include "KDEKernel.hpp"
 #include "MeshTally.hpp"
-#include "TallyEvent.hpp"
 #include "Quadrature.hpp"
 
 // forward declarations
@@ -51,11 +49,11 @@ namespace moab {
  *        Computational Methods (M&C 2013), Sun Valley, Idaho, May 5-9 (2013)
  *
  * ==============
- * MeshTallyInput
+ * TallyInput
  * ==============
  *
  * In addition to choosing the type of estimator, the user must also prepare a
- * MeshTallyInput object that will be used to set all of the other required and
+ * TallyInput object that will be used to set all of the other required and
  * optional input parameters.  This is a struct defined in MeshTally.hpp that
  * must include the tally ID number, the energy bin boundaries, whether or not
  * a total energy bin is required, the name of the mesh input file, and a
@@ -105,7 +103,7 @@ namespace moab {
  * MeshTally::tally_data array.  It is also important for calculating the
  * relative standard error of the final tally results.
  *
- * The third and final step is to use the print() method to write all of the
+ * The third and final step is to use the write_data() method to write all of the
  * tally results and their corresponding relative standard errors to the output
  * file.  If the "out" key is not included as a tally option, then the default
  * case is a H5M file format named meshtal<tally_id>.h5m.  To write to another
@@ -131,28 +129,27 @@ class KDEMeshTally : public MeshTally
      * \param input user-defined input parameters for this KDE mesh tally
      * \param type the type of estimator to use with this KDE mesh tally
      */
-    KDEMeshTally(const MeshTallyInput& input, Estimator type = COLLISION);
+    KDEMeshTally(const TallyInput& input, Estimator type = COLLISION);
 
     /**
      * \brief Virtual destructor
      */
     virtual ~KDEMeshTally();
 
-    // >>> DERIVED PUBLIC INTERFACE from MeshTally.hpp
+    // >>> DERIVED PUBLIC INTERFACE from Tally.hpp
 
     /**
      * \brief Computes mesh tally scores for the given tally event
      * \param event the parameters needed to compute the mesh tally scores
-     * \param ebin index representing energy bin
      */
-    virtual void compute_score(const TallyEvent& event, int ebin);
+    virtual void compute_score(const TallyEvent& event);
 
     /**
      * \brief Write tally and error results to the mesh tally's output file
-     * \param num_particles the number of source particles tracked
+     * \param num_histories the number of source particles tracked
      * \param multiplier an optional constant multiplication factor
      *
-     * The print() method writes the current tally and relative standard error
+     * The write_data() method writes the current tally and relative standard error
      * results to the output file defined for this mesh tally, normalized by
      * the number of source particles that were tracked during the Monte Carlo
      * simulation.
@@ -162,7 +159,7 @@ class KDEMeshTally : public MeshTally
      * same as the standard tally multiplier, which is typically applied to
      * individual scores instead.
      */
-    virtual void print(double num_particles, double multiplier = 1.0);
+    virtual void write_data(double num_histories);
 
   private:
     /// Copy constructor and operator= methods are not implemented
@@ -219,7 +216,7 @@ class KDEMeshTally : public MeshTally
                              unsigned int i);
 
     /**
-     * \brief Parse the MeshTallyInput options for this KDE mesh tally
+     * \brief Parse the TallyInput options for this KDE mesh tally
      */
     void parse_tally_options();
 

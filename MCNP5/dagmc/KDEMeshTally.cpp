@@ -4,6 +4,7 @@
 #include <climits>
 #include <cmath>
 #include <iostream>
+#include <set>
 #include <sstream>
 #include <string>
 
@@ -23,7 +24,7 @@ const char* const KDEMeshTally::kde_estimator_names[] = {"collision",
 //---------------------------------------------------------------------------//
 // CONSTRUCTOR
 //---------------------------------------------------------------------------//
-KDEMeshTally::KDEMeshTally(const MeshTallyInput& input,
+KDEMeshTally::KDEMeshTally(const TallyInput& input,
                            KDEMeshTally::Estimator type)
     : MeshTally(input),
       estimator(type),
@@ -37,10 +38,10 @@ KDEMeshTally::KDEMeshTally(const MeshTallyInput& input,
     std::cout << "Creating KDE " << kde_estimator_names[estimator]
               << " mesh tally " << input.tally_id << std::endl;
 
-    std::cout << "    for input mesh: " << input.input_filename
+    std::cout << "    for input mesh: " << input_filename
               << ", output file: " << output_filename << std::endl;
 
-    // set up KDEMeshTally member variables from MeshTallyInput
+    // set up KDEMeshTally member variables from TallyInput
     parse_tally_options();
 
     // create second-order epanechnikov kernel if user did not specify type
@@ -76,8 +77,8 @@ KDEMeshTally::KDEMeshTally(const MeshTallyInput& input,
     if (rval != moab::MB_SUCCESS)
     {
         std::cerr << "Error: Could not load mesh data for KDE mesh tally "
-                  << input_data.tally_id << " from input file "
-                  << input_data.input_filename << std::endl;
+                  << input.tally_id << " from input file "
+                  << input_filename << std::endl;
         exit(EXIT_FAILURE);
     }
 
@@ -97,18 +98,18 @@ KDEMeshTally::~KDEMeshTally()
     delete mbi;
     delete quadrature;  
 }
+
 //---------------------------------------------------------------------------//
-// DERIVED PUBLIC INTERFACE from MeshTally.hpp
+// DERIVED PUBLIC INTERFACE from Tally.hpp
 //---------------------------------------------------------------------------//
-void KDEMeshTally::compute_score(const TallyEvent& event, int ebin)
+void KDEMeshTally::compute_score(const TallyEvent& event)
 {
-    // initialize common weighting factor for this tally event
-    double weight = event.get_weighting_factor();
+    double weight = event.particle_weight;
 
     // set up tally event based on KDE mesh tally type
     std::vector<moab::CartVect> subtrack_points;
 
-    if (event.type == TallyEvent::TRACK)
+    if (event.type == TallyEvent::TRACK && estimator != COLLISION)
     {
         if (estimator == SUB_TRACK)
         {
@@ -123,11 +124,9 @@ void KDEMeshTally::compute_score(const TallyEvent& event, int ebin)
         weight /= event.total_cross_section;
         update_variance(event.position);
     }
-    else // NONE, warn and exit
+    else // NONE, return from this method
     {
-        std::cerr << "Error: Tally event is not valid for KDE mesh tally ";
-        std::cerr << input_data.tally_id << std::endl;
-        exit(EXIT_FAILURE);
+ 	return;
     }
 
     // create the neighborhood region and find all of the calculations points
@@ -137,7 +136,7 @@ void KDEMeshTally::compute_score(const TallyEvent& event, int ebin)
     // iterate through calculation points and compute their final scores
     std::set<moab::EntityHandle>::iterator i;
     CalculationPoint X;
-    
+
     for (i = calculation_points.begin(); i != calculation_points.end(); ++i)
     {
         // get coordinates of this point
@@ -171,14 +170,17 @@ void KDEMeshTally::compute_score(const TallyEvent& event, int ebin)
             score *= evaluate_kernel(X, event.position);
         }
 
+        // TODO:  do a correct ebin based on the particle energy; this is temporary
+        int ebin = 0;
+
         // add score to KDE mesh tally for the current history
         add_score_to_tally(point, score, ebin);
     }
 }
 //---------------------------------------------------------------------------//
-void KDEMeshTally::print(double num_particles, double multiplier)
+void KDEMeshTally::write_data(double num_histories)
 {
-    // print the optimal bandwidth if it was computed
+    // display the optimal bandwidth if it was computed
     if (estimator == COLLISION)
     {
         std::cout << std::endl << "optimal bandwidth for " << num_collisions
@@ -203,14 +205,11 @@ void KDEMeshTally::print(double num_particles, double multiplier)
 
             if (error != 0.0)
             {
-                rel_error = sqrt(error / (tally * tally) - 1.0 / num_particles);
+                rel_error = sqrt(error / (tally * tally) - 1.0 / num_histories);
             }
 
             // normalize mesh tally result by the number of source particles
-            tally /= num_particles;
-
-            // apply multiplier to the total tally result
-            tally *= multiplier;
+            tally /= num_histories;
 
             // set tally and error tag values for this entity
             rval = mbi->tag_set_data(tally_tags[j], &point, 1, &tally);
@@ -278,8 +277,8 @@ void KDEMeshTally::set_bandwidth_value(const std::string& key,
 //---------------------------------------------------------------------------//
 void KDEMeshTally::parse_tally_options()
 {
-    const MeshTallyInput::TallyOptions& options = input_data.options;  
-    MeshTallyInput::TallyOptions::const_iterator it;
+    const TallyInput::TallyOptions& options = input_data.options;  
+    TallyInput::TallyOptions::const_iterator it;
 
     for (it = options.begin(); it != options.end(); ++it)
     {

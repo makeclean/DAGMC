@@ -1,6 +1,7 @@
 // MCNP5/dagmc/MeshTally.cpp
 
 #include <cassert>
+#include <cstdlib>
 #include <iostream>
 #include <sstream>
 
@@ -11,21 +12,11 @@
 //---------------------------------------------------------------------------//
 // CONSTRUCTOR
 //---------------------------------------------------------------------------//
-MeshTally::MeshTally(const MeshTallyInput& input)
-    : input_data(input)
+MeshTally::MeshTally(const TallyInput& input)
+    : Tally(input)    
 {
-    // Determine the total number of energy bins requested
-    num_energy_bins = input_data.energy_bin_bounds.size();
-
-    if(!input_data.total_energy_bin)
-    {
-        --num_energy_bins;
-    }
-
-    assert(num_energy_bins > 0);
-
     // Determine name of the output file
-    MeshTallyInput::TallyOptions::iterator it = input_data.options.find("out");
+    TallyInput::TallyOptions::iterator it = input_data.options.find("out");
 
     if (it != input_data.options.end())
     {
@@ -35,9 +26,51 @@ MeshTally::MeshTally(const MeshTallyInput& input)
     else // use default output file name
     {
         std::stringstream str;
-        str << "meshtal" << input_data.tally_id << ".h5m";
+        str << "meshtal" << input.tally_id << ".h5m";
         str >> output_filename;
     }
+
+    // Reset the iterator and find the name of the input mesh file
+    it = input_data.options.begin();
+    it = input_data.options.find("inp");
+
+    if (it != input_data.options.end())
+    {
+ 	input_filename = it->second;
+        input_data.options.erase(it);
+    }
+    else
+    {
+       std::cerr << "Exit: No input mesh file was given." << std::endl;
+       exit(EXIT_FAILURE); 
+    }
+}
+//---------------------------------------------------------------------------//
+// DERIVED PUBLIC INTERFACE from Tally.hpp
+//---------------------------------------------------------------------------//
+void MeshTally::end_history()
+{
+    std::set<moab::EntityHandle>::iterator i;
+
+    // add sum of scores for this history to mesh tally for each tally point
+    for (i = visited_this_history.begin(); i != visited_this_history.end(); ++i)
+    {
+        for (unsigned int j = 0; j < num_energy_bins; ++j)
+        {
+            double& history_score = get_data(temp_tally_data, *i, j);
+            double& tally = get_data(tally_data, *i, j);
+            double& error = get_data(error_data, *i, j);
+
+            tally += history_score;
+            error += history_score * history_score;
+      
+            // reset temp_tally_data array for the next particle history
+            history_score = 0;
+        }
+    }
+
+    // reset set of tally points for next particle history
+    visited_this_history.clear();
 }
 //---------------------------------------------------------------------------//
 // TALLY DATA ACCESS METHODS
@@ -77,7 +110,7 @@ void MeshTally::add_score_to_tally(moab::EntityHandle tally_point,
     get_data(temp_tally_data, tally_point, ebin) += score;
 
     // also update total energy bin tally for this history if one exists
-    if (input_data.total_energy_bin)
+    if (total_energy_bin)
     {
         get_data(temp_tally_data, tally_point, (num_energy_bins-1)) += score;
     }
@@ -119,7 +152,7 @@ moab::ErrorCode MeshTally::load_moab_mesh(moab::Interface* mbi,
     if (rval != moab::MB_SUCCESS) return rval;
 
     // load the MOAB mesh data from the input file into the mesh set
-    rval = mbi->load_file(input_data.input_filename.c_str(), &mesh_set);
+    rval = mbi->load_file(input_filename.c_str(), &mesh_set);
 
     if (rval != moab::MB_SUCCESS) return rval;
 
@@ -211,31 +244,6 @@ moab::ErrorCode MeshTally::setup_tags(moab::Interface* mbi, const char* prefix)
     }
 
     return moab::MB_SUCCESS;
-}
-//---------------------------------------------------------------------------//
-void MeshTally::end_history()
-{
-    std::set<moab::EntityHandle>::iterator i;
-
-    // add sum of scores for this history to mesh tally for each tally point
-    for (i = visited_this_history.begin(); i != visited_this_history.end(); ++i)
-    {
-        for (unsigned int j = 0; j < num_energy_bins; ++j)
-        {
-            double& history_score = get_data(temp_tally_data, *i, j);
-            double& tally = get_data(tally_data, *i, j);
-            double& error = get_data(error_data, *i, j);
-
-            tally += history_score;
-            error += history_score * history_score;
-      
-            // reset temp_tally_data array for the next particle history
-            history_score = 0;
-        }
-    }
-
-    // reset set of tally points for next particle history
-    visited_this_history.clear();
 }
 //---------------------------------------------------------------------------//
 

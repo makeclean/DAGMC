@@ -17,15 +17,25 @@ SET(MOAB_HOME ${HOME}/opt/moab)
 # Where to look for includes
 INCLUDE_DIRECTORIES("${HOME}/opt/moab/include")
 
+ADD_LIBRARY(tally 
+	${DAGMC_MESHTALLY_SOURCE}/Tally.cpp
+	${DAGMC_MESHTALLY_SOURCE}/TallyManager.cpp
+	${DAGMC_MESHTALLY_SOURCE}/MeshTally.cpp
+	${DAGMC_MESHTALLY_SOURCE}/KDEMeshTally.cpp
+	${DAGMC_MESHTALLY_SOURCE}/TrackLengthMeshTally.cpp
+	${DAGMC_MESHTALLY_SOURCE}/meshtal_funcs.cpp
+)
+
 # make mesh tally source files into a library
 ADD_LIBRARY(meshtally
-    ${DAGMC_MESHTALLY_SOURCE}/KDEKernel.cpp
-    ${DAGMC_MESHTALLY_SOURCE}/KDEMeshTally.cpp
-    ${DAGMC_MESHTALLY_SOURCE}/KDENeighborhood.cpp
+    ${DAGMC_MESHTALLY_SOURCE}/Tally.cpp
     ${DAGMC_MESHTALLY_SOURCE}/MeshTally.cpp
+    ${DAGMC_MESHTALLY_SOURCE}/TrackLengthMeshTally.cpp
+    ${DAGMC_MESHTALLY_SOURCE}/KDEMeshTally.cpp
+    ${DAGMC_MESHTALLY_SOURCE}/KDEKernel.cpp
+    ${DAGMC_MESHTALLY_SOURCE}/KDENeighborhood.cpp
     ${DAGMC_MESHTALLY_SOURCE}/PolynomialKernel.cpp
     ${DAGMC_MESHTALLY_SOURCE}/Quadrature.cpp
-    ${DAGMC_MESHTALLY_SOURCE}/TallyEvent.cpp
 )
 
 # set libraries

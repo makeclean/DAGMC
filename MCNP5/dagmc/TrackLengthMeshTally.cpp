@@ -1,8 +1,7 @@
 #include <iostream>
 #include <sstream>
-#include <cmath>
-#include <set>
-
+#include <cmath> 
+#include <set> 
 #include "moab/Core.hpp"
 #include "moab/Range.hpp"
 #include "moab/GeomUtil.hpp"
@@ -31,14 +30,15 @@
 #include <cassert>
 
 // the header file has at least one assert, so keep this include below the macro checks
-#include "TallyEvent.hpp"
 #include "TrackLengthMeshTally.hpp"
-#include "meshtal_funcs.h"
 
 
 // tolerance for ray-triangle intersection tests
 // (note: this paramater is ignored by GeomUtil, so don't bother trying to tune it)
 #define TRIANGLE_INTERSECTION_TOL 1e-6
+
+std::string tag_name;
+std::vector<std::string> tag_values;
 
 // If the following is defined, use OBB trees for ray-triangle intersections,
 // otherwise use KD tree
@@ -57,7 +57,6 @@ inline static double tet_volume( const moab::CartVect& v0,
 
 // Adapted from MOAB's convert.cpp
 // Parse list of integer ranges, e.g. "1,2,5-10,12"
-static
 bool parse_int_list( const char* string, std::set<int>& results )
 {
   bool okay = true;
@@ -102,84 +101,51 @@ bool parse_int_list( const char* string, std::set<int>& results )
   return okay;    
 }
 
-extern "C"{
-extern int namchg_( int*, int* );
-}
-
-static 
-bool map_conformal_names( std::set<int>& input, std::set<int>& output ){
-  
-  for( std::set<int>::iterator i = input.begin(); i!=input.end(); ++i){
-    int x, y, one = 1;
-    x = *i;
-    y = namchg_( &one, &x );
-#ifdef MESHTAL_DEBUG
-    std::cerr << "namchg mapped cell " << *i << " to name " << y << std::endl;
-#endif
-    if( y == 0 ){
-        std::cerr << " conformality cell " << *i << " does not exist." << std::endl;
-        return false;
-    }
-    output.insert( y );
-  }
-  return true;
-}
-
 namespace moab { 
 
-
-
-TrackLengthMeshTally* TrackLengthMeshTally::setup( const MeshTallyInput& fmesh_params, 
-                                                   const int* current_mcnp_cell )
+/**
+ * Convenience function
+ * ToDo:  Consider whether the TallyOptions need to be a multimap:  Are there
+ *        times when the user needs to enter the same key with different values?
+ * ToDo:  Do we need this to be multimap?  It allows tags to have multiple tags (vector).  
+ *        In TrackLengthMeshTally you can have one tag name with many tag values, but it
+ *        isn't tested, i.e. there is not a test with multiple tag values.
+ * ToDo:  Find the sjackson doc on MeshTally keys (PHHW)
+ */
+void TrackLengthMeshTally::parse_tally_options()
 {
+  const TallyInput::TallyOptions& options = input_data.options;
+  TallyInput::TallyOptions::const_iterator it;
 
-  const MeshTallyInput::TallyOptions& fc_params = fmesh_params.options;
-
-  std::string tag_name;
-  std::vector<std::string> tag_values;
-
-  bool convex_flag = false, conformal_flag = false;
-  std::set<int> conf_tmp, *conformality = NULL;
-  bool conformal_surface_source = false;
-
-  int id = fmesh_params.tally_id;
-
-  for( MeshTallyInput::TallyOptions::const_iterator i = fc_params.begin();
-       i != fc_params.end(); ++i )
+  for(it = options.begin(); it != options.end(); ++it )
   {
-    std::string key = (*i).first, val = (*i).second;
-    if(key == "out" ) continue; // processed in MeshTally
-    else if( key == "tag" ) tag_name = val;
+    std::string key = (*it).first, val = (*it).second;
+    if( key == "tag" ) tag_name = val;
     else if( key == "tagval" ) tag_values.push_back(val);
-    else if( key == "convex" && (val == "t" || val == "true" ) ) convex_flag = true; 
+    else if( key == "convex" && (val == "t" || val == "true" ) ) convex = true; 
     else if( key == "conf_surf_src" && (val == "t" || val == "true" ) ) conformal_surface_source = true;
-    else if( key == "conformal" ) { 
-
-      if( !conformality ) conformality = new std::set<int>();
-      if( !parse_int_list( val.c_str(), *conformality ) ){
-        std::cerr << "Error: FC" << id << " card has bad conformality value '" << val << "'" << std::endl;
-        exit(EXIT_FAILURE);
+    else if( key == "conformal" ) 
+    { 
+      // Since the options are a multimap, the conformal tag could (illogically) occur more than once
+      if (conformality.empty())
+      {
+         if( !parse_int_list( val.c_str(), conformality ) )
+         {
+           std::cerr << "Error: Tally " << input_data.tally_id << " input has bad conformality value '" << val << "'" << std::endl;
+           exit(EXIT_FAILURE);
+         }
       }
-      if( !map_conformal_names( *conformality, conf_tmp ) ){
-        std::cerr << "Error: a conformal cell does not exist in the problem!" << std::endl;
-        exit(EXIT_FAILURE);
-      }
-
     }
-    else{
-      std::cerr << "Warning: FC" << id << " card has unknown key '" << key << "'" << std::endl;
+    else
+    {
+      std::cerr << "Warning: Tally " << input_data.tally_id << " input has unknown key '" << key << "'" << std::endl;
     }
   }
-
-  moab::TrackLengthMeshTally *mt = new moab::TrackLengthMeshTally( fmesh_params );
-
-  std::cout << "Creating dagmc fmesh" << id 
-            << ", input: " << fmesh_params.input_filename 
-            << ", output: " << mt->output_filename << std::endl;
-
-  if( tag_name != "" ){
+  if( tag_name != "" )
+  {
     std::cout << "  using tag name='" << tag_name << "'";
-    if( tag_values.size() > 0 ){
+    if( tag_values.size() > 0 )
+    {
       std::cout <<", and tag values= " << std::endl;
       for( unsigned int i = 0; i < tag_values.size(); ++i ){
         std::cout << "    '" << tag_values[i] << "'" << std::endl;
@@ -187,81 +153,30 @@ TrackLengthMeshTally* TrackLengthMeshTally::setup( const MeshTallyInput& fmesh_p
     }
     std::cout << std::endl;
   }
-
-  if( convex_flag ){ 
-    std::cout << "  user asserts that this tally mesh has convex geometry." << std::endl;
-  }
-  
-  if( conformality ){
-    std::cout << "  conformal to cells " << std::flush;
-    for( std::set<int>::iterator i = conformality->begin(); i!=conformality->end(); ){
-      std::cout << *i; 
-      if( ++i != conformality->end() ) std::cout << ", ";
-    }
-    std::cout << std::endl; 
-    *conformality = conf_tmp;
-  }
-  
-  if( convex_flag && conformal_flag ){
-    std::cerr << "Warning: FC" << id << " specifies both conformal and convex logic; using conformal logic." << std::endl;
-  }
-  if( conformality ){
-    mt->mcnp_current_cell = current_mcnp_cell;
-    mt->conformality = conformality;
-    mt->conformal_surface_source = conformal_surface_source;
-  }
-  else mt->set_convex_flag( convex_flag );
-
-  moab::ErrorCode rval;
-  rval = mt->load_mesh( fmesh_params.input_filename, tag_name, tag_values );
-  if( rval != moab::MB_SUCCESS ){
-    std::cerr << "** DAGMC TrackLengthMeshTally creation failed!" << std::endl;
-    std::cerr << "** Tally " << id << " failed to initialize." << std::endl;
-    exit( EXIT_FAILURE );
-    
-  }
-  
-  return mt;
-
-}
-
-  
-TrackLengthMeshTally::TrackLengthMeshTally( const MeshTallyInput& fmesh ) :
-  MeshTally( fmesh ),
-  mb( new moab::Core() ),  
-  obb_tool( new OrientedBoxTreeTool(mb) ),
-  last_visited_tet( 0 ), 
-  convex( false ), conformality( NULL ), conformal_surface_source( false ),
-  mcnp_current_cell( NULL ), last_cell( -1 ), num_negative_tracks(0)
-{}
-  
-TrackLengthMeshTally::~TrackLengthMeshTally(){
-  delete mb;
-  delete obb_tool;
-}
-
+}  
+ 
 /**
- * Load the given file as an input mesh
- * MeshTally member variable tally_mesh_set will contain the mesh contents
+ *  Using the tagnames and values, if given, reduce the meshset need to load and tally
+ *  Created as part of the meshtally refactor, pulled from the setup function. 
+ *  Now called by the constructor.
  */
-ErrorCode TrackLengthMeshTally::load_mesh( const std::string& input_filename, 
-                                           std::string tag_name, std::vector<std::string>& tag_values ){
-
+void TrackLengthMeshTally::set_tally_meshset()
+{
   // load the MOAB mesh data from the input file for this mesh tally
   moab::EntityHandle loaded_file_set;
   moab::ErrorCode rval = load_moab_mesh(mb, loaded_file_set);
 
-  if (rval != moab::MB_SUCCESS) return rval;
+  assert( rval == MB_SUCCESS ); 
 
   rval = mb->create_meshset( MESHSET_SET, tally_mesh_set );
   assert( rval == MB_SUCCESS ); 
 
-  if( tag_name.length() > 0 ){
-
+  if( tag_name.length() > 0 )
+  {
     std::cout << "  User-specified tag to load:  " << tag_name << std::endl;
 
-    /* Until there is more certainty about the type and parameters of the tag the user specified,
-       use MB_TAG_ANY to get access to any tag with the given name */
+    // Until there is more certainty about the type and parameters of the tag the user specified,
+    //   use MB_TAG_ANY to get access to any tag with the given name 
     Tag user_spec_tag;
     rval = mb->tag_get_handle( tag_name.c_str(), 0, MB_TYPE_OPAQUE, user_spec_tag, MB_TAG_ANY );
     assert( rval == MB_SUCCESS );
@@ -278,7 +193,8 @@ ErrorCode TrackLengthMeshTally::load_mesh( const std::string& input_filename,
 
     std::cout << "  Found " << user_sets.size() << " sets with this tag." << std::endl;
 
-    for( Range::iterator i = user_sets.begin(); i!=user_sets.end(); ++i){
+    for( Range::iterator i = user_sets.begin(); i!=user_sets.end(); ++i)
+    {
       EntityHandle s = *i;
       char* name = new char[ user_spec_tag_length + 1];
       
@@ -290,74 +206,140 @@ ErrorCode TrackLengthMeshTally::load_mesh( const std::string& input_filename,
         std::cout << "    available tag value: " << name << std::endl; 
       }
       
-      if( std::find( tag_values.begin(), tag_values.end(),std::string(name) ) != tag_values.end() ){
+      if( std::find( tag_values.begin(), tag_values.end(),std::string(name) ) != tag_values.end() )
+      {
         std::cout << "  Successfully found a set with tag value " << name << std::endl;
         rval = mb->unite_meshset( tally_mesh_set, s );
         assert( rval == MB_SUCCESS );
       }
       delete[] name;
     }
-
   }
-  else{ // no user-specified tag filter
-
+  else
+  { // no user-specified tag filter
     rval = mb->unite_meshset( tally_mesh_set, loaded_file_set );
-    assert( rval == MB_SUCCESS );
+    assert (rval == MB_SUCCESS);
   }
+} 
 
-  rval = setup_tags( mb );
-  assert( rval == MB_SUCCESS );
+/**
+  * Constructor
+  */
+TrackLengthMeshTally::TrackLengthMeshTally( const TallyInput& input ) :
+  MeshTally( input ),
+  mb (new moab::Core() ),  
+  obb_tool( new OrientedBoxTreeTool(mb) ),
+  last_visited_tet( 0 ), 
+  convex( false ),  conformal_surface_source( false ),
+  last_cell (-1), num_negative_tracks(0)
+{
+   std::cout << "Creating dagmc mesh tally" << input.tally_id 
+            << ", input: " << input_filename 
+            << ", output: " << output_filename << std::endl;
 
-  int num_tets;
-  rval = mb->get_number_entities_by_dimension( tally_mesh_set, 3, num_tets );
-  assert( rval == MB_SUCCESS );
+   parse_tally_options();
+   set_tally_meshset();
+
+   // reduce the loaded MOAB mesh set to include only 3D elements
+   Range all_tets;
+   ErrorCode rval = reduce_meshset_to_3D(mb, tally_mesh_set, all_tets);  
+   assert (rval == MB_SUCCESS);
+
+   // initialize MeshTally::tally_points to include all mesh cells
+   set_tally_points(all_tets);
+
+   // Does not change all_tets
+   rval = compute_barycentric_data(all_tets);
+   assert (rval == MB_SUCCESS);
+  
+   // Add skin triangles to all_tets, build obb if requested, and kde tree
+   build_trees(all_tets);
+
+   // Manage conformality situation
+   if (convex)
+   { 
+      std::cout << "  user asserts that this tally mesh has convex geometry." << std::endl;
+   }
+  
+   if (!conformality.empty() )
+   {
+     std::cout << "  conformal to cells " << std::flush;
+     for( std::set<int>::iterator i = conformality.begin(); i!=conformality.end(); )
+     {
+        std::cout << *i; 
+        if( ++i != conformality.end() ) std::cout << ", ";
+     }
+     std::cout << std::endl; 
+   }
+  
+   if (convex && !conformality.empty())
+   {
+     std::cerr << "Warning:  Tally " << input.tally_id << " specifies both conformal and convex logic; using conformal logic." << std::endl;
+   }
+
+   // Perform tasks
+   rval = setup_tags( mb );
+   assert (rval == MB_SUCCESS);
+}
+  
+TrackLengthMeshTally::~TrackLengthMeshTally()
+{
+  delete mb;
+  delete obb_tool;
+}
+
+/**
+ * Load the given file as an input mesh
+ * MeshTally member variable tally_mesh_set will contain the mesh contents
+ */
+ErrorCode TrackLengthMeshTally::compute_barycentric_data(const Range& all_tets )
+{
+  ErrorCode rval;
+
+  // Iterate over all tets and compute barycentric matrices 
+  int num_tets = all_tets.size();
   std::cerr << "  There are " << num_tets << " tetrahedrons in this tally mesh." << std::endl;
 
-  tet_baryc_data.resize( num_tets );  
+  if (num_tets != 0)
+  {
+     tet_baryc_data.resize (num_tets);  
+  }
 
-  // reduce the loaded MOAB mesh set to include only 3D elements
-  Range all_tets;
-  rval = reduce_meshset_to_3D(mb, tally_mesh_set, all_tets);  
-
-  if (rval != moab::MB_SUCCESS) return rval;
-  assert( all_tets.size() == (unsigned)num_tets );
-
-  // initialize MeshTally::tally_points to include all mesh cells
-  set_tally_points(all_tets);
-
-  /**
-   * Iterate over all tets and compute barycentric matrices 
-   */
-  for( Range::const_iterator i=all_tets.begin(); i!=all_tets.end(); ++i){
+  for( Range::const_iterator i=all_tets.begin(); i!=all_tets.end(); ++i)
+  {
     EntityHandle tet = *i;
 
     const EntityHandle* verts;
     int num_verts;
-    rval = mb->get_connectivity( tet, verts, num_verts );
+    rval = mb->get_connectivity (tet, verts, num_verts);
     assert( rval == MB_SUCCESS );
     
-    if( num_verts != 4 ){
+    if( num_verts != 4 )
+    {
       std::cerr << "Error: DAGMC TrackLengthMeshTally cannot handle non-tetrahedral meshes yet," << std::endl;
       std::cerr << "       but your mesh has at least one cell with " << num_verts << " vertices." << std::endl;
       return MB_NOT_IMPLEMENTED;
     }
     
     CartVect p[4];
-    rval = mb->get_coords( verts, 4, p[0].array() );
+    rval = mb->get_coords (verts, 4, p[0].array());
     assert( rval == MB_SUCCESS );
 
     Matrix3 a( p[1]-p[0], p[2]-p[0], p[3]-p[0] );
     a = a.transpose().inverse();
     tet_baryc_data.at( get_entity_index(tet) ) = a;
-
   }
+  return MB_SUCCESS;
+}
 
+void TrackLengthMeshTally::build_trees (Range& all_tets)
+{
+  moab::ErrorCode rval;
   // prepare to build KD tree and OBB tree
   Range all_tris;
   Skinner skinner(mb);
   skinner.find_skin( all_tets, 2, all_tris );
   std::cout << "  Tally mesh skin has " << all_tris.size() << " triangles." << std::endl;
-
 
 #ifdef USE_OBB_TREE_RAY_TRACING
   std::cout << " Building OBB tree of size " << all_tris.size() << "... " << std::flush;
@@ -378,27 +360,14 @@ ErrorCode TrackLengthMeshTally::load_mesh( const std::string& input_filename,
   kdtree = new AdaptiveKDTree( mb );
   kdtree->build_tree( all_tets, kdtree_root );
   std::cout << "done." << std::endl << std::endl;;
-
-  return MB_SUCCESS;
-
 }
-
-  void TrackLengthMeshTally::print( double num_particles, double multiplier ){
-    write_results( num_particles, multiplier );
-  }
 
 /**
  * Write out the mesh with tally and error tags attached
- * @param sp_norm Tally for each tetrahedron will be divided by sp_norm*volume of tet.
- * @param mult_fact Tally for each tetrahedron will be multiplied by this parameter.
- * @param override_output_filename If non-NULL, use this filename for output instead
- *                                 of this->output_filename
+ * @param num_histories Tally for each tetrahedron will be divided by num_histories*volume of tet.
  */
-ErrorCode TrackLengthMeshTally::write_results( double sp_norm, double mult_fact, 
-                                    const std::string* override_output_filename )
+void TrackLengthMeshTally::write_data( double num_histories)
 {
-
-  std::string filename = override_output_filename ? *override_output_filename : output_filename;
 
   ErrorCode rval;
 
@@ -428,7 +397,7 @@ ErrorCode TrackLengthMeshTally::write_results( double sp_norm, double mult_fact,
 
       double tally = get_data( tally_data, t, j );
       double error = get_data( error_data, t, j );
-      double score = (tally / (volume*sp_norm)) * mult_fact;
+      double score = (tally / (volume*num_histories));
       
       rval = mb->tag_set_data( tally_tags[j], &t, 1, &score );
       assert( rval == MB_SUCCESS );
@@ -437,19 +406,18 @@ ErrorCode TrackLengthMeshTally::write_results( double sp_norm, double mult_fact,
       // this reflects MCNP's approach to avoiding a divide-by-zero situation.
       double rel_err = 0;
       if( error != 0 ){
-        rel_err = sqrt( (error / (tally*tally)) - (1./sp_norm) );
+        rel_err = sqrt( (error / (tally*tally)) - (1./num_histories) );
       }        
 
       rval = mb->tag_set_data( error_tags[j], &t, 1, &rel_err );
       assert( rval == MB_SUCCESS );
-
     }
   }
 
   std::vector<Tag> output_tags = tally_tags;
   output_tags.insert( output_tags.end(), error_tags.begin(), error_tags.end() );
 
-  rval = mb->write_file( filename.c_str(), NULL, NULL, &tally_mesh_set, 1, &(output_tags[0]), output_tags.size() );
+  rval = mb->write_file( output_filename.c_str(), NULL, NULL, &tally_mesh_set, 1, &(output_tags[0]), output_tags.size() );
   assert (rval == MB_SUCCESS );
  
   if ( num_negative_tracks != 0 )
@@ -459,9 +427,8 @@ ErrorCode TrackLengthMeshTally::write_results( double sp_norm, double mult_fact,
     std::cout << "These tracks were not included in the final tally results." << std::endl << std::endl;
   }
 
-  return MB_SUCCESS;
+  // return MB_SUCCESS;
 }
-
 
 /**
  * Return true if the point falls inside tet.  Assumes tet is part of this TrackLengthMeshTally.
@@ -489,43 +456,15 @@ bool TrackLengthMeshTally::point_in_tet( const CartVect& point, const EntityHand
   return in_tet;
 }
 
-
-/**
- * Add a score to a given mesh cell
- */
-void TrackLengthMeshTally::add_score_to_mesh_cell( EntityHandle mesh_cell, double score, int ebin ){
-  
-  visited_this_history.insert( mesh_cell );
-
-  get_data( temp_tally_data, mesh_cell, ebin ) += score;
-
-  if( input_data.total_energy_bin ){
-    get_data( temp_tally_data, mesh_cell, (num_energy_bins-1) ) += score;
-  }
-}
-
 /**
  * Finish adding a set of scores for a particular monte carlo particle track
+ * ToDo:  This may not need to be overridden, depending on whethere conformality 
+ *        needs to be distinguished.
  */
-void TrackLengthMeshTally::end_history () {
-
-  for( std::set< EntityHandle >::iterator i=visited_this_history.begin(); i!=visited_this_history.end(); ++i){
-
-    for( unsigned j = 0; j < num_energy_bins; ++j ){
-      double& d =     get_data(temp_tally_data, *i, j );
-      double& tally = get_data(tally_data, *i, j );
-      double& error = get_data(error_data, *i, j );
-      
-      tally += d;
-      error += (d * d);
-      d = 0.0;
-    }
-
-  }
-
-  visited_this_history.clear();
-
-  if( conformality ){ last_cell = -1; } 
+void TrackLengthMeshTally::end_history () 
+{
+  MeshTally::end_history();
+  if( !conformality.empty() ){ last_cell = -1; } 
 }
 
 /**
@@ -544,6 +483,9 @@ TrackLengthMeshTally::get_skin_triangle_adjacencies( EntityHandle triangle,
                                                      EntityHandle& tetrahedron, EntityHandle vertices[3] ){
 
   ErrorCode rval;
+  // This part of the code could be replace by a modified get_tet_verts(..)
+  // say 
+  // vertices = get_triangle_vertices(triangle)
   const EntityHandle* tri_conn;
   int num_verts; 
   rval = mb->get_connectivity( triangle, tri_conn, num_verts );
@@ -551,6 +493,10 @@ TrackLengthMeshTally::get_skin_triangle_adjacencies( EntityHandle triangle,
   assert( num_verts == 3 );
   memcpy( vertices, tri_conn, sizeof(EntityHandle)*3 );
   
+   
+  // This part of the code could be replaced by, say
+  // 
+  // tetrahedron = get_adjacent_tetrahedron(triangle)
   Range tri_sides; 
   rval = mb->get_adjacencies( &triangle, 1, 3, false, tri_sides );
   assert( rval == MB_SUCCESS );
@@ -670,8 +616,6 @@ TrackLengthMeshTally::get_starting_tet_conformal(const CartVect& start, EntityHa
  * @param first_tri If return value is non-zero, and a ray fire was performed, 
  *                  will contain the skin triangle that ray intersects.
  * @param first_t Value of t along the ray where first_tri is intersected.
- * @param conformal_begin_track If true, track is known to enter mesh at a conformal 
- *                              MCNP cell at t=0.  Use simplified logic in this case.
  * @return The first tetrahedron along the ray, or zero if none found.
  */
 
@@ -740,56 +684,57 @@ static inline bool tris_eq( const EntityHandle *t1, const EntityHandle *t2 ){
   return CN::ConnectivityMatch( t1, t2, 3, ignored1, ignored2 );
 }
 
-void TrackLengthMeshTally::compute_score(const TallyEvent& event, int ebin)
+void TrackLengthMeshTally::compute_score(const TallyEvent& event)
 {
-  // make sure tally event is a track-based event
-  if (event.type != TallyEvent::TRACK)
-  {
-    std::cerr << "\nError: Tally event is not a track-based event" << std::endl;
-    exit(EXIT_FAILURE);
-  }
+  // If it's not the type we want leave immediately
+  if (event.type != TallyEvent::TRACK) return;
 
   ErrorCode rval;
-
-  bool conformal_begin_track = false;
-
-  if( conformality ){
-
-    bool cell_change = (last_cell != *mcnp_current_cell);
-    bool newparticle = (last_cell == -1);
-    
-    conformal_begin_track = cell_change;
-    // new particles should only use conformal crossing logic if a conformal surface source was declared
-    if( newparticle )
-        conformal_begin_track = conformal_surface_source; 
-
-#ifdef MESHTAL_DEBUG
-    if( newparticle ){ std::cout << "Started new particle in cell " << *mcnp_current_cell << std::endl; } 
-    else if( cell_change ){ 
-        std::cout << "Crossed surface from " << last_cell 
-                  << " into " << *mcnp_current_cell<< std::endl; }
-#endif
-
-    last_cell = *mcnp_current_cell;
-
-    // if the new cell is not part of this tally, return immediately
-    if( conformality->find( *mcnp_current_cell ) == conformality->end() ) {
-      return;
-    }
-  }
 
   EntityHandle last_crossed_tri[3] = {0,0,0};
   double last_t = 0;
   EntityHandle first_tet;
 
-  if( conformal_begin_track ){
-    first_tet = get_starting_tet_conformal(event.position, last_crossed_tri);
+  if (conformality.empty())  // it's not conformal
+  {
+      first_tet = get_starting_tet(event.position, event.direction, event.track_length, last_crossed_tri, last_t);
   }
-  else{
-    first_tet = get_starting_tet(event.position, event.direction, event.track_length, last_crossed_tri, last_t);
+  else  // The conformal branch
+  {
+     bool cell_change = (last_cell != event.current_cell);
+     bool new_particle = (last_cell == -1);
+    
+#ifdef MESHTAL_DEBUG
+     if(new_particle){ std::cout << "Started new particle in cell " << event.current_cell << std::endl; } 
+     else if(cell_change)
+     { 
+        std::cout << "Crossed surface from " << last_cell << " into " << event.current_cell<< std::endl; 
+     }
+#endif
+
+     // update last cell information
+     last_cell = event.current_cell;
+
+     // if the new cell is not part of this tally, return immediately
+     if (conformality.find(event.current_cell) == conformality.end()) 
+     {
+        return;
+     }
+
+     // new particles only use conformal crossing logic if a conformal surface source was declared
+     if ((new_particle && conformal_surface_source) ||
+           cell_change)
+     {
+       first_tet = get_starting_tet_conformal(event.position, last_crossed_tri);
+     }
+     else
+     {
+       first_tet = get_starting_tet(event.position, event.direction, event.track_length, last_crossed_tri, last_t);
+     }
   }
 
-  if( first_tet == 0 ){
+  if( first_tet == 0 )
+  {
     // this ray never touches the tally mesh
     return;
   }
@@ -803,20 +748,31 @@ void TrackLengthMeshTally::compute_score(const TallyEvent& event, int ebin)
     EntityHandle tet = next_tet; // the tetrahedron being currently handled
     tet_count++;
 
+    // The next 5 lines could be replaced with a single function 
+    // pseudo: // Get a list of EntityHandles at each vertex of  the 
+    // pseudo: // current tetrahedron entity
+    // pseudo: tet_verts = get_tetrahedron_vertices(tet)
     const EntityHandle* tet_verts; 
     int num_tet_verts; 
     rval = mb->get_connectivity( tet, tet_verts, num_tet_verts );
     assert( rval == MB_SUCCESS );
     assert( num_tet_verts == 4 );
-
+    
     bool found_crossing = false;
 
-
-    for( int i = 0; i < 4 && !found_crossing; ++i ){
-
+    for( int i = 0; i < 4 && !found_crossing; ++i )
+    {
+      // return the vertices of the sub-entity at the ith vertex in the given 
+      // set vertices from a single parent entity, 
+      // where MBTET is the Entity type of tet_verts (the parent),
+      // tri is the list of EntityHandles of the subentity at the ith vertex,
+      // based on tet_verts and canonical ordering for parent_type, and
+      // the expected number of vertices of the sub_entity is 3
+      // This could be replaced by a function call
+      // pseudo: tri = get_triangle_vertices_at(tet_verts, i)
       EntityHandle tri[3]; 
       int three;
-
+      // constructor or static class
       CN::SubEntityConn( tet_verts, MBTET, 2, i, tri, three );
       assert( three == 3 );
 
@@ -827,11 +783,12 @@ void TrackLengthMeshTally::compute_score(const TallyEvent& event, int ebin)
       assert( rval == MB_SUCCESS );
 
       double t;
-      if( GeomUtil::ray_tri_intersect( tri_pts, event.position, event.direction, TRIANGLE_INTERSECTION_TOL, t ) ){
-
+      if( GeomUtil::ray_tri_intersect( tri_pts, event.position, event.direction, TRIANGLE_INTERSECTION_TOL, t ) )
+      {
         double track_length;
 
-        if( t >= event.track_length ){
+        if( t >= event.track_length )
+        {
           // track ends in this tetrahedron
           track_length = event.track_length - last_t;
           next_tet = 0;
@@ -862,7 +819,7 @@ void TrackLengthMeshTally::compute_score(const TallyEvent& event, int ebin)
 #endif
       
 
-            if( convex || conformality ) {
+            if( convex || !conformality.empty() ) {
               // input file made assertion that this mesh tally is convex, 
               // or conformality assures that no single track will reenter tally mesh
             next_tet = 0;
@@ -902,10 +859,13 @@ void TrackLengthMeshTally::compute_score(const TallyEvent& event, int ebin)
           return;
         }
 
-        double weight = event.get_weighting_factor();
+        double weight = event.particle_weight;
         double score = weight * track_length;
 
-        add_score_to_mesh_cell( tet, score, ebin );
+        // ToDo:  fix fake ebin
+        int ebin = 0;
+ 	add_score_to_tally(tet, score, ebin);
+        // add_score_to_mesh_cell( tet, score, ebin );
         found_crossing = true;
       }
 
@@ -915,11 +875,26 @@ void TrackLengthMeshTally::compute_score(const TallyEvent& event, int ebin)
       return;
     }
     assert( found_crossing );
-
   }
 
   return;
-
 }
 
+/*&
+EntityHandle *get_tet_vertices(EntityHandle tet)
+{
+    const EntityHandle* tet_verts; 
+    int num_tet_verts; 
+    ErrorCode rval;
+    rval = mb->get_connectivity( tet, tet_verts, num_tet_verts );
+    assert( rval == MB_SUCCESS );
+    assert( num_tet_verts == 4);
+    if( num_verts != 4 ){
+      std::cerr << "Error: DAGMC TrackLengthMeshTally cannot handle non-tetrahedral meshes yet," << std::endl;
+      std::cerr << "       but your mesh has at least one cell with " << num_verts << " vertices." << std::endl;
+      // return MB_NOT_IMPLEMENTED;
+    }
+    return tet_verts;
+}
+*/
 } // namespace moab
