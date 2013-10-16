@@ -104,7 +104,6 @@ KDEMeshTally::~KDEMeshTally()
     delete mbi;
     delete quadrature;  
 }
-
 //---------------------------------------------------------------------------//
 // DERIVED PUBLIC INTERFACE from Tally.hpp
 //---------------------------------------------------------------------------//
@@ -203,7 +202,6 @@ void KDEMeshTally::write_data(double num_histories)
     {
         moab::EntityHandle point = *i;
         unsigned int point_index = get_entity_index(point);
-        
 
         for (unsigned int j = 0; j < data->get_num_energy_bins(); ++ j)
         {
