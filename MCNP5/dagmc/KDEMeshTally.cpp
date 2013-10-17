@@ -147,6 +147,11 @@ void KDEMeshTally::compute_score(const TallyEvent& event)
         // get coordinates of this point
         moab::EntityHandle point = *i;
         moab::ErrorCode rval = mbi->get_coords(&point, 1, X.coords);
+	if(rval != moab::MB_SUCCESS)
+	  {
+	    std::cout << "Failed to get coordinates" << std::endl;
+	    exit(1);
+	  }
         assert(rval == moab::MB_SUCCESS);
 
         // get tag data for this point if user requested boundary correction
@@ -196,6 +201,11 @@ void KDEMeshTally::write_data(double num_histories)
 
     // tag tally and relative error results to the mesh for each tally point
     moab::ErrorCode rval = moab::MB_SUCCESS;
+    if(rval != moab::MB_SUCCESS)
+      {
+	std::cout << "This can't fail" << std::endl;
+	exit(1);
+      }
     moab::Range::iterator i;
 
     for (i = tally_points.begin(); i != tally_points.end(); ++i)
