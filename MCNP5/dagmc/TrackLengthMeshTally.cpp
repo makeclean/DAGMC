@@ -248,6 +248,7 @@ void TrackLengthMeshTally::compute_score(const TallyEvent& event)
   //double first_t = last_t; //useful as a debugging var
   int tet_count = 0;
 
+  double weight = event.get_score_multiplier(input_data.multiplier_id);
   while( next_tet != 0 )
   {
 
@@ -374,7 +375,6 @@ void TrackLengthMeshTally::compute_score(const TallyEvent& event)
           return;
         }
 
-        double weight = event.particle_weight;
         double score = weight * track_length;
 
         // ToDo jcz:  Call a function defined in Tally to calculate the correct ebin

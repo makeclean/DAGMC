@@ -4,6 +4,7 @@
 #define DAGMC_TALLY_EVENT_HPP
 
 #include "moab/CartVect.hpp"
+#include <vector>
 
 //===========================================================================//
 /**
@@ -49,6 +50,19 @@ struct TallyEvent
     /// Energy and weight of particle when event occurred
     double particle_energy;
     double particle_weight;
+
+    /// Energy-dependent tally multipliers: variable with each event
+    std::vector<double> multipliers; 
+ 
+    double get_score_multiplier(int multiplier_index) const
+    {
+       if (multiplier_index == -1 || multiplier_index >= multipliers.size())
+       {
+          return particle_weight;
+       }
+      
+       return multipliers.at(multiplier_index) * particle_weight; 
+    }
 };
 
 #endif // DAGMC_TALLY_EVENT_HPP
