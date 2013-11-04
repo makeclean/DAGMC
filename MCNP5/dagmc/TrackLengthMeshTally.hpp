@@ -155,6 +155,11 @@ class TrackLengthMeshTally : public MeshTally
     // Stores barycentric data for tetrahedrons
     std::vector<Matrix3> tet_baryc_data;
 
+    // Stores
+    std::vector<EntityHandle> entity_list;
+    std::vector<std::vector<EntityHandle> > neighbour_tets;
+    std::vector<std::vector<EntityHandle> > neighbour_surf;
+
     // Counts how many negative tracks occurred that were not tallied
     int num_negative_tracks;
 
@@ -182,6 +187,15 @@ class TrackLengthMeshTally : public MeshTally
      * \return the MOAB ErrorCode value
      */
     ErrorCode compute_barycentric_data (const Range& all_tets);
+
+    /**
+     * \brief Computes the adjaceny information across the mesh
+     * for each tet in the problem, calculates each adjecent tet to it
+     * \param all_tets the set of tets extracted from the input mesh
+     * \return the MOAB ErrorCode value
+     */
+    ErrorCode compute_adjacency_information (const Range& all_tets);
+
 
     /**
      * \brief Constructs the KD and OBB trees from the mesh data
@@ -335,6 +349,21 @@ class TrackLengthMeshTally : public MeshTally
    */
   void determine_score(const TallyEvent event, double tracklength, EntityHandle tet);
 
+  /*
+   * Function to provide the next_tet by using the adjacent face to determine what is the next
+   * tet
+   */
+  EntityHandle next_tet_by_adjacancy(EntityHandle tet, EntityHandle face);
+
+  /** 
+   * \brief find the tet the point is in by using the shared surface for that intersection
+   * \param EntityHandle surface, the entityhandle that corresponds to a specific intersection
+   * \param CartVect point, the xyz location of to test
+   * \return void
+   */
+  EntityHandle find_tet_by_intersection(EntityHandle surface, CartVect point);
+
+  EntityHandle next_tet_by_info(EntityHandle tet,EntityHandle surf);
 };
 
 } // end namespace moab
