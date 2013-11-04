@@ -48,6 +48,8 @@ struct ray_data {
   moab::EntityHandle triangle;
 };
 
+moab::EntityHandle last_tet = 0;
+
 //---------------------------------------------------------------------------//
 // MISCELLANEOUS FILE SCOPE METHODS
 //---------------------------------------------------------------------------/
@@ -157,9 +159,15 @@ TrackLengthMeshTally::TrackLengthMeshTally(const TallyInput& input)
 
    // initialize MeshTally::tally_points to include all mesh cells
    set_tally_points(all_tets);
+
    // build the kdtree
    // Does not change all_tets
+   // precompute the barycentric coordinates
    rval = compute_barycentric_data(all_tets);
+   // precompute the adjacency data
+   rval = compute_adjacency_information(all_tets);
+
+
    assert (rval == MB_SUCCESS);
   
    // Perform tasks
@@ -231,7 +239,6 @@ void TrackLengthMeshTally::compute_score(const TallyEvent& event)
   sort_intersection_data(intersections,triangles);
   // compute the tracklengths
   compute_tracklengths(event,intersections,triangles);
-
 
   return;
 }
@@ -440,6 +447,7 @@ ErrorCode TrackLengthMeshTally::compute_barycentric_data(const Range& all_tets)
   if (num_tets != 0)
   {
      tet_baryc_data.resize (num_tets);  
+     entity_list.resize(num_tets);
   }
 
   for( Range::const_iterator i=all_tets.begin(); i!=all_tets.end(); ++i)
@@ -477,6 +485,71 @@ ErrorCode TrackLengthMeshTally::compute_barycentric_data(const Range& all_tets)
     tet_baryc_data.at( get_entity_index(tet) ) = a;
   }
   return MB_SUCCESS;
+}
+//---------------------------------------------------------------------------//
+/* 
+ * function that determines which tets are adjacent to each other tet, ie, when we know that midpoint was in a given
+ * tet, then we know that we need only test upto 4 tets to determine the next
+ */
+ErrorCode TrackLengthMeshTally::compute_adjacency_information(const Range &input_handles)
+{
+  Range adjacencies,test;
+  Range::iterator inh;
+  ErrorCode rval;
+  int dimension;
+  EntityHandle shared_faces[4]={0,0,0,0};
+
+  std::cout << "Calculating ajacency information ..." << std::endl;
+
+  // get the dimensionality of the input set, we assume that we have 3d elements, i.e. tets
+  dimension = 3;
+  int tet = 0;
+  for ( inh = input_handles.begin() ; inh != input_handles.end() ; ++inh) // loop over every tet
+    {
+      std::vector<EntityHandle> temp_tets; // temp array containing 
+      std::vector<EntityHandle> temp_surf; // temp array for surfs
+      std::vector<EntityHandle> children; // the faces of the tet inh
+      EntityHandle entity = *inh; // current tet
+      // generate the faces of the tet
+      rval = mb->get_adjacencies(&entity,1,dimension-1, true, 
+				children, moab::Interface::UNION); 
+
+      // to build list of tets
+      entity_list.push_back(*inh);
+
+      // now find the n shared tets
+      std::vector<EntityHandle> :: iterator faces;
+      int surf = 0;
+      for ( faces = children.begin() ; faces != children.end() ; ++faces) // loop over the 4 faces
+	{
+	  std::vector<EntityHandle> shared_tets; // vector of mbentities that share the surface face
+	  EntityHandle face = *faces; // current face being tested
+	  // get the tets that share face 
+	  rval = mb->get_adjacencies(&face,2,dimension,true,
+					shared_tets,moab::Interface::UNION); 
+	  // loop over the two tets and compare to the current tet, only the keep the one that isnt
+	  // the one we are already in
+	  for ( unsigned int i = 0 ; i < shared_tets.size() ; i++ )
+	    {
+	      if(shared_tets[i] != entity) // if not the current tet, store it
+		{
+		  temp_tets.push_back(shared_tets[i]);     
+		  temp_surf.push_back(face);
+		}
+	    }
+	  surf++; // increment surface counter
+	  neighbour_tets.push_back(temp_tets);
+	  neighbour_surf.push_back(temp_surf);
+	}
+      /*
+      std::cout << shared_faces[0] << " " << shared_faces[1] << " " 
+		<< shared_faces[2] << " " << shared_faces[3] << std::endl;
+      std::cout << children.size() << std::endl;      
+      */ 
+      tet++; // increment the tet counter
+    }
+  std::cout << neighbour_tets[0][0] << " " << neighbour_tets[0][1] << " " << neighbour_tets[0][2] << " " << neighbour_tets[0][3] << std::endl;
+  return rval;
 }
 //---------------------------------------------------------------------------//
 void TrackLengthMeshTally::build_trees (Range& all_tets)
@@ -643,10 +716,93 @@ void TrackLengthMeshTally::determine_score(const TallyEvent event, double trackl
     // ToDo:  fix fake ebin
     int ebin = 0;
     unsigned int tet_index = get_entity_index(tet);
+    //    std::cout << "tet index =" << tet_index << std::endl;
+    //    std::cout << "tet = " << tet << " score = " << score << std::endl;
     data->add_score_to_tally(tet_index, score, ebin);
     return;
 }
 
+/*
+ * Function to provide the next_tet by using the adjacent face to determine what is the next
+ * tet
+ */
+EntityHandle TrackLengthMeshTally::next_tet_by_adjacancy(EntityHandle tet, EntityHandle face)
+{
+  Range adjacancies,tets;
+  EntityHandle next_tet;
+  tets.insert(face);
+  ErrorCode rval = mb->get_adjacencies(tets, 3, true, 
+					  adjacancies, Interface::UNION); 
+  if (rval != MB_SUCCESS)
+    {
+      std::cout << "Fuck it" << std::endl;
+      exit(1);
+    }
+  
+  if (adjacancies.size() > 1 )
+    {
+      if(adjacancies[0]==tet)
+	return adjacancies[1];
+      if(adjacancies[1]==tet)
+	return adjacancies[0];
+    }
+  else
+    return 0;
+}
+//---------------------------------------------------------------------------//
+/*
+ * returns the tet that the point is in
+ */
+EntityHandle TrackLengthMeshTally::find_tet_by_intersection(EntityHandle surface, CartVect point)
+{
+  Range surf; // the surface to test
+  Range adjacancies; // the adjcaent tets
+
+  surf.insert(surface); // insert surface into range
+
+  ErrorCode rval = mb->get_adjacencies(surf, 3, true, 
+		       adjacancies, moab::Interface::UNION); // get the tets shared by face surf
+  if (rval != MB_SUCCESS)
+    {
+      std::cout << "Failed to get adjacent tet information" << std::endl;
+      exit(1);
+    }
+
+  // loop over the 2 adjacent tets and see which point they are in
+  for ( unsigned int i = 0 ; i < adjacancies.size() ; i++ )
+    {
+      EntityHandle test = adjacancies[i];
+      if( TrackLengthMeshTally::point_in_tet(point,&test)  ) // point belong to tet return it
+	return adjacancies[i];
+    }
+  
+  return 0;
+  std::cout << "Failed to get tet by intersection" << std::endl;
+  exit(1);
+}
+//---------------------------------------------------------------------------//
+EntityHandle TrackLengthMeshTally::next_tet_by_info(EntityHandle tet, EntityHandle surf)
+{
+  // find the element 
+  for ( unsigned int i = 0 ; i != entity_list.size() ; i++ )
+    {
+      if (entity_list[i] == tet ) // find the tet that matches
+	{
+	  //	  std::cout << entity_list[i] << " " <<  tet << std::endl;
+	  for ( unsigned int j = 0 ; j != neighbour_tets[i].size() ; j++) // loop over the shared tets
+	    {
+	      //	      std::cout << surf << " " << neighbour_surf[i][j] << std::endl;
+	      if (surf == neighbour_surf[i][j])
+		{
+		  //		  std::cout << "next tet = " << neighbour_tets[i][j] << std::endl;
+		  return neighbour_tets[i][j];
+		}
+	    }
+	}
+    }
+  return 0;
+}
+//---------------------------------------------------------------------------//
 // function to compute the track lengths
 void TrackLengthMeshTally::compute_tracklengths(const TallyEvent event, 
 						const std::vector<double> intersections,
@@ -657,9 +813,72 @@ void TrackLengthMeshTally::compute_tracklengths(const TallyEvent event,
   std::vector<CartVect> hit_point; // array of all hit points
   CartVect tet_centroid; // centroid position between intersect point
   EntityHandle tet;
+  EntityHandle next_tet = 0;
+  std::vector<CartVect> tet_centres; // array of all hit points
+
   hit_point.push_back(event.position); // add the origin of the ray to the point to the list
 
-  EntityHandle next_tet = 0;
+  //  std::cout << intersections.size() << std::endl;
+  
+  for ( unsigned int i = 0 ; i < intersections.size() ; i++) // calculate the centroids
+    {
+      hit_p = (event.direction*intersections[i]) + event.position;
+      hit_point.push_back(hit_p); // add to list of hit points
+      tet_centroid = ((hit_point[i+1]-hit_point[i])/2.0)+hit_point[i]; // centre of the tet
+      tet_centres.push_back(tet_centroid);
+    }
+
+
+  //  exit(1);
+
+  for ( unsigned int i = 0 ; i < intersections.size() ; i++) // loop over the intersections
+    {
+      if(next_tet != 0) // if the next tet is assigned (determined by adjaceny)
+	{
+	  tet = next_tet; // set us to be in the correct tet
+	}
+      else
+	{
+	  tet = TrackLengthMeshTally::find_tet_by_intersection(triangles[i],tet_centres[i]); // determine the tet on the basis of the surface crossed
+	}
+ 
+      if( tet > 0 ) // if tet is assigned 
+	{
+	  double tracklength; // if there are no intersections ray stops inside current tet
+	  if ( intersections.size() == 0 )
+	    {
+	      tracklength = event.track_length;
+	    }
+	  else // otherwise there are intersections
+	    {
+	      if ( i > 0 && i != intersections.size()-2 ) // the general case
+		tracklength = intersections[i]-intersections[i-1];
+	      else if ( i == intersections.size()-2 ) // when ray ends inside tet
+		tracklength = event.track_length-intersections[i];
+	      else // the first one
+		tracklength = intersections[i];
+	    }
+
+	  //	  std::cout << "i=" << i << " intersections.size() = " << intersections.size() << std::endl;
+	  //	  std::cout << "tet = " << tet << std::endl;
+	  //	  std::cout << "track_length = " << tracklength << std::endl;
+
+	  TrackLengthMeshTally::determine_score(event,tracklength,tet); // calculate the score
+	  next_tet = TrackLengthMeshTally::next_tet_by_info(tet,triangles[i]); // determine the next tet on the basis of adjacency info
+	}     
+      
+    }
+
+  return;
+   
+  /*
+
+  // the event position should lie within last_tet if we are on the same history
+  if(last_tet != 0 && TrackLengthMeshTally::point_in_tet(event.position,(&last_tet)))
+    next_tet = last_tet;
+  else
+    next_tet = 0;
+
   // loop over all intersections
   for (unsigned int i = 0 ; i < intersections.size() ; i++) 
     {
@@ -670,7 +889,13 @@ void TrackLengthMeshTally::compute_tracklengths(const TallyEvent event,
       tet_centroid = ((hit_point[i+1]-hit_point[i])/2.0)+hit_point[i]; // centre of the tet
       //      std::cout << "centroid " << tet_centroid << std::endl;
       // determine the tet that the point belongs to
-      tet = TrackLengthMeshTally::point_in_which_tet(tet_centroid);
+      if (next_tet == 0 ) 
+	tet = TrackLengthMeshTally::point_in_which_tet(tet_centroid);
+      else
+	{
+	  tet = next_tet;
+	  next_tet = TrackLengthMeshTally::next_tet_by_adjacancy(tet,triangles[i]);
+	}
       //      std::cout << tet << std::endl;
       if ( tet > 0 )
 	{
@@ -678,8 +903,6 @@ void TrackLengthMeshTally::compute_tracklengths(const TallyEvent event,
 	    track_length = intersections[i]-intersections[i-1];
 	  else
 	    track_length = intersections[i];
-
-	  //  std::cout << tet << " " << track_length << " " << intersections[i] << std::endl;
 
 	  if (track_length < 0.0 )
 	    {
@@ -689,15 +912,6 @@ void TrackLengthMeshTally::compute_tracklengths(const TallyEvent event,
 	    }
 
 	  TrackLengthMeshTally::determine_score(event,track_length,tet);
-	  /*
-	  double weight = event.particle_weight;
-	  double score = weight * track_length;
-	  
-	  // ToDo:  fix fake ebin
-	  int ebin = 0;
-	  unsigned int tet_index = get_entity_index(tet);
-	  data->add_score_to_tally(tet_index, score, ebin);
-	  */
 	}
     }
 
@@ -719,18 +933,12 @@ void TrackLengthMeshTally::compute_tracklengths(const TallyEvent event,
       if ( tet > 0 ) 
 	{
 	  TrackLengthMeshTally::determine_score(event,track_length,tet);
-	  /*
-	  double weight = event.particle_weight;
-	  double score = weight * track_length;
-	  
-	  // ToDo:  fix fake ebin
-	  int ebin = 0;
-	  unsigned int tet_index = get_entity_index(tet);
-	  data->add_score_to_tally(tet_index, score, ebin);
-	  */
 	}
     }
 
+  last_tet = tet;
+  return;
+  */
 }
 
 //---------------------------------------------------------------------------//
