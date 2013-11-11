@@ -822,6 +822,8 @@ void TrackLengthMeshTally::compute_tracklengths(const TallyEvent event,
   
   for ( unsigned int i = 0 ; i < intersections.size() ; i++) // calculate the centroids
     {
+      std::cout << intersections[i] << std::endl;
+
       hit_p = (event.direction*intersections[i]) + event.position;
       hit_point.push_back(hit_p); // add to list of hit points
       tet_centroid = ((hit_point[i+1]-hit_point[i])/2.0)+hit_point[i]; // centre of the tet
