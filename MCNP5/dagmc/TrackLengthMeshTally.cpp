@@ -863,12 +863,14 @@ void TrackLengthMeshTally::compute_tracklengths(const TallyEvent event,
 	  //	  std::cout << "tet = " << tet << std::endl;
 	  //	  std::cout << "track_length = " << tracklength << std::endl;
 
+	  std::cout << "tet = " << tet << " tracklength = " << tracklength << std::endl;
 	  TrackLengthMeshTally::determine_score(event,tracklength,tet); // calculate the score
 	  next_tet = TrackLengthMeshTally::next_tet_by_info(tet,triangles[i]); // determine the next tet on the basis of adjacency info
 	}     
       
     }
 
+  exit(1);
   return;
    
   /*
