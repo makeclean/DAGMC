@@ -85,6 +85,10 @@ Tally *Tally::create_tally(const TallyInput& input)
         std::cout << "Warning: " << input.tally_type
                   << " is not implemented." << std::endl;
     }
+    else if (input.tally_type == "surface_mesh" )
+    {	  
+      newTally = new moab::SurfaceMeshTally(input);
+    }
     else 
     {
         std::cout << "Warning: " << input.tally_type
