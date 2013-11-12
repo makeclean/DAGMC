@@ -114,6 +114,28 @@ moab::ErrorCode MeshTally::reduce_meshset_to_3D(moab::Interface* mbi,
     return moab::MB_SUCCESS;
 }
 //---------------------------------------------------------------------------//
+moab::ErrorCode MeshTally::reduce_meshset_to_2D(moab::Interface* mbi,
+                                                moab::EntityHandle& mesh_set,
+                                                moab::Range& mesh_elements)
+{
+    // get all 2D elements from the mesh set
+    moab::ErrorCode rval;
+    rval = mbi->get_entities_by_dimension(mesh_set, 2, mesh_elements);
+
+    if (rval != moab::MB_SUCCESS) return rval;
+
+    // clear the mesh set and add 3D elements
+    rval = mbi->clear_meshset(&mesh_set, 1);
+
+    if (rval != moab::MB_SUCCESS) return rval;
+
+    rval = mbi->add_entities(mesh_set, mesh_elements);
+
+    if (rval != moab::MB_SUCCESS) return rval;
+
+    return moab::MB_SUCCESS;
+}
+//---------------------------------------------------------------------------//
 moab::ErrorCode MeshTally::setup_tags(moab::Interface* mbi, const char* prefix)
 { 
     moab::ErrorCode rval;
