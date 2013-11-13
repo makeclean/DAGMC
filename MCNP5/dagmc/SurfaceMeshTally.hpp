@@ -1,8 +1,5 @@
 // MCNP5/dagmc/TrackLengthMeshTally.hpp
 
-#ifndef DAGMC_TRACK_LENGTH_MESH_TALLY_HPP
-#define DAGMC_TRACK_LENGTH_MESH_TALLY_HPP
-
 #include <string>
 #include <cassert>
 #include <set>
@@ -11,7 +8,6 @@
 #include "moab/CartVect.hpp"
 #include "moab/Range.hpp"
 
-#include "Matrix3.hpp"
 #include "MeshTally.hpp"
 #include "TallyEvent.hpp"
 
@@ -177,8 +173,8 @@ class SurfaceMeshTally : public MeshTally
      * \param position, the location of the origin of the ray
      * \param track_length, the length of the ray
      */
-    std::vector<EntityHandle> get_intersections(const CartVect direction,
-						const CartVect position,
+    std::vector<EntityHandle> get_intersections(const double direction[3],
+						const double position[3],
 						const double track_length);
 
     /**
@@ -194,11 +190,8 @@ class SurfaceMeshTally : public MeshTally
      */ 
      double get_angle(const CartVect normal, const CartVect direction);
 
-
-
+};
 
 } // end namespace moab
-
-#endif // DAGMC_TRACK_LENGTH_MESH_TALLY_HPP
 
 // end of MCNP5/dagmc/TrackLengthMeshTally.hpp
