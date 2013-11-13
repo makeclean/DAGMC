@@ -91,6 +91,7 @@ void MeshTally::set_tally_points(const moab::Range& mesh_elements)
                   << ", may reduce performance" << std::endl;
     }
 }
+// may want to make function called reduce_meshset_to_n (which takes dimension as an arg)
 //---------------------------------------------------------------------------//
 moab::ErrorCode MeshTally::reduce_meshset_to_3D(moab::Interface* mbi,
                                                 moab::EntityHandle& mesh_set,
