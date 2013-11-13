@@ -132,8 +132,10 @@ class SurfaceMeshTally : public MeshTally
     moab::AdaptiveKDTree* kdtree;  
     moab::EntityHandle kdtree_root;
 
-    // Stores barycentric data for tetrahedrons
+    // Stores normal data for each facet
     std::vector<CartVect> surface_normals;
+    // Stores the surface area for each facet
+    std::vector<double> surface_areas;
 
     // >>> PROTECTED METHODS
 
@@ -160,6 +162,12 @@ class SurfaceMeshTally : public MeshTally
      */
     ErrorCode compute_surface_normals(const Range &all_facets);
 
+    /**
+     * \brief Computes the surface areas for each facet in the problem
+     * \param all_facets, all facets in the problem
+     * \return the MOAB ErrorCode value
+     */
+    ErrorCode compute_surface_areas(const Range &all_facets);
 
     /**
      * \brief Constructs the KDtrees from the mesh data
@@ -182,6 +190,12 @@ class SurfaceMeshTally : public MeshTally
      * \param triangle, a given MBEntityHandle 
      */
     CartVect surface_normal(const EntityHandle triangle); 
+
+    /**
+     * \brief computes the surface area of the facet
+     * \param triangle, a given MBEntityHandle 
+     */
+    double surface_area(const EntityHandle triangle); 
 
     /**
      * \brief computes the angle between two vectors 
