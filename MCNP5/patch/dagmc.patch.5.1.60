@@ -463,7 +463,7 @@ diff -N -r '--unified=0' MCNP_dist/Source/src/Depends MCNP_meshtally/Source/src/
 @@ -403 +407 @@
 -		erprnt$(OBJF)
 +		erprnt$(OBJF) $(DAGMC_MOD)
-@@ -462,0 +467,41 @@
+@@ -462,0 +467,46 @@
 +endif
 +#
 +# DagMC objects
@@ -477,6 +477,10 @@ diff -N -r '--unified=0' MCNP_dist/Source/src/Depends MCNP_meshtally/Source/src/
 +                                     ../dagmc/Tally.hpp \
 +                                     ../dagmc/MeshTally.hpp \
 +                                     ../dagmc/Matrix3.hpp
++../dagmc/SurfaceMeshTally$(OBJC):../dagmc/TallyEvent.hpp \
++                                     ../dagmc/SurfaceMeshTally.hpp \
++                                     ../dagmc/Tally.hpp \
++                                     ../dagmc/MeshTally.hpp
 +../dagmc/KDEKernel$(OBJC): ../dagmc/KDEKernel.hpp \
 +                           ../dagmc/Quadrature.hpp \
 +                           ../dagmc/PolynomialKernel.hpp
@@ -495,7 +499,8 @@ diff -N -r '--unified=0' MCNP_dist/Source/src/Depends MCNP_meshtally/Source/src/
 +                       ../dagmc/TallyData.hpp \
 +                       ../dagmc/Tally.hpp \
 +                       ../dagmc/KDEMeshTally.hpp \
-+                       ../dagmc/TrackLengthMeshTally.hpp 
++                       ../dagmc/TrackLengthMeshTally.hpp \
++                       ../dagmc/SurfaceMeshTally.hpp 
 +../dagmc/TallyManager$(OBJC): ../dagmc/TallyManager.hpp \
 +                              ../dagmc/Tally.hpp \
 +                              ../dagmc/TallyEvent.hpp
