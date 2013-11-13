@@ -551,7 +551,7 @@ diff -N -r '--unified=0' MCNP_dist/Source/src/FILE.list MCNP_meshtally/Source/sr
 +
 @@ -79,0 +85 @@
 +UNWANTED_CXX_SRC :=
-@@ -92,0 +99,16 @@
+@@ -92,0 +99,17 @@
 +ifeq (dagmc,$(filter dagmc,$(CONFIG)))
 +  F_SRC   := $(F_SRC) dagmc_mod.F90
 +  CXX_SRC := $(CXX_SRC) ../dagmc/mcnp_funcs.cpp \
@@ -565,7 +565,8 @@ diff -N -r '--unified=0' MCNP_dist/Source/src/FILE.list MCNP_meshtally/Source/sr
 +                        ../dagmc/KDENeighborhood.cpp \
 +                        ../dagmc/KDEKernel.cpp \
 +			../dagmc/PolynomialKernel.cpp \
-+			../dagmc/Quadrature.cpp
++			../dagmc/Quadrature.cpp \
++                       ../dagmc/SurfaceMeshTally.cpp
 +endif
 +
 @@ -98,0 +121 @@
