@@ -13,6 +13,8 @@
 #include "moab/Skinner.hpp"
 #include "moab/CN.hpp"
 
+#include "moab/CartVect.hpp"
+
 #include <cassert>
 #include "SurfaceMeshTally.hpp"
 
@@ -71,8 +73,9 @@ SurfaceMeshTally::SurfaceMeshTally(const TallyInput& input)
 
    // precompute the surface normals
    rval = compute_surface_normals(facets);
-   // precompute the adjacency data
-
+   // precompute the area data
+   rval = compute_surface_areas(facets);
+   
    assert (rval == MB_SUCCESS);
   
    // Perform tasks
@@ -132,8 +135,8 @@ void SurfaceMeshTally::write_data(double num_histories)
 {
   ErrorCode rval;
 
-  Range all_facets;
-  rval = mb->get_entities_by_dimension( tally_mesh_set, 2, all_facets );
+  Range all_facets; 
+  rval = mb->get_entities_by_dimension( tally_mesh_set, 2, all_facets ); //get all facets
   if(rval != MB_SUCCESS )
     {
       std::cout << "Failed to get 2d entities" << std::endl;
@@ -141,32 +144,19 @@ void SurfaceMeshTally::write_data(double num_histories)
     }
   assert( rval == MB_SUCCESS );
 
-  for( Range::const_iterator i=all_facets.begin(); i!=all_facets.end(); ++i)
+  for( Range::const_iterator i=all_facets.begin(); i!=all_facets.end(); ++i) // loop over every facet
     {
-      EntityHandle t = *i;
-      
-      CartVect v[3];
-
-      std::vector<EntityHandle> vtx;    
-      mb->get_connectivity( &t, 1, vtx );
-      assert( vtx.size() == 3);
-
-      int k = 0;
-      for( std::vector<EntityHandle>::iterator j = vtx.begin(); j!=vtx.end(); ++j)
-	{
-	  EntityHandle vertex = *j;
-	  mb->get_coords( &vertex, 1, v[k++].array() );
-	}
-      
-      double volume = facet_area( v[0], v[1], v[2] );
+      EntityHandle t = *i; // get the facet handle
+           
       unsigned int facet_index = get_entity_index(t);
+      double facet_area = surface_areas[facet_index];
 
       for( unsigned j = 0; j < data->get_num_energy_bins(); ++j )
 	{
 	  std::pair <double,double> tally_data = data->get_data(facet_index,j);
 	  double tally = tally_data.first;
 	  double error = tally_data.second;
-	  double score = (tally / (volume*num_histories));
+	  double score = (tally / (facet_area*num_histories));
       
 	  rval = mb->tag_set_data( tally_tags[j], &t, 1, &score );
 	  assert( rval == MB_SUCCESS );
@@ -251,13 +241,61 @@ ErrorCode SurfaceMeshTally::compute_surface_normals(const Range &all_facets)
       // resize the surface normal array
       surface_normals.resize(num_facets);
     }
-
+  int val=0;
   for( Range::const_iterator i=all_facets.begin(); i!=all_facets.end(); ++i)
     {
       CartVect normal = surface_normal(*i); // get the surface normal
-      surface_normals.push_back(normal);
+      surface_normals[val]=normal;
+      val++;
     }
   return MB_SUCCESS;
+}
+
+// compute the area of each facet
+ErrorCode SurfaceMeshTally::compute_surface_areas(const Range &all_facets)
+{
+  ErrorCode rval;
+  // iterate over the facets
+  int num_facets = all_facets.size();
+  std::cerr << "  There are " << num_facets << " triangles in this mesh tally." << std::endl;
+
+  if (num_facets != 0 )
+    {
+      // resize the surface normal array
+      surface_areas.resize(num_facets);
+    }
+  int val=0;
+  for( Range::const_iterator i=all_facets.begin(); i!=all_facets.end(); ++i)
+    {
+      double area = surface_area(*i); // get the surface normal
+      surface_areas[val]=area;
+      val++;
+    }
+
+  return MB_SUCCESS;
+}
+
+/*
+* Wrapper function, return the surface normal of the triangle 
+*/
+double SurfaceMeshTally::surface_area(const EntityHandle triangle)
+{
+  const EntityHandle *connectivity; 
+  int number_nodes = 0;
+  ErrorCode result = mb->get_connectivity(triangle,connectivity,number_nodes);
+ 
+  //get the coordinates of each node
+  CartVect nodes[3],normal;
+  for ( int i = 0 ; i <= 2 ; i++ )
+    {
+      result = mb->get_coords(&(connectivity[i]),1,nodes[i].array());
+    }
+  
+  CartVect V1 = nodes[2]-nodes[0];
+  CartVect V2 = nodes[2]-nodes[1];
+  CartVect CrossProd = V1*V2;
+  double len = CrossProd.length();
+  return (0.5*len);
 }
 
 // return the intersection data, could return more than one of there are multiple surfaces
@@ -277,14 +315,7 @@ std::vector<EntityHandle> SurfaceMeshTally::get_intersections(const double dir[3
   
   if ( result != MB_SUCCESS)
     std::cerr << "failed to intersect ray with triangles" << std::endl;
-  /*
-  if ( ret_intersections.size() == 0 )
-    {
-      // if(DEBUG)    
-      //std::cout << "ray misses mesh" << std::endl;
-      return ret_t;
-    }
-  */
+
   return ret_triangles;
 }
   
