@@ -5,6 +5,7 @@
 
 #include "Tally.hpp"
 #include "TrackLengthMeshTally.hpp"
+#include "SurfaceMeshTally.hpp"
 #include "KDEMeshTally.hpp"
 
 //---------------------------------------------------------------------------//
@@ -86,8 +87,9 @@ Tally *Tally::create_tally(const TallyInput& input)
                   << " is not implemented." << std::endl;
     }
     else if (input.tally_type == "surface_mesh" )
-    {	  
-      newTally = new moab::SurfaceMeshTally(input);
+    {	
+        //surface mesh tally   
+        newTally = new moab::SurfaceMeshTally(input);
     }
     else 
     {
