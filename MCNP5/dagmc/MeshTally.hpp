@@ -125,6 +125,19 @@ class MeshTally : public Tally
                                          moab::Range& mesh_elements);
 
     /**
+     * \brief Reduces a MOAB mesh set to include only its 2D elements
+     * \param[in] mbi the MOAB interface for this mesh tally
+     * \param[in, out] mesh_set entity handle for the mesh set that will be reduced
+     * \param[out] mesh_elements stores 3D elements that were added to the mesh set
+     * \return the MOAB ErrorCode value
+     *
+     * NOTE: this method will overwrite the mesh set
+     */
+    moab::ErrorCode reduce_meshset_to_2D(moab::Interface* mbi,
+                                         moab::EntityHandle& mesh_set,
+                                         moab::Range& mesh_elements);
+
+    /**
      * \brief Sets up tally value and error labels for all energy bins
      * \param[in] mbi the MOAB interface for this mesh tally
      * \param[in] prefix additional string to be added before each label
