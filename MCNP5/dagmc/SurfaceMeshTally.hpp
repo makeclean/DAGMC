@@ -1,4 +1,4 @@
-// MCNP5/dagmc/TrackLengthMeshTally.hpp
+// MCNP5/dagmc/SurfaceMeshTally.hpp
 
 #include <string>
 #include <cassert>
@@ -19,12 +19,12 @@ class OrientedBoxTreeTool;
 
 //===========================================================================//
 /**
- * \class TrackLengthMeshTally
- * \brief Represents an unstructured mesh tally based on particle tracks
+ * \class SurfaceMeshTally 
+ * \brief Represents an unstructured surface mesh tally based on particle tracks
  *
- * TrackLengthMeshTally is a concrete class derived from MeshTally that
+ * SurfaceMeshTally is a concrete class derived from MeshTally that
  * implements the Tally interface to tally particle tracks on an unstructured
- * mesh as part of a Monte Carlo particle transport simulation.  If a
+ * surface mesh as part of a Monte Carlo particle transport simulation.  If a
  * TrackLengthMeshTally object receives a TallyEvent type that is not
  * TallyEvent::TRACK, then no scores are computed.
  *
@@ -32,9 +32,9 @@ class OrientedBoxTreeTool;
  * TallyInput
  * ==========
  *
- * The TallyInput struct needed to construct a TrackLengthMeshTally object is
+ * The TallyInput struct needed to construct a SurfaceMeshTally object is
  * defined in Tally.hpp and is set through the TallyManager when a Tally is
- * created.  Options that are currently available for TrackLengthMeshTally
+ * created.  Options that are currently available for SurfaceMeshTally
  * objects include
  *
  * 1) "inp"="input_filename", "out"="output_filename"
@@ -43,38 +43,6 @@ class OrientedBoxTreeTool;
  * "inp" key is REQUIRED for TrackLengthMeshTally objects, whereas the "out"
  * key is optional.  See MeshTally.hpp for more information.
  *
- * 2) "convex"="t/f", "convex"="true/fale"
- * ----------------------------------------------
- * If the convex option is set to true, the user is asserting that the input
- * mesh has convex geometry.  Single particle tracks that leave a convex mesh
- * are no longer tracked as they cannot re-enter the mesh.  The default value
- * for this option is false.
- *
- * 3) "conformal"="values"
- * -----------------------
- * If the input mesh is exactly conformal to the geometry, then conformal
- * logic should be used for scoring particle tracks across mesh cells or
- * errors may occur. This option allows the user to identify what geometric
- * cells are conformal to the input mesh.  These values can be defined as a
- * list of cells separated by commas (i.e. 1, 2, 5), and/or a range of cells
- * (i.e. 2-5).  Like the convex case, particle tracks that leave a conformal
- * mesh are no longer tracked.
- *
- * 4) "conf_surf_src"="t/f", "conf_surf_src"="true/false"
- * ------------------------------------------------------
- * If the conformal surface source option is set to true, then the user is
- * asserting that a surface source has been defined that is conformal to a
- * geometric surface.  This means that new particles that are born from
- * this source will use conformal logic to determine the first mesh cell
- * that is crossed.  The default value for this option is false.
- *
- * 5) "tag"="name", "tagval"="value"
- * ---------------------------------
- * The "tag" and "tagval" options can be used to define a subset of the mesh
- * elements in the input file that will be tallied.  These tags are defined
- * on the input mesh itself using the MOAB tagging feature.  Note that "tag"
- * name can only be set once, whereas multiple "tagval" values can be added.
- * This option is only used during setup to define the set of tally points.
  */
 //===========================================================================//
 class SurfaceMeshTally : public MeshTally
@@ -140,12 +108,12 @@ class SurfaceMeshTally : public MeshTally
     // >>> PROTECTED METHODS
 
     /**
-     * \brief Parse the TallyInput options for this TrackLengthMeshTally
+     * \brief Parse the TallyInput options for this SurfaceMeshTally
      */
   //    void parse_tally_options();
 
     /**
-     * \brief Loads and sets the mesh data used by this TrackLengthMeshTally
+     * \brief Loads and sets the mesh data used by this SurfaceMeshTally
      *
      * Mesh data is loaded from the input_filename provided in the TallyInput
      * options.  If no tag name and values are found, the set of tally points
@@ -208,4 +176,4 @@ class SurfaceMeshTally : public MeshTally
 
 } // end namespace moab
 
-// end of MCNP5/dagmc/TrackLengthMeshTally.hpp
+// end of MCNP5/dagmc/SurfaceMeshTally.hpp
