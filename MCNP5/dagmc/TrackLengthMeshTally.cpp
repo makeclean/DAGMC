@@ -215,7 +215,7 @@ void TrackLengthMeshTally::compute_score(const TallyEvent& event)
       else
 	{
 	  // determine tracklength to return
-	  double weight = event.particle_weight;
+	  double weight = event.get_score_multiplier(input_data.multiplier_id);
 	  double score = weight * event.track_length;
 	  
 	  // ToDo:  fix fake ebin
@@ -637,7 +637,7 @@ void TrackLengthMeshTally::sort_intersection_data(std::vector<double> &intersect
 // determine the score for the given tet
 void TrackLengthMeshTally::determine_score(const TallyEvent event, double tracklength, const EntityHandle tet)
 {
-    double weight = event.particle_weight;
+    double weight = event.get_score_multiplier(input_data.multiplier_id);
     double score = weight * tracklength;
     
     // ToDo:  fix fake ebin

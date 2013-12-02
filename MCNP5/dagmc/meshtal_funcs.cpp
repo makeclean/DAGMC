@@ -7,19 +7,13 @@
 #include <fstream>
 #include <sstream>
 #include <cassert>
+#include <vector>
 
 #include "meshtal_funcs.h"
 #include "TallyManager.hpp"
 
-// TODO modify/remove this method when tally multipliers are implemented
-void mcnp_weight_calculation(int* index, double* erg, double* wgt, 
-                              double* dist, double* score_result)
-{
-    FMESH_FUNC(dagmc_mesh_score)(index, erg, wgt, dist, score_result);
-}
-
 // create a tally manager to handle all DAGMC tally actions
-TallyManager tallyManager = TallyManager();
+TallyManager tallyManager;
 
 //---------------------------------------------------------------------------//
 // INITIALIZATION AND SETUP METHODS
@@ -128,7 +122,7 @@ std::string copyComments(char* fort_comment, int* n_comment_lines)
  * \param[in] n_comment_lines the number of comment lines
  * \param[out] is_collision_tally indicates that tally uses collision estimator
  */
-void dagmc_fmesh_setup_mesh_(int* /*ipt*/, int* id, 
+void dagmc_fmesh_setup_mesh_(int* /*ipt*/, int* id, int* fmesh_idx,
                              double* energy_mesh, int* n_energy_mesh,
                              int* tot_energy_bin, 
                              char* fort_comment, int* n_comment_lines,
@@ -192,6 +186,16 @@ void dagmc_fmesh_setup_mesh_(int* /*ipt*/, int* id,
     } 
 
     tallyManager.addNewTally(*id, type, emesh_boundaries, fc_settings);
+
+    // Add tally multiplier, if it exists  
+    if (*fmesh_idx != -1)
+    {
+       // Create a zero-based version of fmesh_idx to use as multiplier_id
+       int multiplier_id = *fmesh_idx - 1;
+
+       tallyManager.addNewMultiplier(multiplier_id);
+       tallyManager.addMultiplierToTally(multiplier_id, *id);
+    }
 }
 //---------------------------------------------------------------------------//
 // RUNTAPE AND MPI METHODS
@@ -209,7 +213,7 @@ void dagmc_fmesh_get_tally_data_(int* tally_id, void* fortran_data_pointer)
     double* data;
     int length;
 
-    data = tallyManager.get_tally_data(*tally_id, length);
+    data = tallyManager.getTallyData(*tally_id, length);
     FMESH_FUNC(dagmc_make_fortran_pointer)(fortran_data_pointer, data, &length);
 }
 //---------------------------------------------------------------------------//
@@ -226,7 +230,7 @@ void dagmc_fmesh_get_error_data_(int* tally_id, void* fortran_data_pointer)
     double* data;
     int length;
 
-    data = tallyManager.get_error_data(*tally_id, length);
+    data = tallyManager.getErrorData(*tally_id, length);
     FMESH_FUNC(dagmc_make_fortran_pointer)(fortran_data_pointer, data, &length);
 }
 //---------------------------------------------------------------------------//
@@ -243,7 +247,7 @@ void dagmc_fmesh_get_scratch_data_(int* tally_id, void* fortran_data_pointer)
     double* data;
     int length;
 
-    data = tallyManager.get_scratch_data(*tally_id, length);
+    data = tallyManager.getScratchData(*tally_id, length);
     FMESH_FUNC(dagmc_make_fortran_pointer)(fortran_data_pointer, data, &length);
 }
 //---------------------------------------------------------------------------//
@@ -255,7 +259,7 @@ void dagmc_fmesh_get_scratch_data_(int* tally_id, void* fortran_data_pointer)
  */
 void dagmc_fmesh_clear_data_()
 {
-    tallyManager.zero_all_tally_data();
+    tallyManager.zeroAllTallyData();
 }
 //---------------------------------------------------------------------------//
 /**
@@ -270,8 +274,8 @@ void dagmc_fmesh_add_scratch_to_tally_(int* tally_id)
     double* scratch;
     int length, scratchlength;
 
-    data = tallyManager.get_tally_data(*tally_id, length);
-    scratch = tallyManager.get_scratch_data(*tally_id, scratchlength);
+    data = tallyManager.getTallyData(*tally_id, length);
+    scratch = tallyManager.getScratchData(*tally_id, scratchlength);
 
     assert(scratchlength >= length);
 
@@ -293,8 +297,8 @@ void dagmc_fmesh_add_scratch_to_error_(int* tally_id)
     double* scratch;
     int length, scratchlength;
 
-    error_data = tallyManager.get_error_data(*tally_id, length);
-    scratch = tallyManager.get_scratch_data(*tally_id, scratchlength);
+    error_data = tallyManager.getErrorData(*tally_id, length);
+    scratch = tallyManager.getScratchData(*tally_id, scratchlength);
 
     assert(scratchlength >= length);
 
@@ -311,7 +315,7 @@ void dagmc_fmesh_add_scratch_to_error_(int* tally_id)
  */
 void dagmc_fmesh_end_history_()
 {
-    tallyManager.end_history();
+    tallyManager.endHistory();
 
 #ifdef MESHTAL_DEBUG
     std::cout << "* History ends *" << std::endl;
@@ -326,6 +330,8 @@ void dagmc_fmesh_end_history_()
  * \param[in] wgt the weight of the particle
  * \param[in] d the track length
  * \param[in] icl the current cell ID (MCNP global variable)
+ * 
+ * This function is called once per track event.
  */
 void dagmc_fmesh_score_(double *x, double *y, double *z,
                         double *u, double *v, double *w, 
@@ -338,8 +344,8 @@ void dagmc_fmesh_score_(double *x, double *y, double *z,
     std::cout << "track length: " << *d << std::endl;
 #endif
 
-    tallyManager.set_track_event(*x, *y, *z, *u, *v, *w, *erg, *wgt, *d, *icl);
-    tallyManager.update_tallies();
+    tallyManager.setTrackEvent(*x, *y, *z, *u, *v, *w, *erg, *wgt, *d, *icl);
+    tallyManager.updateTallies();
 }
 //---------------------------------------------------------------------------//
 /**
@@ -348,7 +354,7 @@ void dagmc_fmesh_score_(double *x, double *y, double *z,
  */
 void dagmc_fmesh_print_(double* sp_norm)
 {
-    tallyManager.write_data(*sp_norm);
+    tallyManager.writeData(*sp_norm);
 }
 //---------------------------------------------------------------------------//
 /**
@@ -358,13 +364,25 @@ void dagmc_fmesh_print_(double* sp_norm)
  * \param[in] wgt the weight of the particle
  * \param[in] ple the total macroscopic cross section of the current cell
  * \param[in] icl the current cell ID (MCNP global variable)
+ * 
+ * This function is called once per collision event.
  */
 void dagmc_collision_score_(double* x,   double* y, double* z, 
                             double* erg, double* wgt,
                             double* ple, int* icl)
 {
-    tallyManager.set_collision_event(*x, *y, *z, *erg, *wgt, *ple, *icl);
-    tallyManager.update_tallies();
+    tallyManager.setCollisionEvent(*x, *y, *z, *erg, *wgt, *ple, *icl);
+    tallyManager.updateTallies();
+}
+//---------------------------------------------------------------------------//
+/**
+ * \brief Called from fmesh_mod.F90 to update tally multipliers
+ * \param[in] fmesh_idx the fmesh index for multiplier to be updated
+ * \param[in] value the value of the multiplier
+ */
+void dagmc_update_multiplier_(int* fmesh_idx, double* value)
+{
+   tallyManager.updateMultiplier(*fmesh_idx-1, *value);
 }
 //---------------------------------------------------------------------------//
 

@@ -4,6 +4,7 @@
 #define DAGMC_TALLY_EVENT_HPP
 
 #include "moab/CartVect.hpp"
+#include <vector>
 
 //===========================================================================//
 /**
@@ -16,6 +17,12 @@
  * and particle_weight. Collision events add the current_cell, position
  * (i.e. collision point) and total_cross_section.  Track events add the
  * current_cell, position (i.e. start of track), direction and track_length.
+ *
+ * An optional tally multipliers vector is also stored in TallyEvent.  Each
+ * Tally can set a multiplier_id in TallyInput through the TallyManager that
+ * corresponds to an index in this vector.  This multiplier_id can then be
+ * used with get_score_multiplier() to return the product of the appropriate
+ * multiplier and the particle_weight.
  */
 //===========================================================================//
 struct TallyEvent
@@ -49,6 +56,29 @@ struct TallyEvent
     /// Energy and weight of particle when event occurred
     double particle_energy;
     double particle_weight;
+
+    /// Energy-dependent tally multipliers: variable with each event
+    std::vector<double> multipliers; 
+
+    /**
+     * \brief returns multiplier * particle_weight for the current tally event
+     * \param[in] multiplier_index the index of the multipliers vector to access
+     * \return the score multiplier
+     *
+     * Note that if the multiplier_index is invalid or the tally does not use
+     * multipliers, then only the particle weight will be returned.
+     */
+    double get_score_multiplier(int multiplier_index) const
+    {
+        int size = multipliers.size();
+
+        if (multiplier_index == -1 || multiplier_index >= size)
+        {
+            return particle_weight;
+        }
+
+        return multipliers.at(multiplier_index) * particle_weight; 
+    }
 };
 
 #endif // DAGMC_TALLY_EVENT_HPP

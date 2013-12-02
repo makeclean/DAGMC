@@ -62,6 +62,21 @@
  * write_data() method to write all of the tally results and their corresponding
  * relative standard errors to an output file.  These results are typically
  * normalized by the number of histories reported by the physics code.
+ *
+ * =================
+ * Tally Multipliers
+ * =================
+ *
+ * TallyManager also includes optional support for energy-dependent tally
+ * multipliers.  These multipliers are defined by a unique ID determined by
+ * the user, and are stored separately to the list of Tally objects so that
+ * multiple tallies can use the same multiplier ID.
+ *
+ * To use multipliers, simply add them using addNewMultiplier() and then assign
+ * them to a specific Tally using addMultiplierToTally().  This will store the
+ * multiplier ID in the Tally so that it has access to that multiplier during
+ * the transport process for computing its scores.  As the multiplier values
+ * change, use updateMultiplier() to update their values in the TallyManager.
  */
 //===========================================================================//
 class TallyManager
@@ -91,6 +106,34 @@ class TallyManager
                      std::multimap<std::string, std::string>& options);
 
     /**
+     * \brief Add a new tally multiplier
+     * \param[in] multiplier_id the unique ID for the multiplier
+     *
+     * All new multipliers that are added are set to a default value of 1.0.
+     * If the multiplier ID already exists, then nothing will happen.
+     */
+    void addNewMultiplier(unsigned int multiplier_id);
+
+    /**
+     * \brief Assign a multiplier to a Tally
+     * \param[in] multiplier_id the unique ID for the multiplier
+     * \param[in] tally_id the unique ID for the Tally
+     *
+     * Note that if a multiplier ID has already been set for the Tally, then it
+     * will be overwritten.  Currently only single multipliers are supported.
+     */
+    void addMultiplierToTally(unsigned int multiplier_id, unsigned int tally_id);
+
+    /**
+     * \brief Update the value associated with the multiplier ID
+     * \param[in] multiplier_id the unique ID for the multiplier
+     * \param[in] value the value of the multiplier
+     *
+     * If the multiplier_id is invalid, then nothing will happen.
+     */
+    void updateMultiplier(unsigned int multiplier_id, double value);
+
+    /**
      * \brief Remove a DAGMC Tally from the Observer list
      * \param[in] tally_id the unique ID for the Tally to be removed
      */
@@ -105,9 +148,9 @@ class TallyManager
      * \param[in] cell_id the unique ID for the current cell
      * \return true if a collision event was set; false otherwise
      */
-    bool set_collision_event(double x, double y, double z,
-                             double particle_energy, double particle_weight,
-                             double total_cross_section, int cell_id); 
+    bool setCollisionEvent(double x, double y, double z,
+                           double particle_energy, double particle_weight,
+                           double total_cross_section, int cell_id); 
 
     /**
      * \brief Set a track event
@@ -118,35 +161,35 @@ class TallyManager
      * \param[in] track_length the length of the track
      * \return true if a track event was set; false otherwise
      */
-    bool set_track_event(double x, double y, double z,
-                   double u, double v, double w,                           
-                   double particle_energy, double particle_weight,
-                   double track_length, int cell_id); 
+    bool setTrackEvent(double x, double y, double z,
+                       double u, double v, double w,                           
+                       double particle_energy, double particle_weight,
+                       double track_length, int cell_id); 
 
     /**
      *  \brief Reset a tally event
      *
      *  Sets event type to NONE and clears all event data.
      */
-    void clear_last_event();
+    void clearLastEvent();
 
     /**
      * \brief Call compute_score() for all active DAGMC tallies
      *
      * Resets the tally event once all scores are computed.
      */
-    void update_tallies();
+    void updateTallies();
 
     /**
      * \brief Call end_history() for all active DAGMC tallies
      */
-    void end_history();
+    void endHistory();
 
     /**
      * \brief Call write_data() for all active DAGMC tallies
      * \param[in] num_histories the number of particle histories tracked
      */
-    void write_data(double num_histories);
+    void writeData(double num_histories);
 
     // >>> TALLY DATA ACCESS METHODS
 
@@ -161,14 +204,14 @@ class TallyManager
      * parallel or other implementations, then these methods can be used to get
      * a pointer to the underlying data stored within each Tally.
      */
-    double* get_tally_data(int tally_id, int& length);
-    double* get_error_data(int tally_id, int& length);
-    double* get_scratch_data(int tally_id, int& length);
+    double* getTallyData(int tally_id, int& length);
+    double* getErrorData(int tally_id, int& length);
+    double* getScratchData(int tally_id, int& length);
 
     /**
      * \brief Resets all data arrays for all active Tally Observers
      */
-    void zero_all_tally_data();
+    void zeroAllTallyData();
 
   private:
     // Keep a record of the currently active Tally Observers
@@ -204,7 +247,7 @@ class TallyManager
      * \param[in] cell_id the unique ID for the current geometric cell
      * \return true if an event was set; false otherwise
      */
-    bool set_event(TallyEvent::EventType type,
+    bool setEvent(TallyEvent::EventType type,
                    double x, double y, double z,
                    double u, double v, double w,                           
                    double particle_energy, double particle_weight,

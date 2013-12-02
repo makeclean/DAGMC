@@ -13,20 +13,6 @@ extern "C" {
  * are available include unstructured track length and KDE options.
  *************************************************************************/
 
-/** TODO modify/remove this function when tally multipliers are implemented
- * mcnp_weight_calculation: bridge to call back into MCNP code to compute the weight
- *     of a scored event on a mesh tally
- *
- * @param i The fmesh_index number assigned to the tally
- * @param erg The particle's energy
- * @param wgt The current weight of the particle
- * @param dist The distance over which to tally the particle; for track length tallies, 
- *             this is typically a track segment length
- * @param (out) score_result Output parameter returned from MCNP
- */
-void mcnp_weight_calculation(int* index, double* erg, double* wgt, 
-                              double* dist, double* score_result);
-
 /**
  * Functions from fmesh_mod are implemented in src/fmesh_mod.F90 
  * and should only be called from within meshtal_funcs.cpp
@@ -56,10 +42,6 @@ void mcnp_weight_calculation(int* index, double* erg, double* wgt,
 
 #define FMESH_FUNC( func ) FORT_FUNC( fmesh_mod, func )
 
-// TODO modify/remove this method when tally multipliers are implemented
-/* Mesh weight/score calculation */
-extern void FMESH_FUNC(dagmc_mesh_score)(int* i, double* erg, double* wgt, double* d, double *score);
-
 /* Make a valid Fortran pointer to a C array */
 extern void FMESH_FUNC(dagmc_make_fortran_pointer)(void* fort_ref, double* array, int* size);
 
@@ -73,7 +55,7 @@ extern void FMESH_FUNC(dagmc_mesh_choose_ebin)(int* i, double* erg, int* ien);
  * mostly from fmesh_mod.F90.  They should probably not be called from C++ code.
  * Per-function documentation is found in meshtal_funcs.cpp
  */
-void dagmc_fmesh_setup_mesh_(int* ipt, int* id, 
+void dagmc_fmesh_setup_mesh_(int* ipt, int* id, int* fmesh_idx,
                              double* energy_mesh, int* n_energy_mesh, int* tot_energy_bin, 
                              char* comment, int* n_comment_lines, int* is_collision_tally);
 
@@ -89,6 +71,8 @@ void dagmc_fmesh_print_(double* sp_norm);
 void dagmc_collision_score_(double* x,   double* y, double* z, 
                             double* erg, double* wgt,
                             double* ple, int* icl);
+
+void dagmc_update_multiplier_(int* fmesh_idx, double* value);
 
 void dagmc_fmesh_get_tally_data_(int* tally_id, void* fortran_data_pointer);
 void dagmc_fmesh_get_error_data_(int* tally_id, void* fortran_data_pointer);
