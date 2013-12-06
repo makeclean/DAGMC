@@ -215,12 +215,7 @@ void TrackLengthMeshTally::compute_score(const TallyEvent& event)
       else
 	{
 	  // determine tracklength to return
-	  double weight = event.get_score_multiplier(input_data.multiplier_id);
-	  double score = weight * event.track_length;
-	  
-          unsigned int ebin = get_energy_bin(event.energy);  
-	  unsigned int tet_index = get_entity_index(tet);
-	  data->add_score_to_tally(tet_index, score, ebin);
+          determine_score(event, tet);
 	  //	  found_crossing = true;
 	  return;
 	}
@@ -634,14 +629,13 @@ void TrackLengthMeshTally::sort_intersection_data(std::vector<double> &intersect
 }
 
 // determine the score for the given tet
-void TrackLengthMeshTally::determine_score(const TallyEvent event, double tracklength, const EntityHandle tet)
+void TrackLengthMeshTally::determine_score(const TallyEvent event, const EntityHandle tet)
 {
     double weight = event.get_score_multiplier(input_data.multiplier_id);
-    double score = weight * tracklength;
+    double score = weight * event.track_length;
     
-    unsigned int ebin = get_energy_bin(event.energy);  
-    unsigned int tet_index = get_entity_index(tet);
-    data->add_score_to_tally(tet_index, score, ebin);
+    add_score_to_energy_tally(event.particle_energy, tet, score);
+
     return;
 }
 
@@ -686,7 +680,7 @@ void TrackLengthMeshTally::compute_tracklengths(const TallyEvent event,
 	      std::cout << tet << " " << next_tet << std::endl;
 	    }
 
-	  TrackLengthMeshTally::determine_score(event,track_length,tet);
+	  TrackLengthMeshTally::determine_score(event,tet);
 	}
     }
 
@@ -707,7 +701,7 @@ void TrackLengthMeshTally::compute_tracklengths(const TallyEvent event,
       
       if ( tet > 0 ) 
 	{
-	  TrackLengthMeshTally::determine_score(event,track_length,tet);
+	  TrackLengthMeshTally::determine_score(event,tet);
 	}
     }
 
