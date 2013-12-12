@@ -129,7 +129,7 @@ void dagmc_fmesh_setup_mesh_(int* /*ipt*/, int* id, int* fmesh_idx,
                              int* is_collision_tally)
 {
     std::cout << "Mesh tally " << *id << " has these " << *n_energy_mesh
-              << " energy bins: " << std::endl;
+              << " energy bin boundaries: " << std::endl;
 
     for(int i = 0; i < *n_energy_mesh; ++i)
     {
@@ -147,10 +147,10 @@ void dagmc_fmesh_setup_mesh_(int* /*ipt*/, int* id, int* fmesh_idx,
     }
   
     // Copy emesh bin boundaries from MCNP (includes 0.0 MeV)
-    std::vector<double> emesh_boundaries;
+    std::vector<double> energy_boundaries;
     for(int i = 0; i < *n_energy_mesh; ++i)
     {
-        emesh_boundaries.push_back(energy_mesh[i]);
+        energy_boundaries.push_back(energy_mesh[i]);
     }
 
     // Parse FC card and create input data for MeshTally
@@ -185,7 +185,7 @@ void dagmc_fmesh_setup_mesh_(int* /*ipt*/, int* id, int* fmesh_idx,
         *is_collision_tally = false;
     } 
 
-    tallyManager.addNewTally(*id, type, emesh_boundaries, fc_settings);
+    tallyManager.addNewTally(*id, type, energy_boundaries, fc_settings);
 
     // Add tally multiplier, if it exists  
     if (*fmesh_idx != -1)

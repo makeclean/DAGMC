@@ -136,6 +136,7 @@ void TallyManager::clearLastEvent()
     event.current_cell        = 0;
 }
 //---------------------------------------------------------------------------//
+// Note: the event is set just before updateTallies is called
 void TallyManager::updateTallies()
 {
     std::map<int, Tally*>::iterator map_it;

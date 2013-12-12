@@ -134,6 +134,12 @@ void KDEMeshTally::compute_score(const TallyEvent& event)
  	return;
     }
 
+    unsigned int ebin;
+    if (!get_energy_bin(event.particle_energy, ebin))
+    {  
+        return;
+    }
+
     // create the neighborhood region and find all of the calculations points
     KDENeighborhood region(event, bandwidth, *kd_tree, kd_tree_root);
     std::set<moab::EntityHandle> calculation_points = region.get_points();
@@ -165,29 +171,23 @@ void KDEMeshTally::compute_score(const TallyEvent& event)
         }
 
         // compute the final contribution to the tally for this point
-        double score = weight;
+        double score = 0.0;
 
         if (estimator == INTEGRAL_TRACK)
         {
-            score *= integral_track_score(X, event);
+            score = integral_track_score(X, event);
         }
         else if (estimator == SUB_TRACK)
         {
-            score *= subtrack_score(X, subtrack_points);
+            score = subtrack_score(X, subtrack_points);
         }
         else // estimator == COLLISION
         {
-            score *= evaluate_kernel(X, event.position);
+            score = evaluate_kernel(X, event.position);
         }
 
-        // TODO:  do a correct ebin based on the particle energy; this is temporary
-        // jcz:  Consider wrapping up the eh, ebin, and call to add_score_to_tally and put it in MeshTally.
-        //       Same call here and in TrackLengthMeshTally, which see
-        int ebin = 0;
-        unsigned int point_index = get_entity_index(point);
-        // add score to KDE mesh tally for the current history
-        data->add_score_to_tally(point_index, score, ebin);
-    }
+        add_score_to_mesh_tally(point, weight, score,  ebin);
+    }  // end calculation_points iteration
 }
 //---------------------------------------------------------------------------//
 void KDEMeshTally::write_data(double num_histories)
