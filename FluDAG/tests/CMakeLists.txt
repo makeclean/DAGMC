@@ -1,5 +1,6 @@
 PROJECT(FluDAGUnitTests)
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6.4)
+# CMAKE_MINIMUM_REQUIRED(VERSION 2.8.5)
 
 # Note that CMAKE_SOURCE_DIR (without 'CURRNET') is the top-level dir containing CMakeLists.txt
 SET (gtest_home    "${CMAKE_SOURCE_DIR}/../gtest")
@@ -7,7 +8,13 @@ SET (gtest_dir     "${gtest_home}/gtest-1.7.0")
 SET (fludag_source "${CMAKE_SOURCE_DIR}/src")
 
 # Where to look for includes
-INCLUDE_DIRECTORIES("${MOAB_HOME}/include" "${gtest_dir}" "${gtest_dir}/include" ${fludag_source})
+INCLUDE_DIRECTORIES(
+	"${MOAB_HOME}/include" 
+	"${HDF5_HOME}/include" 
+	"${PYNE_HOME}/include" 
+	"${gtest_dir}" 
+	"${gtest_dir}/include" 
+	${fludag_source})
 
 # Setup for gtest libraries
 SET(cxx_base_flags "-Wall -Wshadow")
@@ -44,6 +51,7 @@ ENDFUNCTION()
 
 cxx_static_library(gtest ${cxx_strict} "${gtest_dir}/src/gtest-all.cc")
 
+########################################################################
 SET (tgt "gtest")
 ADD_CUSTOM_COMMAND (TARGET ${tgt}
 	COMMAND ln "-s"
@@ -54,9 +62,11 @@ ADD_CUSTOM_COMMAND (TARGET ${tgt}
 	VERBATIM
  	)
 
-# make fludag source files into a library
+########################################################################
+#
+# Make fludag source files into a library
 SET(fludag_source_files 
-	    ${fludag_source}/fluka_funcs.cpp
+	${fludag_source}/fluka_funcs.cpp
  )
 
 SET (fludag_test_source ${fludag_source_files}
@@ -64,11 +74,19 @@ SET (fludag_test_source ${fludag_source_files}
 	)
 
 # set libraries needed to link to test cases
-SET(LIBS
+SET(moablibs
     pthread
     ${MOAB_HOME}/lib/libMOAB.so
     ${MOAB_HOME}/lib/libdagmc.so
     ${MOAB_HOME}/lib/libMOAB.so
+)
+
+SET(pynelibs
+   ${HDF5_HOME}/lib/libhdf5.so
+   ${PYNE_HOME}/lib/libpyne.so
+   ${PYNE_HOME}/lib/libpyne_material.so
+   ${PYNE_HOME}/lib/libpyne_nucname.so
+   ${PYNE_HOME}/lib/libpyne_data.so
 )
 
 ADD_EXECUTABLE (fludag_unit_tests 
@@ -76,7 +94,7 @@ ADD_EXECUTABLE (fludag_unit_tests
 	${fludag_test_source}
 	)
 
-TARGET_LINK_LIBRARIES (fludag_unit_tests ${LIBS} gtest)
+TARGET_LINK_LIBRARIES (fludag_unit_tests ${moablibs} ${pynelibs} gtest)
 	
 # enable test cases
 enable_testing()

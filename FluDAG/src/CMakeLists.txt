@@ -1,5 +1,6 @@
 PROJECT (mainFluDAG)
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6.4)
+# CMAKE_MINIMUM_REQUIRED(VERSION 2.8.5)
 
 IF (NOT DEFINED HOME) 
 	set (HOME "$ENV{HOME}")
@@ -9,12 +10,25 @@ IF (NOT DEFINED FLUPRO)
 	set (FLUPRO "$ENV{FLUPRO}")
 ENDIF (NOT DEFINED FLUPRO)
 
-SET(MOAB_INCLUDE ${MOAB_HOME}/include)
-SET(MOAB_LIB_DIR ${MOAB_HOME}/lib)
-SET(moablibs ${MOAB_LIB_DIR}/libdagmc.so ${MOAB_LIB_DIR}/libMOAB.so)
+#############################################
+# PROJECT (PyneDag)
+#
+
+SET(pynelibs
+   ${HDF5_HOME}/lib/libhdf5.so
+   ${PYNE_HOME}/lib/libpyne.so
+   ${PYNE_HOME}/lib/libpyne_material.so
+   ${PYNE_HOME}/lib/libpyne_nucname.so
+   ${PYNE_HOME}/lib/libpyne_data.so
+)
+
+SET(moablibs 
+	${MOAB_HOME}/lib/libdagmc.so 
+	${MOAB_HOME}/lib/libMOAB.so
+)
 
 # Where to look for includes
-INCLUDE_DIRECTORIES(${MOAB_INCLUDE})
+INCLUDE_DIRECTORIES(${MOAB_HOME}/include ${HDF5_HOME}/include ${PYNE_HOME}/include)
 ENABLE_LANGUAGE(Fortran)
 
 #SET (fluka_file ${FLUPRO}/usermvax/mgdraw.f)
@@ -30,4 +44,4 @@ SET (fluka_libdir ${FLUPRO})
 
 # Create the executable that can call flukam_
 ADD_EXECUTABLE(mainfludag mainFluDAG.cpp fluka_funcs.cpp)
-TARGET_LINK_LIBRARIES(mainfludag ${moablibs} ${FLUPRO}/libflukahp.a gfortran)
+TARGET_LINK_LIBRARIES(mainfludag ${moablibs} ${pynelibs} ${FLUPRO}/libflukahp.a gfortran)
