@@ -42,6 +42,8 @@ using moab::DagMC;
 #define DGFM_READ  1
 #define DGFM_BCAST 2
 
+const char *delimiters = ":/";
+
 #ifdef ENABLE_RAYSTAT_DUMPS
 
 #include <fstream>
@@ -741,6 +743,8 @@ void fludag_write(std::string matfile, std::string lfname)
   std::ostringstream astr;
   std::list<std::string> matNamesList = fludagwrite_assignma(astr, num_vols);
 
+  std::cout << "number of groups " << matNamesList.size() << std::endl;
+
   // Section Ia - index-id
   // Process the matNamesList list so that it truly is unique
   matNamesList.sort();
@@ -797,10 +801,14 @@ int fludag_setup()
   std::cout << "\tnum_vols is " << num_vols << std::endl;
   MBErrorCode ret;
 
+
   std::vector< std::string > keywords;
-  ret = DAG->detect_available_props( keywords );
+  ret = DAG->detect_available_props( keywords, delimiters );
+  for ( int i = 0 ; i < keywords.size() ; i++ ) 
+    std::cout << "keywords " << keywords[i] << std::endl;
+
   // parse data from geometry so that property can be found
-  ret = DAG->parse_properties( keywords );
+  ret = DAG->parse_properties( keywords, delimiters );
   if (MB_SUCCESS != ret) 
   {
     std::cerr << "DAGMC failed to parse metadata properties" <<  std::endl;
@@ -861,9 +869,10 @@ std::list<std::string> fludagwrite_assignma(std::ostringstream& ostr, int num_vo
 	 ostr << std::setw(10) << std::right << "BLCKHOLE";
 	 ostr << std::setw(10) << std::right << vol_i << std::endl;
       }
-      else if (DAG->has_prop(entity, "mat:"))
+      else if (DAG->has_prop(entity, "mat"))
       {
-         ret = DAG->prop_values(entity, "mat:", vals);
+         ret = DAG->prop_values(entity, "mat", vals);
+	 std::cout << vals[0] << std::endl;
          if (vals.size() >= 1)
          {
             // Make a copy of string in vals[0]; full string needs to be compared to
@@ -932,7 +941,8 @@ void fludag_write_material(std::ostringstream& ostr, int num_mats, std::string m
   for (int i=0; i<num_mats; ++i)
   {
       pyneMat.from_hdf5(mat_file, "/materials", i,1);
-      ostr << pyneMat.fluka();
+      print_material(pyneMat);
+      //      ostr << pyneMat.fluka();
   }
 }
 //---------------------------------------------------------------------------//
@@ -1074,7 +1084,7 @@ void region2name(int volindex, char *vname )  // file with cell/surface cards
   fluka_keywords.push_back( "graveyard" );
 
   // parse data from geometry
-  rval = DAG->parse_properties (fluka_keywords);
+  rval = DAG->parse_properties (fluka_keywords, delimiters);
   if (MB_SUCCESS != rval) {
     std::cerr << "DAGMC failed to parse metadata properties" <<  std::endl;
     exit(EXIT_FAILURE);
