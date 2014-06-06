@@ -32,8 +32,8 @@ INCLUDE_DIRECTORIES(${MOAB_HOME}/include ${HDF5_HOME}/include ${PYNE_HOME}/inclu
 ENABLE_LANGUAGE(Fortran)
 
 #SET (fluka_file ${FLUPRO}/usermvax/mgdraw.f)
-SET (fluka_includes ${FLUPRO}/flukapro)
-SET (fluka_libdir ${FLUPRO})
+#SET (fluka_includes ${FLUPRO}/flukapro)
+#SET (fluka_libdir ${FLUPRO})
 #ADD_CUSTOM_COMMAND(OUTPUT mgdraw.o
 #       COMMAND gfortran -c ${fluka_file} -I${fluka_includes} 
 #       DEPENDS ${FLUPRO}/usermvax/mgdraw.f
