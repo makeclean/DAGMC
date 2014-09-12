@@ -155,7 +155,8 @@ extern "C" {
   /*
    * get all properties by dimension
    */
-  std::map<MBEntityHandle,std::vector<std::string> > get_property_assignments(std::string property, int dimension);
+std::map<MBEntityHandle,std::vector<std::string> > get_property_assignments(std::string property, int dimension,
+									    std::string delimiters);
  
 
 #ifdef __cplusplus

@@ -305,6 +305,7 @@ void write_lcad_uwuw(std::ofstream &lcadfile, std::string full_dagfilename)
   material_library = load_pyne_materials(full_dagfilename);
   if ( material_library.size() == 0 ) {
     std::cout << "No Materials found in the file, " << full_dagfilename << std::endl;
+    std::cout << "Have you used the preprocess script?" << std::endl;
     exit(EXIT_FAILURE);
   }
 
@@ -314,18 +315,14 @@ void write_lcad_uwuw(std::ofstream &lcadfile, std::string full_dagfilename)
   }
 
   std::map<MBEntityHandle,std::vector<std::string> > material_assignments;
-  material_assignments = get_property_assignments("mat",3);
+  material_assignments = get_property_assignments("mat",3,":/");
   std::map<MBEntityHandle,std::vector<std::string> > density_assignments;
-  density_assignments = get_property_assignments("rho",3);
-  std::map<MBEntityHandle,std::vector<std::string> > tally_assignments;
-  tally_assignments = get_property_assignments("tally",3);
+  density_assignments = get_property_assignments("rho",3,":");
 
   int num_cells = DAG->num_entities( 3 );
 
   std::vector<std::string> material_props;
   std::vector<std::string> density_props;
-  std::vector<std::string> tally_props;
-
   
   pyne::Material material;
 
@@ -344,18 +341,24 @@ void write_lcad_uwuw(std::ofstream &lcadfile, std::string full_dagfilename)
     material_props = material_assignments[entity];
     density_props = density_assignments[entity];
 
-    if(material_props.size() > 1)
-      {
-	std::cout << "more than one material for " << std::endl;
+    if( material_props.size() > 1 ) {
+      std::cout << "more than one material for volume with id " << cellid << std::endl;
+      std::cout << cellid << " has the following material assignments" << std::endl;
+      for ( int j = 0 ; j < material_props.size() ; j++ ) {
+	std::cout << material_props[j] << std::endl;
       }
-    if(density_props.size() > 1)
-      {
-	std::cout << "more than one density for " << std::endl;
-	for ( int j = 0 ; j < density_props.size() ; j++ ) 
-	  {
-	    std::cout << density_props[j] << std::endl;
-	  }
+      std::cout << "Please check your material assignments " << cellid << std::endl;
+      exit(EXIT_FAILURE);
+    }
+    if(density_props.size() > 1) {
+      std::cout << "More than one density specified for " << cellid <<std::endl;
+      std::cout << cellid << " has the following density assignments" << std::endl;
+      for ( int j = 0 ; j < density_props.size() ; j++ ) {
+	std::cout << density_props[j] << std::endl;
       }
+      std::cout << "Please check your density assignments " << cellid << std::endl;
+      exit(EXIT_FAILURE);
+    }
 
     std::string grp_name = "";
     if (!density_props[0].empty())
@@ -369,7 +372,7 @@ void write_lcad_uwuw(std::ofstream &lcadfile, std::string full_dagfilename)
       {
 	material = material_library[grp_name];
 	material_number = material.metadata["mat_number"].asString();
-	density = material.density;
+	density = -1.0*material.density; // -ve for mass density
 	lcadfile << cellid << " " << material_number << " " << density << " imp:n=1" << std::endl;
       }
     // found graveyard
@@ -384,6 +387,7 @@ void write_lcad_uwuw(std::ofstream &lcadfile, std::string full_dagfilename)
       }
     else if (  DAG->is_implicit_complement(entity) )
       {
+	// need to figure out how we will assign props to implcitcomp
 	lcadfile << cellid << " 0 imp:n=1" << std::endl;
       }
   }
@@ -1071,14 +1075,17 @@ std::map<std::string, pyne::Material> load_pyne_materials(std::string filename)
 	{
 	  end = true;  
 	}
+      else
+	{
+	  std::string result;
+	  std::ostringstream matnum;   // stream used for the conversion
+	  matnum << i+1;      // insert the textual representation of 'Number' in the characters in the streamng
+	  mat.metadata["mat_number"]=matnum.str();
 
-      std::string result;
-      std::ostringstream matnum;   // stream used for the conversion
-      matnum << i+1;      // insert the textual representation of 'Number' in the characters in the streamng
-      mat.metadata["mat_number"]=matnum.str();
+	  library[mat.metadata["name"].asString()]=mat;
+	  std::cout << library.size() << std::endl;
 
-
-      library[mat.metadata["name"].asString()]=mat;
+	}
     }
   
   std::cout << "Materials present in the h5m file" << std::endl;
@@ -1125,7 +1132,8 @@ std::map<std::string, pyne::Tally> load_pyne_tallies(std::string filename)
 }
 
 
-std::map<MBEntityHandle,std::vector<std::string> > get_property_assignments(std::string property, int dimension)
+std::map<MBEntityHandle,std::vector<std::string> > get_property_assignments(std::string property, 
+									    int dimension, std::string delimiters)
 {
 
   std::map<MBEntityHandle,std::vector<std::string> > prop_map;
@@ -1142,7 +1150,7 @@ std::map<MBEntityHandle,std::vector<std::string> > get_property_assignments(std:
   int num_entities = DAG->num_entities( dimension );
 
   // parse data from geometry
-  MBErrorCode rval = DAG->parse_properties( mcnp5_keywords, mcnp5_keyword_synonyms,":/");
+  MBErrorCode rval = DAG->parse_properties( mcnp5_keywords, mcnp5_keyword_synonyms,delimiters.c_str());
 
   if (MB_SUCCESS != rval) {
     std::cerr << "DAGMC failed to parse metadata properties" <<  std::endl;
