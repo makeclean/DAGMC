@@ -257,7 +257,7 @@ void dagmcwritemcnp_(char* dagfile, char *lfile, int *llen)  // file with cell/s
   // get rid of all trailing white space
   full_dagfilename.erase(std::remove_if( full_dagfilename.begin(), 
 					 full_dagfilename.end(), ::isspace), 
-			 full_dagfilename.end());
+		          	         full_dagfilename.end());
 
   if ( !old_method ) {
     try
