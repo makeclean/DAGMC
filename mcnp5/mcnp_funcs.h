@@ -10,7 +10,9 @@
 #include <fstream>
 #include <sstream>
 
+#include "../uwuw/uwuw.hpp"
 #include "pyne/pyne.h"
+#include <unistd.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -137,7 +139,7 @@ extern "C" {
 
   void write_lcad_old(std::ofstream &lcadfile);
 
-  void write_lcad_uwuw(std::ofstream &lcadfile, std::string full_dagfilename);
+  void write_lcad_uwuw(std::ofstream &lcadfile, UWUW workflow_data);
 
   /*
    * load the pyne materials from the dag file

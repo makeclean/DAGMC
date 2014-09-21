@@ -9,7 +9,6 @@ using moab::DagMC;
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
 #ifdef CUBIT_LIBS_PRESENT
 #include <fenv.h>
@@ -246,7 +245,10 @@ void dagmcwritemcnp_(char* dagfile, char *lfile, int *llen)  // file with cell/s
   bool old_method = false;
 
   pyne::Material test_mat;
+  
+  UWUW workflow_data = UWUW(dagfile);
 
+  /*
   char *current_dir = get_current_dir_name(); //current working dir needed for pyne load
 
   std::string cwd(current_dir), dagfilename(dagfile); 
@@ -258,7 +260,9 @@ void dagmcwritemcnp_(char* dagfile, char *lfile, int *llen)  // file with cell/s
   full_dagfilename.erase(std::remove_if( full_dagfilename.begin(), 
 					 full_dagfilename.end(), ::isspace), 
 		          	         full_dagfilename.end());
-
+  */
+  std::string full_dagfilename = workflow_data.full_filepath;
+  
   if ( !old_method ) {
     try
       {
@@ -290,28 +294,28 @@ void dagmcwritemcnp_(char* dagfile, char *lfile, int *llen)  // file with cell/s
   if ( old_method ) 
     write_lcad_old(lcadfile);
   else
-    write_lcad_uwuw(lcadfile,full_dagfilename);
+    write_lcad_uwuw(lcadfile, workflow_data);
   
   return;
 }    
 
-void write_lcad_uwuw(std::ofstream &lcadfile, std::string full_dagfilename)
+void write_lcad_uwuw(std::ofstream &lcadfile, UWUW workflow_data)
 {
+
   std::map<std::string,pyne::Material> material_library; // map of material objects by name
   std::map<std::string,pyne::Tally> tally_library; // map of tally objects by name
 
-  std::cout << "loading material library" << std::endl;
+  material_library = workflow_data.material_library;
+  tally_library = workflow_data.tally_library;
   
-  material_library = load_pyne_materials(full_dagfilename);
   if ( material_library.size() == 0 ) {
-    std::cout << "No Materials found in the file, " << full_dagfilename << std::endl;
+    std::cout << "No Materials found in the file, " << workflow_data.full_filepath << std::endl;
     std::cout << "Have you used the preprocess script?" << std::endl;
     exit(EXIT_FAILURE);
   }
 
-  tally_library = load_pyne_tallies(full_dagfilename) ;
   if ( tally_library.size() == 0 ) {
-    std::cout << "Warning No Tallies found in the file, " << full_dagfilename << std::endl;
+    std::cout << "Warning No Tallies found in the file, " << workflow_data.full_filepath << std::endl;
   }
 
   std::map<MBEntityHandle,std::vector<std::string> > material_assignments;
