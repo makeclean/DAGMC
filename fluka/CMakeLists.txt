@@ -6,6 +6,9 @@ SET ( CODE_SRCDIR      "fluka" )
 SET ( CODE_SRC_FILES   "${CODE_SRCDIR}/fluka_funcs.cpp" )
 SET ( CODE_PUB_HEADERS "${CODE_SRCDIR}/fluka_funcs.h" )
 
+#SET ( CODE_SRC_FILES   /mnt/data/opt/mcnp5v16_current/Source/src/plasma_source.cpp )
+
+
 SET ( CODE_CONFIG       )
 
 SET ( DI_PUB_HEADERS ${DI_PUB_HEADERS}
@@ -36,7 +39,18 @@ SET(FLUDAG_LIBS
 # add_custom_command (TARGET mainfludag
 # PRE_BUILD COMMAND 
 
-ADD_EXECUTABLE ( mainfludag mainFluDAG.cpp )
+# custom sources
+SET(FLUKA_FILE ${FLUKA_DIR}/usermvax/source.f)
+SET (FLUKA_INCLUDES ${FLUKA_DIR}/flukapro)
+ADD_CUSTOM_COMMAND(OUTPUT source.o
+       COMMAND gfortran -c ${FLUKA_FILE} -I${FLUKA_INCLUDES} 
+       DEPENDS ${FLUKA_DIR}/usermvax/source.f 
+       COMMENT "Custom command to compile source object with parenthetically named includes"
+       )
+
+ADD_CUSTOM_TARGET (source DEPENDS source.o )
+#/mnt/data/opt/mcnp5v16_current/Source/src/plasma_source.cpp
+ADD_EXECUTABLE ( mainfludag mainFluDAG.cpp /mnt/data/opt/mcnp5v16_current/Source/src/plasma_source.cpp source.o)
 INSTALL( TARGETS mainfludag 
   RUNTIME DESTINATION ${INSTALL_BIN_DIR} )
 # Order very important!
