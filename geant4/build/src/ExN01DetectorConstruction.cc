@@ -435,7 +435,7 @@ void ExN01DetectorConstruction::add_histogram_description(std::string tally_name
 				    2.000000E-2*GeV};
   // create historgram
   //  analysisManager->CreateH1(tally_name,tally_name,10000,1e-11,100.);
-  analysisManager->CreateH1(tally_name,tally_name,10000,1e-11,100.);
+  analysisManager->CreateH1(tally_name,tally_name,bin_bounds);
   analysisManager->CreateNtupleDColumn(tally_name);
   return;
 }
