@@ -42,11 +42,28 @@ IF(STATIC_LIB)
   SET(CMAKE_EXE_LINKER_FLAGS "-static")
 ENDIF(STATIC_LIB)
 
-ADD_EXECUTABLE ( mainfludag mainFluDAG.cpp )
+
+
+# custom sources
+SET(SOURCE_DIR ${CMAKE_SOURCE_DIR}/sources/tfc )
+SET(FLUKA_FILE ${SOURCE_DIR}/source.f)
+SET (FLUKA_INCLUDES ${FLUKA_DIR}/flukapro)
+
+ADD_CUSTOM_COMMAND(OUTPUT source.o
+       COMMAND gfortran -c ${FLUKA_FILE} -I${FLUKA_INCLUDES} 
+       DEPENDS ${FLUKA_FILE} 
+       COMMENT "Custom command to compile source object with parenthetically named includes"
+       )
+
+ADD_CUSTOM_TARGET (source DEPENDS source.o )
+#/mnt/data/opt/mcnp5v16_current/Source/src/plasma_source.cpp
+ADD_EXECUTABLE ( mainfludag mainFluDAG.cpp ${SOURCE_DIR}/source_tf.cpp source.o)
+
+
 INSTALL( TARGETS mainfludag 
   RUNTIME DESTINATION ${INSTALL_BIN_DIR} )
 # Order very important!
-TARGET_LINK_LIBRARIES ( mainfludag ${FLUDAG_LIBS} ${FLUKA_DIR}/libflukahp.a gfortran)
+TARGET_LINK_LIBRARIES ( mainfludag ${FLUDAG_LIBS}  ${FLUKA_DIR}/libflukahp.a gfortran)
 
 ADD_SUBDIRECTORY(tests)
 
