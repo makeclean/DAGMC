@@ -77,7 +77,7 @@ ELSEIF( BUILD_TALLY )
   MESSAGE ( STATUS "Not building tagtally interface library")
 ENDIF ( BUILD_TALLY )
 
-#ADD_SUBDIRECTORY(sources/tfc)
+ADD_SUBDIRECTORY(sources)
 
 
 ###################################

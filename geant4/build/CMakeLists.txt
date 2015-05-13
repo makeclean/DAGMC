@@ -22,7 +22,7 @@ endif()
 # Setup include directory for this project
 #
 include(${Geant4_USE_FILE})
-include_directories(${PROJECT_SOURCE_DIR}/include)
+include_directories(${PROJECT_SOURCE_DIR}/include source_tf)
 
 
 #----------------------------------------------------------------------------
@@ -52,6 +52,7 @@ target_link_libraries(DagGeant4 ${Geant4_LIBRARIES}
 			        ${DAGMC_LIBRARIES}
 				dagsolid
 				iMesh
+				source_tf
 				dagmciface)
 
 

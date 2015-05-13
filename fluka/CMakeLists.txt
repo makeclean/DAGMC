@@ -57,13 +57,13 @@ ADD_CUSTOM_COMMAND(OUTPUT source.o
 
 ADD_CUSTOM_TARGET (source DEPENDS source.o )
 #/mnt/data/opt/mcnp5v16_current/Source/src/plasma_source.cpp
-ADD_EXECUTABLE ( mainfludag mainFluDAG.cpp ${SOURCE_DIR}/source_tf.cpp source.o)
+ADD_EXECUTABLE ( mainfludag mainFluDAG.cpp  source.o)
 
 
 INSTALL( TARGETS mainfludag 
   RUNTIME DESTINATION ${INSTALL_BIN_DIR} )
 # Order very important!
-TARGET_LINK_LIBRARIES ( mainfludag ${FLUDAG_LIBS}  ${FLUKA_DIR}/libflukahp.a gfortran)
+TARGET_LINK_LIBRARIES ( mainfludag ${FLUDAG_LIBS} source_tf ${FLUKA_DIR}/libflukahp.a gfortran)
 
 ADD_SUBDIRECTORY(tests)
 
