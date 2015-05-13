@@ -362,7 +362,6 @@ LIST(APPEND MCNP_SRC_FILES ${MCNP_SRC}/Source/src/sing.F90)
 LIST(APPEND MCNP_SRC_FILES ${MCNP_SRC}/Source/src/smmp.F90)
 LIST(APPEND MCNP_SRC_FILES ${MCNP_SRC}/Source/src/smpsrc.F90)
 LIST(APPEND MCNP_SRC_FILES ${MCNP_SRC}/Source/src/sourcb.F90)
-LIST(APPEND MCNP_SRC_FILES ${MCNP_SRC}/Source/src/source.F90)
 LIST(APPEND MCNP_SRC_FILES ${MCNP_SRC}/Source/src/sourck.F90)
 LIST(APPEND MCNP_SRC_FILES ${MCNP_SRC}/Source/src/spec.F90)
 LIST(APPEND MCNP_SRC_FILES ${MCNP_SRC}/Source/src/spol.F90)
@@ -429,6 +428,7 @@ LIST(APPEND MCNP_SRC_FILES ${MCNP_SRC}/Source/src/xsec.F90)
 LIST(APPEND MCNP_SRC_FILES ${MCNP_SRC}/Source/src/xsgen.F90)
 LIST(APPEND MCNP_SRC_FILES ${MCNP_SRC}/Source/src/ypbssp.F90)
 LIST(APPEND MCNP_SRC_FILES ${MCNP_SRC}/Source/src/zaid.F90)
+LIST(APPEND MCNP_SRC_FILES ${MCNP_SRC}/Source/src/source.F90)
 
 # cpp files go here
 # LIST(APPEND MCNP_SRC_FILES ${MCNP_SRC}/Source/src/plasma_source.cpp)
@@ -494,6 +494,7 @@ ADD_EXECUTABLE(${mcnp_exec} ${MCNP_SRC_FILES} ${MCNP_SRC}/Source/src/main.F90)
 target_link_libraries(${mcnp_exec} 
  			dagmciface 
 			dagtally 
+			source_tf
 			${DAGMC_LIBRARIES} 
 			${HDF5_hdf5_hl_LIBRARY} ${HDF5_hdf5_LIBRARY} 
 			pyne_dagmc )

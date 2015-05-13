@@ -47,9 +47,10 @@ void ExN01PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
   
   G4double x,y,z;
   G4double energy,weight;
-  sample_linear_(20.,-20.,G4UniformRand(),x);
-  sample_linear_(20.,-20.,G4UniformRand(),y);
-  sample_linear_(20.,-20.,G4UniformRand(),z);
+  x = 350.0;
+  //  sample_linear_(20.,-20.,G4UniformRand(),x);
+  sample_linear_(40.,-40.,G4UniformRand(),y);
+  sample_linear_(400.,-400.,G4UniformRand(),z);
 
   sample_(G4UniformRand(),G4UniformRand(),energy,weight);
   particleGun->SetParticleEnergy(energy*MeV);
