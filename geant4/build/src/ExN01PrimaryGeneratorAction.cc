@@ -48,11 +48,21 @@ void ExN01PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
   G4double x,y,z;
   G4double energy,weight;
   x = 350.0;
-  //  sample_linear_(20.,-20.,G4UniformRand(),x);
-  sample_linear_(40.,-40.,G4UniformRand(),y);
-  sample_linear_(400.,-400.,G4UniformRand(),z);
+  G4double y_min = -40.0;
+  G4double y_max = 40.0;
+  G4double z_min = -400.0;
+  G4double z_max = 400.0;
+  G4double rand1 = G4UniformRand();
+  G4double rand2 = G4UniformRand();
 
-  sample_(G4UniformRand(),G4UniformRand(),energy,weight);
+  //  sample_linear_(20.,-20.,G4UniformRand(),x);
+  linear_sample_(y_max,y_min,rand1,y);
+  linear_sample_(z_max,z_min,rand2,z);
+
+  G4double rand3 = G4UniformRand();
+  G4double rand4 = G4UniformRand();
+
+  sample_(rand3,rand4,energy,weight);
   particleGun->SetParticleEnergy(energy*MeV);
   particleGun->SetParticlePosition(G4ThreeVector(x*cm,y*cm,z*cm));
 

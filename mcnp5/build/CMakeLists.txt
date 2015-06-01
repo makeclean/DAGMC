@@ -428,7 +428,8 @@ LIST(APPEND MCNP_SRC_FILES ${MCNP_SRC}/Source/src/xsec.F90)
 LIST(APPEND MCNP_SRC_FILES ${MCNP_SRC}/Source/src/xsgen.F90)
 LIST(APPEND MCNP_SRC_FILES ${MCNP_SRC}/Source/src/ypbssp.F90)
 LIST(APPEND MCNP_SRC_FILES ${MCNP_SRC}/Source/src/zaid.F90)
-LIST(APPEND MCNP_SRC_FILES ${MCNP_SRC}/Source/src/source.F90)
+#LIST(APPEND MCNP_SRC_FILES ${MCNP_SRC}/Source/src/source.F90)
+LIST(APPEND MCNP_SRC_FILES ${CMAKE_SOURCE_DIR}/sources/tfc/source.F90)
 
 # cpp files go here
 # LIST(APPEND MCNP_SRC_FILES ${MCNP_SRC}/Source/src/plasma_source.cpp)
@@ -454,7 +455,15 @@ add_definitions(-DVERS="5")
 DATETIME(DATE)
 # set the date
 add_definitions(-DLODDAT=${DATE})
-add_definitions(-DDPATH="/mnt/data/opt/xs_data/mcnp_data")
+
+if(EXISTS "$ENV{DATAPATH}")
+  add_definitions(-DDPATH="$ENV{DATAPATH}")
+else()
+  message($ENV{DATAPATH})
+  message(FATAL_ERROR "Could not find MCNP DATAPATH environment variable")
+endif(EXISTS "$ENV{DATAPATH}")
+
+#add_definitions(-DDPATH="/mnt/data/opt/xs_data/mcnp_data")
 add_definitions(-DTHREAD="MCNP5")
 add_definitions(-DTVERS="1.60")
 

@@ -4,7 +4,7 @@
 
 double ebins[47] = {1.0E-7,4.14e-07,8.76e-07,1.86e-06,3.93e-06,8.32e-06,1.76e-05,3.73e-05,
 		    7.89e-05,0.000167,0.000354,0.000749,0.00158,0.00335,0.0071,0.015,
-		    0.0318,0.0674,0.123,0.166,0.224,0.302,0.408,0.55,0.743,1,1.35,1.83,
+		    0.0318,0.0674,0.123,0.166,0.224,0.302,0.408,0.55,0.743,1.0,1.35,1.83,
 		    2.47, 2.73,3.01,3.33,3.68,4.07,4.49,4.97,5.49,6.07,6.7,7.41,8.19,9.05,
 		    10,11.1,12.2,13.8,14.2};
 
@@ -48,14 +48,14 @@ void setup_()
 }
 
 /* sample a distribution linearly*/
-void sample_linear_(double max, double min, double random, double &sample)
+void linear_sample_(double &max, double &min, double &random, double &sample)
 {
   sample = ((max-min)*random) + min;
   return;
 }
 
 /* sample the particle energy given the spectra */
-void sample_(double rand1, double rand2, double &energy, double &weight)
+void sample_(double &rand1, double &rand2, double &energy, double &weight)
 {
   for ( i = 1 ; i < bins+1 ; i++ )
     {
@@ -63,7 +63,7 @@ void sample_(double rand1, double rand2, double &energy, double &weight)
 	{
 	  if(rand1 <= pdf[i-1])
 	    {
-	      sample_linear_(ebins[i], ebins[i-1], rand2, energy);
+	      linear_sample_(ebins[i], ebins[i-1], rand2, energy);
 	      weight = weights[i];
 	      return;
 	    }
@@ -72,7 +72,7 @@ void sample_(double rand1, double rand2, double &energy, double &weight)
 	{
 	  if(rand1 > pdf[i-1] && rand1 <= pdf[i] )
 	    {
-	      sample_linear_(ebins[i], ebins[i-1], rand2, energy);
+	      linear_sample_(ebins[i], ebins[i-1], rand2, energy);
 	      weight = weights[i];
 	      return;
 	    }

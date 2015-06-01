@@ -11,22 +11,35 @@ subroutine source
   use mcnp_global
   use mcnp_debug
 
-  logical first_time = .true.
-
   implicit real(dknd) (a-h,o-z)
+  double precision :: dummy
+  logical, save :: first_time = .true.
 
-  if(first_time.eqv..true.)
+  double precision, save :: y_min,y_max
+  double precision, save :: z_min,z_max
+
+  if(first_time .eqv. .true.)then
     call setup()
-  else
-    jsu = 0
-    wgt = 1.0
-    tme = 0.0
-    xxx = 350.0
-    call sample_linear(40.,-40.,rand(),yyy)
-    call sample_linear(400.,-400.,rand(),zzz)
-    call sample(rand(),rand(),erg,dummy)
-    ipt = 1 !neutrons
-    icl = idum(1) ! get start icl from idum
+    y_min = -40.
+    y_max = 40.
+    z_min = -399.
+    z_max = 399.
+    first_time = .false.
+  endif
+
+  jsu = 0
+  wgt = 1.0
+  tme = 0.0
+  xxx = 350.0
+  
+  call linear_sample(y_max,y_min,rang(),yyy)
+  call linear_sample(z_max,z_min,rang(),zzz)
+  call sample(rang(),rang(),erg,dummy)
+  ipt = 1 !neutrons
+  icl = idum(1) ! get start icl from idum
+
+  if(wgt.le.0.0)then
+     write(*,*) xxx, yyy ,zzz ,erg ,ipt , icl
   endif
 
   return

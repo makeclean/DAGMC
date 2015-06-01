@@ -15,8 +15,8 @@ void setup_();
  * double random - random number between 0 and 1
  * double sample - the returned value
  */
-void sample_linear_(double max, double min, 
-		    double random, double &sample); 
+void linear_sample_(double &max, double &min, 
+		    double &random, double &sample); 
 
 /**
  * samples the build in source distributions
@@ -25,7 +25,7 @@ void sample_linear_(double max, double min,
  * double energy - the returned energy 
  * double weight - the returned statistical weight
  */
-void sample_(double rand1, double rand2, double &energy,
+void sample_(double &rand1, double &rand2, double &energy,
 	     double &weight);
 
 #ifdef __cplusplus

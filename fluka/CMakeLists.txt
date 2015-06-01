@@ -51,11 +51,11 @@ SET (FLUKA_INCLUDES ${FLUKA_DIR}/flukapro)
 
 ADD_CUSTOM_COMMAND(OUTPUT source.o
        COMMAND gfortran -c ${FLUKA_FILE} -I${FLUKA_INCLUDES} 
-       DEPENDS ${FLUKA_FILE} 
+       DEPENDS ${FLUKA_FILE} source_tf
        COMMENT "Custom command to compile source object with parenthetically named includes"
        )
 
-ADD_CUSTOM_TARGET (source DEPENDS source.o )
+ADD_CUSTOM_TARGET (source DEPENDS source.o source_tf )
 #/mnt/data/opt/mcnp5v16_current/Source/src/plasma_source.cpp
 ADD_EXECUTABLE ( mainfludag mainFluDAG.cpp  source.o)
 

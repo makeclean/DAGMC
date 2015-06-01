@@ -12,3 +12,4 @@ target_include_directories (source_tf PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 # global variable for cludgy Fluka building
 SET_PROPERTY(GLOBAL PROPERTY TFC_FLUKA_SRC "${CMAKE_CURRENT_SOURCE_DIR}/source.f")
+SET_PROPERTY(GLOBAL PROPERTY TFC_MCNP_SRC "${CMAKE_CURRENT_SOURCE_DIR}/source.F90")
