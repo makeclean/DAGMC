@@ -174,6 +174,13 @@ void g_fire(int &oldRegion, double point[], double dir[], double &propStep,
       return;
     }
 
+  if ( propStep == 0.0 )
+    {
+      propStep = 1e-12;
+      //      newRegion = -3;
+      //      return;
+    }
+
   // set the safety
   retStep = next_surf_dist; // the returned step length is the distance to next surf
   if ( propStep >= retStep ) // will cross into next volume next step
@@ -512,6 +519,28 @@ void lkfxwr(double& pSx, double& pSy, double& pSz,
 {
   std::cout << "======= LKFXWR =======" << std::endl;
 
+  pSx += 1e-3;
+  pSy += 1e-3;
+  pSz += 1e-3;
+
+  pV[0] *= 0.00001;
+  pV[1] *= 0.00001;
+  pV[2] *= 0.00001;
+
+  double length = (pV[0]*pV[0]) + (pV[1]*pV[1]) + (pV[2]*pV[2]);
+  length = std::sqrt(length);
+
+  pV[0] /= length;
+  pV[1] /= length;
+  pV[2] /= length;
+
+
+  f_look(pSx,pSy,pSz,pV,oldReg, oldLttc,
+	 newReg,flagErr,newLttc);
+  newLttc = 0;
+  //  oldLttc = 0;
+  newReg = flagErr;
+  
   return;
 }
 
