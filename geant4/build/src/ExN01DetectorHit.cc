@@ -1,5 +1,5 @@
 /// \file ExN01DetectorHit.cc
-/// \brief Implementation of the ExN01DeteectorHit class
+/// \brief Implementation of the ExN01DetectorHit class
 
 #include "ExN01DetectorHit.hh"
 #include "G4UnitsTable.hh"
@@ -18,7 +18,7 @@ ExN01DetectorHit::ExN01DetectorHit()
  : G4VHit(),
    fTrackID(-1),
    //fChamberNb(-1),
-   //fEdep(0.),
+   fEdep(0.),
    //fPos(G4ThreeVector()),
    fKe(0.),
    fTl(0.)
@@ -36,7 +36,7 @@ ExN01DetectorHit::ExN01DetectorHit(const ExN01DetectorHit& right)
 {
   fTrackID   = right.fTrackID;
   //fChamberNb = right.fChamberNb;
-  //fEdep      = right.fEdep;
+  fEdep      = right.fEdep;
   //fPos       = right.fPos;
   fKe        = right.fKe;
   fTl        = right.fTl;
@@ -49,7 +49,7 @@ const ExN01DetectorHit& ExN01DetectorHit::operator=(const ExN01DetectorHit& righ
 {
   fTrackID   = right.fTrackID;
   //fChamberNb = right.fChamberNb;
-  //fEdep      = right.fEdep;
+  fEdep      = right.fEdep;
   //fPos       = right.fPos;
   fKe        = right.fKe;
   fTl        = right.fTl;
@@ -98,7 +98,7 @@ void ExN01DetectorHit::Print()
      << " Weight: "
      << std::setw(7) << fWeight
      << " name:"
-     << std::setw(7) << fName 
+     << std::setw(7) << fName
      << G4endl;
 }
 

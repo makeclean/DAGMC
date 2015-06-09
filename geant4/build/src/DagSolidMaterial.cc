@@ -1,4 +1,5 @@
 #include "DagSolidMaterial.hh"
+#include <math.h>
 
 std::map<std::string,G4Material*> load_uwuw_materials(UWUW *workflow_data)
 {
@@ -21,7 +22,7 @@ std::map<std::string,G4Material*> load_uwuw_materials(UWUW *workflow_data)
   std::map<int,G4Isotope*> g4_isotopes;
   g4_isotopes = get_g4isotopes(material_library);
 
-  // generate an element for each isotopes, this is so we need only create 
+  // generate an element for each isotopes, this is so we need only create
   // one element for each nuclide, this makes making G4 materials much easier
   std::map<int,G4Element*> g4_elements;
   g4_elements = get_g4elements(g4_isotopes);
@@ -33,6 +34,59 @@ std::map<std::string,G4Material*> load_uwuw_materials(UWUW *workflow_data)
   return g4_materials;
 }
 
+std::map<std::string, G4Colour > get_material_colors(std::map<std::string,
+                                                     G4Material*> g4_materials)
+{
+  std::map<std::string, G4Colour> colour_map;
+  // determine the number of materials
+  int num_mats = g4_materials.size();
+  // linearly map the color space
+  std::vector<std::string> materials_vec;
+  std::map<std::string,G4Material*>::iterator it;
+  for ( it = g4_materials.begin() ; it != g4_materials.end() ; ++it )
+    {
+      // make a list out of the materials
+      materials_vec.push_back(it->first);
+    }
+  float red,green,blue; // colours
+  for ( int i = 0 ; i < num_mats ; i++)
+    {
+      float var = float(i)/float(num_mats);	//convert to range [0-1]
+      /*plot grayscale*/
+      //int g_val = float(var*255.);
+      /*convert to long rainbow RGB*/
+      float a = (1.- var)/0.2;
+      float x = floor(a);
+      float y = floor(255.*(a-x));
+
+      switch(int(x))
+      {
+        /*convert to long rainbow RGB*/
+        case 0:
+          red=1.0;green=y/255.0;blue=0.;
+          break;
+        case 1:
+          red=(255.0-y)/255.0;green=1.0;blue=0.;
+          break;
+        case 2:
+          red=0.;green=1.0;blue=y/255.0;
+          break;
+        case 3:
+          red=0;green=(255.-y)/255.;blue=1.0;
+          break;
+        case 4:
+          red=y/255.0;green=0;blue=1.0;
+          break;
+        case 5:
+          red=1.0;green=0;blue=1.0;
+          break;
+      }
+      G4Colour colour = G4Colour(red,green,blue);
+      std::cout << materials_vec[i] << " " << colour << std::endl;
+      colour_map[materials_vec[i]] = colour;
+    }
+  return colour_map;
+}
 
 std::map<int,G4Isotope*> get_g4isotopes(std::map<std::string, pyne::Material> material_library)
 {
@@ -52,15 +106,15 @@ std::map<int,G4Isotope*> get_g4isotopes(std::map<std::string, pyne::Material> ma
 
   // loop through the comp map of this material
   pyne::comp_iter mat_it;
-  
+
   for ( mat_it = sum_mat.comp.begin() ; mat_it != sum_mat.comp.end() ; ++mat_it )
     {
       int nuc_id = mat_it->first;
       G4Isotope* new_iso = new G4Isotope(name=pyne::nucname::name(nuc_id),iz=pyne::nucname::znum(nuc_id), n=pyne::nucname::anum(nuc_id),
 					 a=(pyne::atomic_mass(nuc_id)*g/mole));
-      g4isotopes[nuc_id]=new_iso;    
+      g4isotopes[nuc_id]=new_iso;
     }
-   
+
   return g4isotopes;
 }
 
@@ -77,8 +131,8 @@ std::map<int,G4Element*> get_g4elements(std::map<int,G4Isotope*> isotope_map)
   double abundance; //abundance of each isotope
   for ( it = isotope_map.begin() ; it != isotope_map.end() ; ++it )
     {
-      G4Element* tmp = new G4Element(name = pyne::nucname::name(it->first), 
-				       symbol = pyne::nucname::name(it->first), 
+      G4Element* tmp = new G4Element(name = pyne::nucname::name(it->first),
+				       symbol = pyne::nucname::name(it->first),
 				       ncomponents = 1);
       tmp->AddIsotope(isotope_map[it->first], abundance = 100.0*perCent);
       element_map[it->first]=tmp;
@@ -119,7 +173,7 @@ std::map<std::string,G4Material*> get_g4materials(std::map<int,G4Element*> eleme
       // create the g4 material
       std::cout << mat.metadata["name"].asString() << std::endl;
       G4Material * g4mat = new G4Material(name = mat.metadata["name"].asString(),
-					  mat.density*g/(cm*cm*cm), 
+					  mat.density*g/(cm*cm*cm),
 					  ncomponents = num_nucs);
       // now iterate over the composiiton
       for ( mat_it = mat.comp.begin() ; mat_it != mat.comp.end() ; ++mat_it )
@@ -132,14 +186,14 @@ std::map<std::string,G4Material*> get_g4materials(std::map<int,G4Element*> eleme
       material_map[mat.metadata["name"].asString()]=g4mat;
     }
 
-  // Add vacuum 
+  // Add vacuum
   double z,a,density;
   G4Material* Vacuum =
     new G4Material("mat:Vacuum", z=1., a=1.0*g/mole, density=1.0e-20*mg/cm3);
   // add to lib
   material_map["mat:Vacuum"]=Vacuum;
 
-  
+
   //  G4cout << *(G4Material::GetMaterialTable());
 
   return material_map;

@@ -16,6 +16,7 @@
 #include "globals.hh"
 #include "G4SystemOfUnits.hh"
 #include "G4VisAttributes.hh"
+#include "G4Color.hh"
 
 #include "G4SDManager.hh"
 #include "G4SDChargedFilter.hh"
@@ -60,6 +61,7 @@ G4VPhysicalVolume* ExN01DetectorConstruction::Construct()
   // load the material from the UW^2 library
   std::map<std::string,G4Material*> material_lib;
   material_lib = load_uwuw_materials(workflow_data);
+  std::map<std::string, G4Color> colors = get_material_colors(material_lib);
 
   G4VisAttributes * invis = new G4VisAttributes(G4VisAttributes::Invisible);
 
@@ -88,7 +90,7 @@ G4VPhysicalVolume* ExN01DetectorConstruction::Construct()
       G4cout << "ERROR: Failed to build the OBB Tree" << G4endl;
       exit(1);
     }
-  
+
   G4int Num_of_survertices = dagmc->num_entities(2);
   G4int num_of_objects = dagmc->num_entities(3);
 
@@ -134,12 +136,15 @@ G4VPhysicalVolume* ExN01DetectorConstruction::Construct()
       //      std::cout << "vol_" << idx_str << "  has prop " << material_lib["mat:"+dag_material_name] << std::endl;
       dag_logical_volumes[dag_idx]=dag_vol_log;
 
-      /*
-      pyne::Material mat = material_lib["mat:"+dag_material_name];
-      if( dag_material_name.find("Vacuum") != std::string::npos )
-	dag_vol_log->SetVisAttributes(invis);
-      */
 
+     if( dag_material_name == "Vacuum")
+	       dag_vol_log->SetVisAttributes(invis);
+     else
+        {
+         std::cout << dag_material_name << " " << colors["mat:"+dag_material_name] << std::endl;
+         G4VisAttributes *vis_att = new G4VisAttributes(colors["mat:"+dag_material_name]);
+         dag_vol_log->SetVisAttributes(vis_att);
+        }
       // define physical volumes
       G4PVPlacement* dag_vol_phys = new G4PVPlacement(0,G4ThreeVector(0*cm,0*cm,0*cm),dag_vol_log,
 						     "volume_"+idx_str+"_phys",

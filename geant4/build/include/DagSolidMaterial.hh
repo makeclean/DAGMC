@@ -1,6 +1,7 @@
 #include <map>
 #include "G4SystemOfUnits.hh"
 #include "G4Material.hh"
+#include "G4Color.hh"
 #include "../pyne/pyne.h"
 
 #ifndef uwuw_hpp
@@ -33,3 +34,8 @@ std::map<int,G4Element*> get_g4elements(std::map<int,G4Isotope*> isotope_map);
  */
 std::map<std::string,G4Material*> get_g4materials(std::map<int,G4Element*> element_map,
 						  std::map<std::string, pyne::Material> material_library);
+
+/*
+ * Make a color map for the materials
+ */
+std::map<std::string, G4Colour > get_material_colors(std::map<std::string,G4Material*> g4_materials);

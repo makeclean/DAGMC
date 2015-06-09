@@ -54,6 +54,11 @@ ExN01SensitiveDetector::ExN01SensitiveDetector(const G4String& name,
    DetectorIndex = detector_index;
    DetectorVolume = detector_volume;
 
+   // set the type of detector
+   if(DetectorName.find("flux") != std::string::npos)
+      DetectorType = FLUX;
+   if(DetectorName.find("edep") != std::string::npos)
+     DetectorType = EDEP;
 
   G4cout << "Detector name = " << DetectorName << G4endl;
   G4cout << "Detector idx = " << DetectorIndex<< G4endl;
@@ -99,11 +104,12 @@ G4bool ExN01SensitiveDetector::ProcessHits(G4Step* aStep,
 
   ExN01DetectorHit* newHit = new ExN01DetectorHit();
   /*
-  newHit->SetEdep( aStep->GetTotalEnergyDeposit());
+
   newHit->SetTrackID  (aStep->GetTrack()->GetTrackID());
   newHit->SetPos (aStep->GetPostStepPoint()->GetPosition());
   */
   //newHit->SetParticleEnergy(aStep->GetTrack()->GetKineticEnergy());
+  newHit->SetEnergyDeposition( aStep->GetTotalEnergyDeposit());
   newHit->SetParticleEnergy(aStep->GetPreStepPoint()->GetKineticEnergy());
   newHit->SetTrackLength(aStep->GetTrack()->GetStepLength());
   newHit->SetWeight(aStep->GetTrack()->GetWeight());
@@ -132,35 +138,26 @@ void ExN01SensitiveDetector::EndOfEvent(G4HCofThisEvent*)
   for ( G4int i=0; i<nofHits; i++ )
   {
     hist_index = hist_part_map[(*fHitsCollection)[i]->GetParticlePDG()];
-    //(*fHitsCollection)[i]->Print();
-  //  (*fHitsCollection)[i]->Print();
-    /*analysisManager->FillH2(DetectorIndex,
-                           (*fHitsCollection)[i]->GetKE(),
-                           (*fHitsCollection)[i]->GetWeight()*
-                           (*fHitsCollection)[i]->GetTrackLength());
-    */
-    /* weight * tracklength / volume */
     if (hist_index != 0 )
-      {
-        score = (*fHitsCollection)[i]->GetWeight()*
-                (*fHitsCollection)[i]->GetTrackLength()
-                *cm/(DetectorVolume);
-        analysisManager->FillH1(hist_index,
-                           (*fHitsCollection)[i]->GetKE(),
-                           score);
-      }
-    //G4cout << DetectorIndex << " " << score << G4endl;
+    {
+      switch (DetectorType)
+        {
+        case FLUX:
+          score = (*fHitsCollection)[i]->GetWeight()*
+                  (*fHitsCollection)[i]->GetTrackLength()
+                  *cm/(DetectorVolume);
+                  analysisManager->FillH1(hist_index,(*fHitsCollection)[i]->GetKE(),score);
+                  break;
 
+        case EDEP:
+          score = (*fHitsCollection)[i]->GetWeight()*
+                  (*fHitsCollection)[i]->GetEnergyDeposition()*GeV
+                  *cm/(DetectorVolume);
+                  analysisManager->FillH1(hist_index,(*fHitsCollection)[i]->GetKE(),score);
+                  break;
+        }
+    }
   }
-
-  /*
-    G4AnalysisManager* analysisManager = G4AnalysisManager::Instance();
-
-     // fill the histograms with results
-     analysisManager->FillH1(*it+1,1.0);
-     analysisManager->FillNtupleDColumn(*it,1.0);
- }
- */
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

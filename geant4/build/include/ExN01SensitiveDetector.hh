@@ -45,6 +45,8 @@
 class G4Step;
 class G4HCofThisEvent;
 
+enum score_type {FLUX,EDEP};
+
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 /// B2Tracker sensitive detector class
@@ -70,6 +72,7 @@ class ExN01SensitiveDetector : public G4VSensitiveDetector
 
   private:
     ExN01DetectorHitsCollection* fHitsCollection;
+    G4int DetectorType;
     G4int collectionID;
     G4String DetectorName;
     G4int DetectorIndex;
