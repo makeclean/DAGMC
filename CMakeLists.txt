@@ -79,6 +79,12 @@ ADD_SUBDIRECTORY(pyne)
 #
 ###################################
 
+IF ( BUILD_SOURCES )
+  ADD_SUBDIRECTORY(sources)
+ELSEIF ( BUILD_SOURCES )
+  MESSAGE ( STATUS "Not building sources library")
+ENDIF ( BUILD_SOURCES )
+
 IF ( BUILD_TALLY )
   ADD_SUBDIRECTORY( tally )
 ELSEIF( BUILD_TALLY )
