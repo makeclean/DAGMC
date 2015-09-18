@@ -362,7 +362,6 @@ LIST(APPEND MCNP_SRC_FILES ${MCNP_SRC}/Source/src/sing.F90)
 LIST(APPEND MCNP_SRC_FILES ${MCNP_SRC}/Source/src/smmp.F90)
 LIST(APPEND MCNP_SRC_FILES ${MCNP_SRC}/Source/src/smpsrc.F90)
 LIST(APPEND MCNP_SRC_FILES ${MCNP_SRC}/Source/src/sourcb.F90)
-LIST(APPEND MCNP_SRC_FILES ${MCNP_SRC}/Source/src/source.F90)
 LIST(APPEND MCNP_SRC_FILES ${MCNP_SRC}/Source/src/sourck.F90)
 LIST(APPEND MCNP_SRC_FILES ${MCNP_SRC}/Source/src/spec.F90)
 LIST(APPEND MCNP_SRC_FILES ${MCNP_SRC}/Source/src/spol.F90)
@@ -431,7 +430,14 @@ LIST(APPEND MCNP_SRC_FILES ${MCNP_SRC}/Source/src/ypbssp.F90)
 LIST(APPEND MCNP_SRC_FILES ${MCNP_SRC}/Source/src/zaid.F90)
 
 # cpp files go here
-# LIST(APPEND MCNP_SRC_FILES ${MCNP_SRC}/Source/src/plasma_source.cpp)
+IF(BUILD_SOURCES)
+  # our plasma sources
+  LIST(APPEND MCNP_SRC_FILES ${PROJECT_SOURCE_DIR}/../sources/mc_plasma_source.cpp)
+  LIST(APPEND MCNP_SRC_FILES ${PROJECT_SOURCE_DIR}/../sources/source.F90)
+ELSE(BUILD_SOURCES)
+  # standard mcnp source 
+  LIST(APPEND MCNP_SRC_FILES ${MCNP_SRC}/Source/src/source.F90)
+ENDIF(BUILD_SOURCES)
 
 set_source_files_properties(mcnp_params.F90 PROPERTIES COMPILE_FLAGS -cpp)
 
@@ -491,12 +497,16 @@ ENDIF(STATIC_LIB)
 
 ADD_EXECUTABLE(${mcnp_exec} ${MCNP_SRC_FILES} ${MCNP_SRC}/Source/src/main.F90)
 
-target_link_libraries(${mcnp_exec} 
+TARGET_LINK_LIBRARIES(${mcnp_exec} 
  			dagmciface 
 			dagtally 
 			${DAG_LINK_LIBS}
 			${HDF5_hdf5_hl_LIBRARY} ${HDF5_hdf5_LIBRARY} 
 			pyne_dagmc )
+IF(BUILD_SOURCES)
+  TARGET_LINK_LIBRARIES(${mcnp_exec} plasma_sources)
+ENDIF(BUILD_SOURCES)
+
 if(MPI_BUILD)
   target_link_libraries(${mcnp_exec} ${MPI_LIBRARIES}) 
 endif(MPI_BUILD)

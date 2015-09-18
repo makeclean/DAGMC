@@ -54,7 +54,6 @@ void PlasmaSourceSampler::sample_energy(double random_number1, double
     sample1 = 0.0;
 
   double sample2 = cos(TWOPI*random_number2);
-
   energy_neutron = (5.59/2.35)*ion_temp*sample1*sample2;
   energy_neutron += 14.08;
   return;
@@ -430,6 +429,7 @@ int RadialProfileSource::sample(double random_numbers[6], double &x, double &y,
   convert_r_to_xy(r,random_numbers[3],x,y,wgt);
   sample_energy(random_numbers[4],random_numbers[5],
                 rprof_cdf_data[bin_sampled].ion_temp,energy);
+
   return 1;
 }
 
@@ -463,11 +463,12 @@ void RadialProfileSource::convert_rad_to_rz(double normalised_sample_r,
 
   double alpha = TWOPI*rn_store;
   //  std::cout << alpha << std::endl;
-  double shift = shafranov_shift*(1.0-std::pow((normalised_sample_r/minor_radius),2));
+  double shift = shafranov_shift*(1.0-std::pow(normalised_sample_r,2));
   //  std::cerr << std::pow(*minor_sampled/(*minor_radius),2) << std::endl;
-
-  radius = major_radius + shift + minor_radius*normalised_sample_r*cos(alpha+(triangularity*sin(alpha)));
+  radius = major_radius + shift + (minor_radius*normalised_sample_r*cos(alpha+(triangularity*sin(alpha))));
   height = elongation*normalised_sample_r*minor_radius*sin(alpha);
+
+  //  std::cout << normalised_sample_r << " " << minor_radius << " " << radius << " " << height << std::endl;
 };
 
 // alternative
@@ -492,7 +493,7 @@ int RadialProfileSource::read_file()
       
       rprofile_source_line data;
       data.minor = tokens[0];
-      data.ion_temp = tokens[1]; // convert to keV
+      data.ion_temp = tokens[1]/1000.; // convert to MeV
       data.d_dens = tokens[2];
       data.t_dens = tokens[3];
       
@@ -539,7 +540,7 @@ int RadialProfileSource::setup_rprofile_source()
     rprofile_source_data data;
     for ( int j = 0 ; j <= i ; j++ )
       cdf += total_rr[j]/total;
-    
+
     // tmp var
     int k = i+1;
 
@@ -549,6 +550,8 @@ int RadialProfileSource::setup_rprofile_source()
     data.minor = r_source_profile[k].minor;
     data.bin_width = r_source_profile[k].minor - r_source_profile[k-1].minor;
     rprof_cdf_data.push_back(data);
+    //    std::cout << r_source_profile[k].minor << " " << data.bin_width << " " <<  cdf << std::endl;
+
   }
 
   return 1;
