@@ -310,7 +310,7 @@ int RZProfileSource::read_file()
 {
   // open up the file
   //char* filename = souce_file.c_str();
-  std::ifstream rz_input(source_file);
+  std::ifstream rz_input(source_file.c_str());
   std::string line;
 
   std::string buf;
@@ -475,7 +475,7 @@ void RadialProfileSource::convert_rad_to_rz(double normalised_sample_r,
 int RadialProfileSource::read_file()
 {
   // open up the file
-  std::ifstream rprof_input (source_file);
+  std::ifstream rprof_input (source_file.c_str());
   std::string line;
 
   std::vector<rprofile_source_line> r_profile; // data read in

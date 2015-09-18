@@ -1,6 +1,6 @@
 # CMAKE build script for DAGMC Tally
 
-SET(CMAKE_CXX_FLAGS "-std=c++11")
+# SET(CMAKE_CXX_FLAGS "-std=c++11")
 
 SET ( PLASMA_SRC_FILES
   plasma_source.cpp

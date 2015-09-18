@@ -3,6 +3,7 @@
 #include <sstream>
 #include <fstream>
 #include <cmath>
+#include <stdlib.h>
 
 // http://www-ist.cea.fr/publicea/exl-doc/201100003182.pdf
 
