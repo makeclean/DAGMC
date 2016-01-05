@@ -1,6 +1,6 @@
 diff -rN '--unified=0' mcnp_vendor/Source/src/angl.F90 mcnp_dagmc/Source/src/angl.F90
 --- mcnp_vendor/Source/src/angl.F90	2016-01-04 16:06:55.000004899 -0600
-+++ mcnp_dagmc/Source/src/angl.F90	2016-01-04 16:05:32.776006032 -0600
++++ mcnp_dagmc/Source/src/angl.F90	2016-01-04 21:20:51.835745280 -0600
 @@ -11,0 +12 @@
 +  use dagmc_mod
 @@ -15,0 +17,7 @@
@@ -13,7 +13,7 @@ diff -rN '--unified=0' mcnp_vendor/Source/src/angl.F90 mcnp_dagmc/Source/src/ang
 +  endif
 diff -rN '--unified=0' mcnp_vendor/Source/src/celsrf.F90 mcnp_dagmc/Source/src/celsrf.F90
 --- mcnp_vendor/Source/src/celsrf.F90	2016-01-04 16:06:55.004004899 -0600
-+++ mcnp_dagmc/Source/src/celsrf.F90	2016-01-04 16:05:32.780006032 -0600
++++ mcnp_dagmc/Source/src/celsrf.F90	2016-01-04 21:20:51.839745280 -0600
 @@ -12,0 +13 @@
 +  use dagmc_mod
 @@ -309,0 +311,4 @@
@@ -23,7 +23,7 @@ diff -rN '--unified=0' mcnp_vendor/Source/src/celsrf.F90 mcnp_dagmc/Source/src/c
 +
 diff -rN '--unified=0' mcnp_vendor/Source/src/chkcel.F90 mcnp_dagmc/Source/src/chkcel.F90
 --- mcnp_vendor/Source/src/chkcel.F90	2016-01-04 16:06:55.000004899 -0600
-+++ mcnp_dagmc/Source/src/chkcel.F90	2016-01-04 16:05:32.768006032 -0600
++++ mcnp_dagmc/Source/src/chkcel.F90	2016-01-04 21:20:51.839745280 -0600
 @@ -22,0 +23 @@
 +  use dagmc_mod
 @@ -26,0 +28,6 @@
@@ -35,7 +35,7 @@ diff -rN '--unified=0' mcnp_vendor/Source/src/chkcel.F90 mcnp_dagmc/Source/src/c
 +  
 diff -rN '--unified=0' mcnp_vendor/Source/src/dagmc_mod.F90 mcnp_dagmc/Source/src/dagmc_mod.F90
 --- mcnp_vendor/Source/src/dagmc_mod.F90	1969-12-31 18:00:00.000000000 -0600
-+++ mcnp_dagmc/Source/src/dagmc_mod.F90	2016-01-04 16:05:32.792006032 -0600
++++ mcnp_dagmc/Source/src/dagmc_mod.F90	2016-01-04 21:20:51.839745280 -0600
 @@ -0,0 +1,254 @@
 +module dagmc_mod
 +
@@ -293,7 +293,7 @@ diff -rN '--unified=0' mcnp_vendor/Source/src/dagmc_mod.F90 mcnp_dagmc/Source/sr
 +end module dagmc_mod
 diff -rN '--unified=0' mcnp_vendor/Source/src/dbmin.F90 mcnp_dagmc/Source/src/dbmin.F90
 --- mcnp_vendor/Source/src/dbmin.F90	2016-01-04 16:06:55.000004899 -0600
-+++ mcnp_dagmc/Source/src/dbmin.F90	2016-01-04 16:05:32.768006032 -0600
++++ mcnp_dagmc/Source/src/dbmin.F90	2016-01-04 21:20:51.839745280 -0600
 @@ -11,0 +12 @@
 +  use dagmc_mod
 @@ -13,0 +15,11 @@
@@ -381,7 +381,7 @@ diff -rN '--unified=0' mcnp_vendor/Source/src/Depends mcnp_dagmc/Source/src/Depe
 +../dagmc/mcnp_funcs$(OBJC) : ../dagmc/mcnp_funcs.h 
 diff -rN '--unified=0' mcnp_vendor/Source/src/electr.F90 mcnp_dagmc/Source/src/electr.F90
 --- mcnp_vendor/Source/src/electr.F90	2016-01-04 16:06:55.004004899 -0600
-+++ mcnp_dagmc/Source/src/electr.F90	2016-01-04 16:05:32.784006032 -0600
++++ mcnp_dagmc/Source/src/electr.F90	2016-01-04 21:20:51.843745280 -0600
 @@ -11,0 +12 @@
 +  use dagmc_mod
 @@ -82,0 +84,6 @@
@@ -414,23 +414,25 @@ diff -rN '--unified=0' mcnp_vendor/Source/src/FILE.list mcnp_dagmc/Source/src/FI
 +CXX_OBJS =	$(CXX_SRC:.cpp=$(OBJC))
 diff -rN '--unified=0' mcnp_vendor/Source/src/fmesh_mod.F90 mcnp_dagmc/Source/src/fmesh_mod.F90
 --- mcnp_vendor/Source/src/fmesh_mod.F90	2016-01-04 16:06:55.008004899 -0600
-+++ mcnp_dagmc/Source/src/fmesh_mod.F90	2016-01-04 16:05:32.792006032 -0600
-@@ -18,0 +19,4 @@
-+  logical :: enable_dag_tallies           = .false. != DAGMC: Indicate any dagmc tally        
-+  logical :: enable_dag_collision_tallies = .false. != DAGMC: Indicate a collision tally      
++++ mcnp_dagmc/Source/src/fmesh_mod.F90	2016-01-04 21:20:51.855745280 -0600
+@@ -11,0 +12,2 @@
++  use dagmc_mod
++
+@@ -18,0 +21,4 @@
++  logical :: enable_dag_tallies           = .false. != DAGMC: Indicate any dagmc tally    
++  logical :: enable_dag_collision_tallies = .false. != DAGMC: Indicate a collision tally   
 +  logical :: enable_dag_track_tallies     = .false. != DAGMC: Indicate a track tally   
 +
-@@ -124,0 +129,28 @@
-+
-+  ! DAGMC: These helper functions must be called with non-dereferenced Fortran pointers.      
-+  ! This interface specification ensures that the calls to these functions                    
-+  ! (which are implemented in C) are made with the correct types                              
+@@ -124,0 +131,27 @@
++  ! DAGMC: These helper functions must be called with non-dereferenced Fortran pointers.
++  ! This interface specification ensures that the calls to these functions       
++  ! (which are implemented in C) are made with the correct types                    
 +    interface
 +     subroutine dagmc_fmesh_get_tally_data( fm_id, fref )
 +       implicit none
 +       integer :: fm_id
-+       ! The dknd parameter is unavailable in this scope for some reason,                     
-+       ! so I have copied the definition of dknd from mcnp_params                             
++       ! The dknd parameter is unavailable in this scope for some reason,
++       ! so I have copied the definition of dknd from mcnp_params                            
 +       real(selected_real_kind(15,307)) , dimension(:), pointer :: fref 
 +     end subroutine dagmc_fmesh_get_tally_data
 +
@@ -449,17 +451,14 @@ diff -rN '--unified=0' mcnp_vendor/Source/src/fmesh_mod.F90 mcnp_dagmc/Source/sr
 +    end interface
 +
 +
-@@ -125,0 +158,59 @@
-+
-+  !-----------------------------------------------------------------------------------------
-+
+@@ -128,0 +162,59 @@
 +  ! DAGMC: Helper function - create a valid Fortran pointer from a C array and a length 
 +  subroutine dagmc_make_fortran_pointer( fref, carray, size )
 +    implicit none
 +
-+    integer :: size ! The size (in doubles) of the array in C                                 
-+    real(dknd), dimension(size), target :: carray ! The C pointer                             
-+    real(dknd), dimension(:), pointer :: fref     ! The returned Fortran pointer              
++    integer :: size ! The size (in doubles) of the array in C 
++    real(dknd), dimension(size), target :: carray ! The C pointer 
++    real(dknd), dimension(:), pointer :: fref     ! The returned Fortran pointer 
 +
 +    fref => carray
 +
@@ -509,9 +508,151 @@ diff -rN '--unified=0' mcnp_vendor/Source/src/fmesh_mod.F90 mcnp_dagmc/Source/sr
 +    endif
 +
 +  end subroutine dagmc_setup_mesh_tally
++
++  !-----------------------------------------------------------------------------------------
++
+@@ -135,0 +228 @@
++    real(dknd), dimension(:), pointer :: dagmc_runtpe_data
+@@ -179,0 +273,8 @@
++       ! DAGMC:                                                                          
++         if ( fm(i)%icrd==3 ) then
++          ! Get pointer to mesh's working data and fill runtpe with those contents           
++            call dagmc_fmesh_get_tally_data( fm(i)%id, dagmc_runtpe_data )
++            write(iu) dagmc_runtpe_data
++            call dagmc_fmesh_get_error_data( fm(i)%id, dagmc_runtpe_data )
++            write(iu) dagmc_runtpe_data
++         endif
+@@ -200,0 +302,5 @@
++    real(dknd), dimension(:), pointer :: dagmc_runtpe_data
++
++    ! DAGMC DEBUGGING  
++    ! print '(a80)', 'DAGMC MESHTAL: fmesh_runtpr' 
++
+@@ -346,0 +453,10 @@
++
++      ! DAGMC:                                                                               
++         if ( fm(i)%icrd==3 ) then
++            if( .not. is_assoc ) call dagmc_setup_mesh_tally( i )
++          ! Get pointer to mesh's working memory and fill it with runtpe data                 
++            call dagmc_fmesh_get_tally_data( fm(i)%id, dagmc_runtpe_data )
++            read(iu) dagmc_runtpe_data
++            call dagmc_fmesh_get_error_data( fm(i)%id, dagmc_runtpe_data )
++            read(iu) dagmc_runtpe_data
++         endif
+@@ -350 +465,0 @@
+-
+@@ -383,0 +499,3 @@
++    ! DAGMC DEBUGGING
++    ! print '(a80)', 'DAGMC MESHTAL: ifmesh_print'  
++
+@@ -761 +879 @@
+-
++    integer :: j
+@@ -806,0 +925,10 @@
++       ! DAGMC: send comment contents if this is a dagmc mesh
++       if( fm(i)%icrd == 3 ) then
++          call msg_put( fm(i)%n_comment_lines )
++
++          do j=1,fm(i)%n_comment_lines
++             call msg_put( fm(i)%comment(j) )
++          enddo
++       endif
++
++
+@@ -822,0 +951 @@
++    integer :: j
+@@ -898,0 +1028,13 @@
++       
++       ! DAGMC: receive comment contents if this is a dagmc mesh 
++       if( fm(i)%icrd == 3 ) then
++        call msg_get( fm(i)%n_comment_lines )
++
++        allocate( fm(i)%comment( fm(i)%n_comment_lines ), stat=is )
++        if(is/=0) call erprnt(1,1,0,0,0,0,0,1,' "mesh tally memory allocation failure"')
++
++        do j=1,fm(i)%n_comment_lines
++           call msg_get( fm(i)%comment(j) )
++        enddo
++
++       endif
+@@ -939,0 +1082,7 @@
++    ! DAGMC:                                                                                 
++    do i = 1,nmesh
++     if( fm(i)%icrd == 3 ) then
++        call dagmc_setup_mesh_tally( i )
++     endif
++    enddo
++
+@@ -951,0 +1101 @@
++    real(dknd), dimension(:), pointer :: dagmc_mpi_data
+@@ -962,0 +1113 @@
++       if( fm(i)%icrd /= 3 ) then
+@@ -971,0 +1123,8 @@
++       else
++          ! DAGMC            
++            call dagmc_fmesh_get_scratch_data( fm(i)%id, dagmc_mpi_data )
++            call msg_get( dagmc_mpi_data, 1, size(dagmc_mpi_data) )
++            call dagmc_fmesh_add_scratch_to_tally( fm(i)%id )
++            call msg_get( dagmc_mpi_data, 1, size(dagmc_mpi_data) )
++            call dagmc_fmesh_add_scratch_to_error( fm(i)%id )
++       endif
+@@ -986,0 +1146 @@
++    real(dknd), dimension(:), pointer :: dagmc_mpi_data
+@@ -997,0 +1158 @@
++       if( fm(i)%icrd /= 3 ) then
+@@ -1004,0 +1166,9 @@
++
++       else
++          ! DAGMC                    
++            call dagmc_fmesh_get_tally_data( fm(i)%id, dagmc_mpi_data )
++            call msg_put( dagmc_mpi_data, 1, size(dagmc_mpi_data) )
++            call dagmc_fmesh_get_error_data( fm(i)%id, dagmc_mpi_data )
++            call msg_put( dagmc_mpi_data, 1, size(dagmc_mpi_data) )
++
++       endif
+@@ -1006,0 +1177,6 @@
++
++    if( enable_dag_tallies ) then
++      ! DAGMC       
++      call dagmc_fmesh_clear_data()
++    endif
++
+@@ -1020,0 +1197,5 @@
++   ! DAGMC: perform end of history tasks for all dagmc mesh tallies                          
++    if (enable_dag_tallies) then
++       call dagmc_fmesh_end_history()
++    endif
++
+@@ -1066,0 +1248,26 @@
++
++  !-----------------------------------------------------------------------------------------
++
++  subroutine dagmc_get_multiplier( i, erg, multiplier )
++
++    use mcnp_params, only:dknd
++    use mcnp_global, only:rho,icl
++
++    integer   , intent(in) :: i
++    real(dknd), intent(in) :: erg
++    real(dknd), intent(out) :: multiplier
++    real(dknd) :: t
++
++    t = 1._dknd
++    if( fm(i)%ifm_card/=0 ) then
++       call wtmult_fmesh(t,i)
++    endif
++    t = t*fm(i)%fmult
++    if( fm(i)%fmult < 0 ) t = -t*rho(icl)
++
++    multiplier = t
++    if ( fm(i)%icx == 1 ) multiplier = multiplier*erg
++    if ( fm(i)%intrpol /= 0 ) multiplier = multiplier*dosef_fmesh(erg,i)
++
++    return
++  end subroutine dagmc_get_multiplier
 diff -rN '--unified=0' mcnp_vendor/Source/src/hstory.F90 mcnp_dagmc/Source/src/hstory.F90
 --- mcnp_vendor/Source/src/hstory.F90	2016-01-04 16:06:55.004004899 -0600
-+++ mcnp_dagmc/Source/src/hstory.F90	2016-01-04 16:05:32.788006032 -0600
++++ mcnp_dagmc/Source/src/hstory.F90	2016-01-04 21:20:51.859745280 -0600
 @@ -18,0 +19 @@
 +  use dagmc_mod
 @@ -82 +83,2 @@
@@ -544,7 +685,7 @@ diff -rN '--unified=0' mcnp_vendor/Source/src/hstory.F90 mcnp_dagmc/Source/src/h
 +
 diff -rN '--unified=0' mcnp_vendor/Source/src/igeom.F90 mcnp_dagmc/Source/src/igeom.F90
 --- mcnp_vendor/Source/src/igeom.F90	2016-01-04 16:06:54.996004899 -0600
-+++ mcnp_dagmc/Source/src/igeom.F90	2016-01-04 16:05:32.760006032 -0600
++++ mcnp_dagmc/Source/src/igeom.F90	2016-01-04 21:20:51.859745280 -0600
 @@ -9,0 +10 @@
 +  use dagmc_mod
 @@ -72 +73,2 @@
@@ -553,7 +694,7 @@ diff -rN '--unified=0' mcnp_vendor/Source/src/igeom.F90 mcnp_dagmc/Source/src/ig
 +  if (isdgmc == 0) call chekcs
 diff -rN '--unified=0' mcnp_vendor/Source/src/imcn.F90 mcnp_dagmc/Source/src/imcn.F90
 --- mcnp_vendor/Source/src/imcn.F90	2016-01-04 16:06:55.000004899 -0600
-+++ mcnp_dagmc/Source/src/imcn.F90	2016-01-04 16:05:32.768006032 -0600
++++ mcnp_dagmc/Source/src/imcn.F90	2016-01-04 21:20:51.859745280 -0600
 @@ -14,0 +15 @@
 +  use dagmc_mod
 @@ -423,0 +425,5 @@
@@ -564,7 +705,7 @@ diff -rN '--unified=0' mcnp_vendor/Source/src/imcn.F90 mcnp_dagmc/Source/src/imc
 +    endif
 diff -rN '--unified=0' mcnp_vendor/Source/src/itally.F90 mcnp_dagmc/Source/src/itally.F90
 --- mcnp_vendor/Source/src/itally.F90	2016-01-04 16:06:54.996004899 -0600
-+++ mcnp_dagmc/Source/src/itally.F90	2016-01-04 16:05:32.764006032 -0600
++++ mcnp_dagmc/Source/src/itally.F90	2016-01-04 21:20:51.859745280 -0600
 @@ -19,0 +20 @@
 +  use dagmc_mod
 @@ -91,0 +93,7 @@
@@ -577,7 +718,7 @@ diff -rN '--unified=0' mcnp_vendor/Source/src/itally.F90 mcnp_dagmc/Source/src/i
 +
 diff -rN '--unified=0' mcnp_vendor/Source/src/main.F90 mcnp_dagmc/Source/src/main.F90
 --- mcnp_vendor/Source/src/main.F90	2016-01-04 16:06:54.996004899 -0600
-+++ mcnp_dagmc/Source/src/main.F90	2016-01-04 16:05:32.764006032 -0600
++++ mcnp_dagmc/Source/src/main.F90	2016-01-04 21:20:51.859745280 -0600
 @@ -55,0 +56 @@
 +  use dagmc_mod
 @@ -144,0 +146,25 @@
@@ -664,7 +805,7 @@ diff -rN '--unified=0' mcnp_vendor/Source/src/Makefile mcnp_dagmc/Source/src/Mak
 +	$(CXX) $(ALL_CXXFLAGS) -c -o $@ $<
 diff -rN '--unified=0' mcnp_vendor/Source/src/mcnp_input.F90 mcnp_dagmc/Source/src/mcnp_input.F90
 --- mcnp_vendor/Source/src/mcnp_input.F90	2016-01-04 16:06:55.004004899 -0600
-+++ mcnp_dagmc/Source/src/mcnp_input.F90	2016-01-04 16:05:32.784006032 -0600
++++ mcnp_dagmc/Source/src/mcnp_input.F90	2016-01-04 21:20:51.859745280 -0600
 @@ -11 +11 @@
 -  integer,parameter :: nkcd   = 104     != Number of different types of input cards.
 +  integer,parameter :: nkcd   = 107     != Number of different types of input cards.
@@ -679,7 +820,7 @@ diff -rN '--unified=0' mcnp_vendor/Source/src/mcnp_input.F90 mcnp_dagmc/Source/s
 +  data cnm(107),(krq(i,104),i=1,7)/ 'dagmc',0,0, 0,0, 0,  12,0 / 
 diff -rN '--unified=0' mcnp_vendor/Source/src/mcnp_iofiles.F90 mcnp_dagmc/Source/src/mcnp_iofiles.F90
 --- mcnp_vendor/Source/src/mcnp_iofiles.F90	2016-01-04 16:06:55.004004899 -0600
-+++ mcnp_dagmc/Source/src/mcnp_iofiles.F90	2016-01-04 16:05:32.780006032 -0600
++++ mcnp_dagmc/Source/src/mcnp_iofiles.F90	2016-01-04 21:20:51.859745280 -0600
 @@ -37 +37,6 @@
 -    &  dumn2   = '        '
 +    &  dumn2   = '        ', &
@@ -700,12 +841,12 @@ diff -rN '--unified=0' mcnp_vendor/Source/src/mcnp_iofiles.F90 mcnp_dagmc/Source
 +    ftol    = isub(22)
 diff -rN '--unified=0' mcnp_vendor/Source/src/mcnp_params.F90 mcnp_dagmc/Source/src/mcnp_params.F90
 --- mcnp_vendor/Source/src/mcnp_params.F90	2016-01-04 16:06:54.996004899 -0600
-+++ mcnp_dagmc/Source/src/mcnp_params.F90	2016-01-04 16:05:32.760006032 -0600
++++ mcnp_dagmc/Source/src/mcnp_params.F90	2016-01-04 21:20:51.863745280 -0600
 @@ -130,0 +131 @@
 +  integer,parameter :: iulc = 57        != I/O unit for DAGMC log file
 diff -rN '--unified=0' mcnp_vendor/Source/src/msgcon.F90 mcnp_dagmc/Source/src/msgcon.F90
 --- mcnp_vendor/Source/src/msgcon.F90	2016-01-04 16:06:55.004004899 -0600
-+++ mcnp_dagmc/Source/src/msgcon.F90	2016-01-04 16:05:32.784006032 -0600
++++ mcnp_dagmc/Source/src/msgcon.F90	2016-01-04 21:20:51.863745280 -0600
 @@ -18,0 +19 @@
 +  use dagmc_mod
 @@ -158,0 +160,5 @@
@@ -716,7 +857,7 @@ diff -rN '--unified=0' mcnp_vendor/Source/src/msgcon.F90 mcnp_dagmc/Source/src/m
 +  call dm_send(-1,20,i)
 diff -rN '--unified=0' mcnp_vendor/Source/src/msgtsk.F90 mcnp_dagmc/Source/src/msgtsk.F90
 --- mcnp_vendor/Source/src/msgtsk.F90	2016-01-04 16:06:54.996004899 -0600
-+++ mcnp_dagmc/Source/src/msgtsk.F90	2016-01-04 16:05:32.764006032 -0600
++++ mcnp_dagmc/Source/src/msgtsk.F90	2016-01-04 21:20:51.863745280 -0600
 @@ -17,0 +18 @@
 +  use dagmc_mod
 @@ -81,0 +83,3 @@
@@ -725,7 +866,7 @@ diff -rN '--unified=0' mcnp_vendor/Source/src/msgtsk.F90 mcnp_dagmc/Source/src/m
 +  call dagmc_msgget  
 diff -rN '--unified=0' mcnp_vendor/Source/src/namchg.F90 mcnp_dagmc/Source/src/namchg.F90
 --- mcnp_vendor/Source/src/namchg.F90	2016-01-04 16:06:55.004004899 -0600
-+++ mcnp_dagmc/Source/src/namchg.F90	2016-01-04 16:05:32.788006032 -0600
++++ mcnp_dagmc/Source/src/namchg.F90	2016-01-04 21:20:51.863745280 -0600
 @@ -8,0 +9 @@
 +  use dagmc_mod
 @@ -12 +13,4 @@
@@ -739,7 +880,7 @@ diff -rN '--unified=0' mcnp_vendor/Source/src/namchg.F90 mcnp_dagmc/Source/src/n
 +  elseif( ( mm==3 ) .and. ( isdgmc == 0 ) ) then
 diff -rN '--unified=0' mcnp_vendor/Source/src/newcel.F90 mcnp_dagmc/Source/src/newcel.F90
 --- mcnp_vendor/Source/src/newcel.F90	2016-01-04 16:06:55.000004899 -0600
-+++ mcnp_dagmc/Source/src/newcel.F90	2016-01-04 16:05:32.776006032 -0600
++++ mcnp_dagmc/Source/src/newcel.F90	2016-01-04 21:20:51.863745280 -0600
 @@ -10,0 +11 @@
 +  use dagmc_mod
 @@ -12,0 +14,7 @@
@@ -758,7 +899,7 @@ diff -rN '--unified=0' mcnp_vendor/Source/src/newcel.F90 mcnp_dagmc/Source/src/n
 +    endif
 diff -rN '--unified=0' mcnp_vendor/Source/src/nextit.F90 mcnp_dagmc/Source/src/nextit.F90
 --- mcnp_vendor/Source/src/nextit.F90	2016-01-04 16:06:54.996004899 -0600
-+++ mcnp_dagmc/Source/src/nextit.F90	2016-01-04 16:05:32.764006032 -0600
++++ mcnp_dagmc/Source/src/nextit.F90	2016-01-04 21:20:51.863745280 -0600
 @@ -12,0 +13 @@
 +  use dagmc_mod
 @@ -1569 +1570,22 @@
@@ -787,7 +928,7 @@ diff -rN '--unified=0' mcnp_vendor/Source/src/nextit.F90 mcnp_dagmc/Source/src/n
 +
 diff -rN '--unified=0' mcnp_vendor/Source/src/oldcrd.F90 mcnp_dagmc/Source/src/oldcrd.F90
 --- mcnp_vendor/Source/src/oldcrd.F90	2016-01-04 16:06:55.008004899 -0600
-+++ mcnp_dagmc/Source/src/oldcrd.F90	2016-01-04 16:05:32.792006032 -0600
++++ mcnp_dagmc/Source/src/oldcrd.F90	2016-01-04 21:20:51.863745280 -0600
 @@ -11,0 +12 @@
 +  use dagmc_mod
 @@ -37 +38,2 @@
@@ -801,7 +942,7 @@ diff -rN '--unified=0' mcnp_vendor/Source/src/oldcrd.F90 mcnp_dagmc/Source/src/o
 +
 diff -rN '--unified=0' mcnp_vendor/Source/src/pass1.F90 mcnp_dagmc/Source/src/pass1.F90
 --- mcnp_vendor/Source/src/pass1.F90	2016-01-04 16:06:55.004004899 -0600
-+++ mcnp_dagmc/Source/src/pass1.F90	2016-01-04 16:05:32.780006032 -0600
++++ mcnp_dagmc/Source/src/pass1.F90	2016-01-04 21:20:51.863745280 -0600
 @@ -13,0 +14 @@
 +  use dagmc_mod
 @@ -15,0 +17,3 @@
@@ -810,7 +951,7 @@ diff -rN '--unified=0' mcnp_vendor/Source/src/pass1.F90 mcnp_dagmc/Source/src/pa
 +  if ( isdgmc == 1) call lcadrd
 diff -rN '--unified=0' mcnp_vendor/Source/src/sourcb.F90 mcnp_dagmc/Source/src/sourcb.F90
 --- mcnp_vendor/Source/src/sourcb.F90	2016-01-04 16:06:54.996004899 -0600
-+++ mcnp_dagmc/Source/src/sourcb.F90	2016-01-04 16:05:32.760006032 -0600
++++ mcnp_dagmc/Source/src/sourcb.F90	2016-01-04 21:20:51.867745280 -0600
 @@ -8,0 +9 @@
 +  use dagmc_mod
 @@ -14 +15 @@
@@ -825,7 +966,7 @@ diff -rN '--unified=0' mcnp_vendor/Source/src/sourcb.F90 mcnp_dagmc/Source/src/s
 +
 diff -rN '--unified=0' mcnp_vendor/Source/src/tally.F90 mcnp_dagmc/Source/src/tally.F90
 --- mcnp_vendor/Source/src/tally.F90	2016-01-04 16:06:55.004004899 -0600
-+++ mcnp_dagmc/Source/src/tally.F90	2016-01-04 16:05:32.788006032 -0600
++++ mcnp_dagmc/Source/src/tally.F90	2016-01-04 21:20:51.871745280 -0600
 @@ -10,0 +11 @@
 +  use dagmc_mod
 @@ -287,0 +289,4 @@
@@ -835,7 +976,7 @@ diff -rN '--unified=0' mcnp_vendor/Source/src/tally.F90 mcnp_dagmc/Source/src/ta
 +
 diff -rN '--unified=0' mcnp_vendor/Source/src/track.F90 mcnp_dagmc/Source/src/track.F90
 --- mcnp_vendor/Source/src/track.F90	2016-01-04 16:06:55.004004899 -0600
-+++ mcnp_dagmc/Source/src/track.F90	2016-01-04 16:05:32.780006032 -0600
++++ mcnp_dagmc/Source/src/track.F90	2016-01-04 21:20:51.871745280 -0600
 @@ -14,0 +15 @@
 +  use dagmc_mod
 @@ -25,0 +27,9 @@
@@ -850,7 +991,7 @@ diff -rN '--unified=0' mcnp_vendor/Source/src/track.F90 mcnp_dagmc/Source/src/tr
 +
 diff -rN '--unified=0' mcnp_vendor/Source/src/transm.F90 mcnp_dagmc/Source/src/transm.F90
 --- mcnp_vendor/Source/src/transm.F90	2016-01-04 16:06:55.004004899 -0600
-+++ mcnp_dagmc/Source/src/transm.F90	2016-01-04 16:05:32.780006032 -0600
++++ mcnp_dagmc/Source/src/transm.F90	2016-01-04 21:20:51.871745280 -0600
 @@ -10,0 +11 @@
 +  use dagmc_mod
 @@ -32,0 +34,2 @@
@@ -858,7 +999,7 @@ diff -rN '--unified=0' mcnp_vendor/Source/src/transm.F90 mcnp_dagmc/Source/src/t
 +    if ( isdgmc == 1 ) call dagmc_setdis( dd - sd )
 diff -rN '--unified=0' mcnp_vendor/Source/src/volume.F90 mcnp_dagmc/Source/src/volume.F90
 --- mcnp_vendor/Source/src/volume.F90	2016-01-04 16:06:55.000004899 -0600
-+++ mcnp_dagmc/Source/src/volume.F90	2016-01-04 16:05:32.764006032 -0600
++++ mcnp_dagmc/Source/src/volume.F90	2016-01-04 21:20:51.871745280 -0600
 @@ -11,0 +12 @@
 +  use dagmc_mod
 @@ -15,0 +17,6 @@
