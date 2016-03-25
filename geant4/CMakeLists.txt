@@ -7,8 +7,14 @@ else ()
   find_package(Geant4 REQUIRED)
 endif ("${LIB_TYPE}" STREQUAL "STATIC")
 
-# Setup Geant4 include directories and compile definitions
-include(${Geant4_USE_FILE})
+# Put the library in Lib
+INSTALL ( TARGETS dagsolid 
+  LIBRARY DESTINATION "${INSTALL_LIB_DIR}"
+  ARCHIVE DESTINATION "${INSTALL_LIB_DIR}"
+  PUBLIC_HEADER DESTINATION "${INSTALL_INCLUDE_DIR}" )
+
+# make the library
+TARGET_LINK_LIBRARIES( dagsolid ${Geant4_LIBRARIES} ${DAGMC_LIBRARIES})
 
 # Source files
 set(SRC_FILES DagSolid.cc)
