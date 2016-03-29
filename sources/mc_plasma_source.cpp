@@ -36,7 +36,7 @@ void setup_(int idums[50], double rdums[50], int *erc) {
 				 rdums[15]); //end angle
     ec = p_src->setup();
   }
-  if(setting == 2) {
+  if(setting == 3) {
     rd_src = new RadialProfileSource(rdums[0], // minor radius
 				     rdums[1], // major radius
 				     rdums[2], // elongation
@@ -47,7 +47,7 @@ void setup_(int idums[50], double rdums[50], int *erc) {
 				     std::string("r_prof.txt"));
     ec = rd_src->setup();
   }
-  if(setting == 3) {
+  if(setting == 2) {
     rz_src = new RZProfileSource(rdums[0],
 				 rdums[1],
 				 std::string("rzsource.txt"));
@@ -64,9 +64,9 @@ void sample_(double randoms[6], double *x, double *y, double *z,
   double x_c,y_c,z_c,w,e;
   if(setting == 1 || setting == 0)
     erc = p_src->sample(randoms,x_c,y_c,z_c,w,e);
-  if(setting == 2)
-    erc = rd_src->sample(randoms,x_c,y_c,z_c,w,e);
   if(setting == 3)
+    erc = rd_src->sample(randoms,x_c,y_c,z_c,w,e);
+  if(setting == 2)
     erc = rz_src->sample(randoms,x_c,y_c,z_c,w,e);
 
   *x = x_c;
