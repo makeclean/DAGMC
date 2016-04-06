@@ -147,6 +147,9 @@ IF ( DI_SRC_FILES )
   ENDIF( STATIC_LIB )
 
 
+  TARGET_LINK_LIBRARIES ( dagmciface ${DAG_LINK_LIBS} ${HDF5_hdf5_hl_LIBRARY} ${HDF5_hdf5_LIBRARY} pyne_dagmc ${DAG_LINK_LIBS})
+
+
   SET_TARGET_PROPERTIES( dagmciface        PROPERTIES   
                          PUBLIC_HEADER     "${DI_PUB_HEADERS}" 
                          )
