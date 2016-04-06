@@ -32,7 +32,7 @@ INSTALL ( TARGETS dagsolid
   PUBLIC_HEADER DESTINATION "${INSTALL_INCLUDE_DIR}" )
 
 # make the library
-TARGET_LINK_LIBRARIES( dagsolid ${Geant4_LIBRARIES})
+TARGET_LINK_LIBRARIES( dagsolid ${Geant4_LIBRARIES} ${DAG_LINK_LIBS})
 
 # build the DAGGeant4 executable
 ADD_SUBDIRECTORY( build )
