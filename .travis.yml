@@ -43,7 +43,7 @@ before_install:
   - cd hdf5
   - mkdir bld
   - cd bld
-  - ../configure --enable-shared --disable-debug --enable-optimize --prefix=$HOME/.cccache/hdf5
+  - ../configure --enable-shared --disable-debug --enable-optimize --prefix=$HOME/.ccache/hdf5
   - make -j2 > log-file 2>&1
   - make install
   - export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$HOME/.ccache/hdf5/lib/"
