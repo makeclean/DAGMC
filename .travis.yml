@@ -31,7 +31,15 @@ before_install:
   # build geant4
   - travis_wait ./.travis/build_geant4.sh
 install:
-  # build dagmc
+  - export PATH=$HOME/.ccache/hdf5/bin:$PATH
+  - export PATH=$HOME/.ccache/moab/bin:$PATH
+  - export PATH=$HOME/.ccache/geant4.00.00.p01/bin:$PATH
+  - export PATH=$HOME/.ccache/cmake/bin:$PATH
+  - export LD_LIBRARY_PATH=$HOME/.ccache/cmake/bin:$LD_LIBRARY_PATH
+  - export LD_LIBRARY_PATH=$HOME/.ccache/hdf5/lib:$LD_LIBRARY_PATH
+  - export LD_LIBRARY_PATH=$HOME/.ccache/moab/lib:$LD_LIBRARY_PATH
+  - export LD_LIBRARY_PATH=$HOME/.ccache/geant4.10.00.p02/lib/:$LD_LIBRARY_PATH
+# build dagmc
   - mkdir bld
   - cd bld
   - env
