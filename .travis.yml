@@ -26,63 +26,63 @@ before_install:
   - export ROOT_DIR="$PWD"
   # build cmake
   - if [ ! -d $HOME/.ccache/cmake ] ; then
-  -   git clone git://cmake.org/cmake.git custom_cmake
-  -   cd custom_cmake
-  -   git checkout master
-  -   mkdir bld
-  -   cd bld
-  -   cmake ../. -DCMAKE_INSTALL_PREFIX=$HOME/.ccache/cmake
-  -   make -j2 > log-file 2>&1
-  -   make install
-  -   cd ..
-  -   cd .. 
+    - git clone git://cmake.org/cmake.git custom_cmake
+    - cd custom_cmake
+    - git checkout master
+    - mkdir bld
+    - cd bld
+    - cmake ../. -DCMAKE_INSTALL_PREFIX=$HOME/.ccache/cmake
+    - make -j2 > log-file 2>&1
+    - make install
+    - cd ..
+    - cd .. 
   - fi
   - export PATH="$HOME/.ccache/cmake/bin:$PATH"
   # build hdf5
   - if [ ! -d $HOME/.ccache/hdf5 ] ; then
-  -   wget https://www.hdfgroup.org/ftp/HDF5/releases/hdf5-1.8.13/src/hdf5-1.8.13.tar.gz
-  -   tar -zxf hdf5-1.8.13.tar.gz
-  -   mv hdf5-1.8.13 hdf5
-  -   cd hdf5
-  -   mkdir bld
-  -   cd bld
-  -   ../configure --enable-shared --disable-debug --enable-optimize --prefix=$HOME/.ccache/hdf5
-  -   make -j2 > log-file 2>&1
-  -   make install
-  -   cd ..
-  -   cd ..
+    - wget https://www.hdfgroup.org/ftp/HDF5/releases/hdf5-1.8.13/src/hdf5-1.8.13.tar.gz
+    - tar -zxf hdf5-1.8.13.tar.gz
+    - mv hdf5-1.8.13 hdf5
+    - cd hdf5
+    - mkdir bld
+    - cd bld
+    - ../configure --enable-shared --disable-debug --enable-optimize --prefix=$HOME/.ccache/hdf5
+    - make -j2 > log-file 2>&1
+    - make install
+    - cd ..
+    - cd ..
   - fi
   - export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$HOME/.ccache/hdf5/lib/"
   - export PATH="$HOME/.ccache/hdf5/bin:$PATH"
   # build moab
   - if [ ! -d $HOME/.ccache/moab ] ; then
-  -   git clone https://bitbucket.org/fathomteam/moab
-  -   cd moab
-  -   git checkout $MOAB_VERSION
-  -   autoreconf -fi
-  -   mkdir bld
-  -   cd bld
-  -   ../configure --enable-dagmc --enable-shared --disable-debug --enable-optimize --with-hdf5=$HOME/.ccache/hdf5 --prefix=$HOME/.ccache/moab
-  -   make -j2 > log-file 2>&1
-  -   make install
-  -   cd ..
-  -   cd ..
+    - git clone https://bitbucket.org/fathomteam/moab
+    - cd moab
+    - git checkout $MOAB_VERSION
+    - autoreconf -fi
+    - mkdir bld
+    - cd bld
+    - ../configure --enable-dagmc --enable-shared --disable-debug --enable-optimize --with-hdf5=$HOME/.ccache/hdf5 --prefix=$HOME/.ccache/moab
+    - make -j2 > log-file 2>&1
+    - make install
+    - cd ..
+    - cd ..
   - fi
   - export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$HOME/.ccache/moab/lib/"
   - export PATH="$HOME/.ccache/moab/bin:$PATH"
   # build geant4
   - if [ ! -d $HOME/.ccache/geant4.10.00.p02 ] ; then
-  -   wget http://geant4.cern.ch/support/source/geant4.10.00.p02.tar.gz
-  -   tar -zxf geant4.10.00.p02.tar.gz
-  -   cd geant4.10.00.p02
-  -   mkdir bld
-  -   cd bld
-  -   cmake ../. -DCMAKE_INSTALL_PREFIX=$HOME/.ccache/geant4.10.00.p02
+    - wget http://geant4.cern.ch/support/source/geant4.10.00.p02.tar.gz
+    - tar -zxf geant4.10.00.p02.tar.gz
+    - cd geant4.10.00.p02
+    - mkdir bld
+    - cd bld
+    - cmake ../. -DCMAKE_INSTALL_PREFIX=$HOME/.ccache/geant4.10.00.p02
   # geant4 compile takes 30 mins so need to use travis_wait
-  -   travis_wait make -j2
-  -   make install
-  -   cd ..
-  -   cd ..
+    - travis_wait make -j2
+    - make install
+    - cd ..
+    - cd ..
   - fi
   - export PATH="$HOME/.ccache/geant4.10.00.p02/bin:$PATH"
   - export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$HOME/.ccache/geant4.10.00.p02/lib/"
