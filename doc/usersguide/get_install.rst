@@ -18,8 +18,8 @@ In order to install you must have done the following:
 
  * Cloned the `DAGMC <http://github.com/svalinn/DAGMC>`_ repository
  * Installed `HDF5 <http://www.hdfgroup.org/HDF5/>`_
- * Install `CGM <http://trac.mcs.anl.gov/projects/ITAPS/wiki/CGM>`_, using the --with-cubit option
- * Installed `MOAB <http://trac.mcs.anl.gov/projects/ITAPS/wiki/MOAB>`_,
+ * Install `CGM <http://sigma.mcs.anl.gov/cgm-library/>`_, using the --with-cubit option
+ * Installed `MOAB <http://sigma.mcs.anl.gov/moab-library/>`_,
    using options --with-cgm --with-hdf5 --with-dagmc --without-netcdf 
    If you need to prepare meshed geometries the following are also required
    a) Install `CUBIT <http://cubit.sandia.gov>`_ v12.2 or v13.1
@@ -235,14 +235,14 @@ Populate and Patch
 ============================================
 In order to populate and patch the MCNP5 source in the DAGMC subdirectory 
 first copy the "Source" directory for MCNP5v16 from the LANL/RSICC CD to the 
-mcnp5/ directory in the DAGMC source tree
+mcnp/mcnp5/ directory in the DAGMC source tree
 ::
-    prompt%> cd $HOME/dagmc_bld/DAGMC/mcnp5
+    prompt%> cd $HOME/dagmc_bld/DAGMC/mcnp/mcnp5
     prompt%> cp -r <path to cdrom>/MCNP5/Source .
 
 Apply the patch from the patch folder
 ::
-    prompt%> patch -p1 < patch/dagmc.patch.5.1.60
+    prompt%> patch -p0 < patch/dagmc.patch.5.1.60
 
 
 Configure and build DAGMC
