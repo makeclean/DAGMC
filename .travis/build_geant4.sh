@@ -10,7 +10,7 @@ if [ ! -d $HOME/.ccache/geant4.10.00.p02 ] ; then
     cd bld
     cmake ../. -DCMAKE_INSTALL_PREFIX=$HOME/.ccache/geant4.10.00.p02
     # geant4 compile takes 30 mins so need to use travis_wait
-    travis_wait make -j2
+    make -j
     make install
     cd ..
     cd ..

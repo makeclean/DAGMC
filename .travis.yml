@@ -29,7 +29,7 @@ before_install:
   # build moab
   - ./.travis/build_moab.sh
   # build geant4
-  - ./.travis/build_geant4.sh
+  - travis_wait ./.travis/build_geant4.sh
 install:
   # build dagmc
   - mkdir bld
