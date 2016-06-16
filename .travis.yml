@@ -1,11 +1,6 @@
 language: c++
+cache: ccache 
 sudo: false
-cache: ccache
- - directories: 
-  - geant4.10.00.p02
-  - cmake
-  - hdf5
-  - moab
 env: 
   matrix:
     - MOAB_VERSION="Version4.7.0"
@@ -35,10 +30,10 @@ before_install:
   - git checkout master
   - mkdir bld
   - cd bld
-  - cmake ../. -DCMAKE_INSTALL_PREFIX=$ROOT_DIR/cmake
+  - cmake ../. -DCMAKE_INSTALL_PREFIX=$HOME/.ccache/cmake
   - make -j2 > log-file 2>&1
   - make install
-  - export PATH="$ROOT_DIR/cmake/bin:$PATH"
+  - export PATH="$HOME/.ccache/cmake/bin:$PATH"
   - cd ..
   - cd .. 
   # build hdf5
@@ -48,11 +43,11 @@ before_install:
   - cd hdf5
   - mkdir bld
   - cd bld
-  - ../configure --enable-shared --disable-debug --enable-optimize --prefix=$ROOT_DIR/hdf5
+  - ../configure --enable-shared --disable-debug --enable-optimize --prefix=$HOME/.cccache/hdf5
   - make -j2 > log-file 2>&1
   - make install
-  - export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$ROOT_DIR/hdf5/lib/"
-  - export PATH="$ROOT_DIR/hdf5/bin:$PATH"
+  - export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$HOME/.ccache/hdf5/lib/"
+  - export PATH="$HOME/.ccache/hdf5/bin:$PATH"
   - cd ..
   - cd ..
   # build moab
@@ -62,11 +57,11 @@ before_install:
   - autoreconf -fi
   - mkdir bld
   - cd bld
-  - ../configure --enable-dagmc --enable-shared --disable-debug --enable-optimize --with-hdf5=$ROOT_DIR/hdf5 --prefix=$ROOT_DIR/moab
+  - ../configure --enable-dagmc --enable-shared --disable-debug --enable-optimize --with-hdf5=$ROOT_DIR/hdf5 --prefix=$HOME/.ccache/moab
   - make -j2 > log-file 2>&1
   - make install
-  - export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$ROOT_DIR/moab/lib/"
-  - export PATH="$ROOT_DIR/moab/bin:$PATH"
+  - export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$HOME/.ccache/moab/lib/"
+  - export PATH="$HOME/.ccache/moab/bin:$PATH"
   - cd ..
   - cd ..
   # build geant4
@@ -76,12 +71,12 @@ before_install:
   - mkdir bld
   - cd bld
   - pwd
-  - cmake ../. -DCMAKE_INSTALL_PREFIX=$ROOT_DIR/geant4.10.00.p02
+  - cmake ../. -DCMAKE_INSTALL_PREFIX=$HOME/.ccache/geant4.10.00.p02
   # geant4 compile takes 30 mins so need to use travis_wait
   - travis_wait make -j2
   - make install
-  - export PATH="$ROOT_DIR/geant4.10.00.p02/bin:$PATH"
-  - export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$ROOT_DIR/geant4.10.00.p02/lib/"
+  - export PATH="$HOME/.ccache/geant4.10.00.p02/bin:$PATH"
+  - export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$HOME/.ccache/geant4.10.00.p02/lib/"
   - cd ..
   - cd ..
 install:
@@ -89,7 +84,7 @@ install:
   - cd DAGMC
   - mkdir bld
   - cd bld
-  - cmake ../. -DBUILD_TALLY=ON -DBUILD_GEANT4=ON -DGEANT4_DIR=$ROOT_DIR/geant4.10.00.p02 -DCMAKE_INSTALL_PREFIX=$ROOT_DIR/DAGMC
+  - cmake ../. -DBUILD_TALLY=ON -DBUILD_GEANT4=ON -DGEANT4_DIR=$HOME/.ccache/geant4.10.00.p02 -DCMAKE_INSTALL_PREFIX=$ROOT_DIR/DAGMC
   - make 
   - make install
   - export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$ROOT_DIR/DAGMC/lib"
