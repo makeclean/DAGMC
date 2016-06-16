@@ -22,8 +22,6 @@ addons:
 before_install:
   # find the start dir - note the start directory is inside the cloned repo
   - export START="$PWD"
-  - cd ..
-  - export ROOT_DIR="$PWD"
   # build cmake
   - ./.travis/build_cmake.sh
   # build hdf5
@@ -34,7 +32,6 @@ before_install:
   - ./.travis/build_geant4.sh
 install:
   # build dagmc
-  - cd DAGMC
   - mkdir bld
   - cd bld
   - cmake ../. -DBUILD_TALLY=ON -DBUILD_GEANT4=ON -DGEANT4_DIR=$HOME/.ccache/geant4.10.00.p02 -DCMAKE_INSTALL_PREFIX=$ROOT_DIR/DAGMC
