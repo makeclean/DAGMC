@@ -25,13 +25,13 @@ before_install:
   - cd ..
   - export ROOT_DIR="$PWD"
   # build cmake
-  - .travis/build_cmake.sh
+  - ./.travis/build_cmake.sh
   # build hdf5
-  - .travis/build_hdf5.sh
+  - ./.travis/build_hdf5.sh
   # build moab
-  - .travis/build_moab.sh
+  - ./.travis/build_moab.sh
   # build geant4
-  - .travis/build_geant4.sh
+  - ./.travis/build_geant4.sh
 install:
   # build dagmc
   - cd DAGMC
