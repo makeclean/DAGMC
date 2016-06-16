@@ -34,6 +34,7 @@ install:
   # build dagmc
   - mkdir bld
   - cd bld
+  - env
   - cmake ../. -DBUILD_TALLY=ON -DBUILD_GEANT4=ON -DGEANT4_DIR=$HOME/.ccache/geant4.10.00.p02 -DCMAKE_INSTALL_PREFIX=$ROOT_DIR/DAGMC
   - make 
   - make install
