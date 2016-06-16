@@ -57,7 +57,7 @@ before_install:
   - autoreconf -fi
   - mkdir bld
   - cd bld
-  - ../configure --enable-dagmc --enable-shared --disable-debug --enable-optimize --with-hdf5=$ROOT_DIR/hdf5 --prefix=$HOME/.ccache/moab
+  - ../configure --enable-dagmc --enable-shared --disable-debug --enable-optimize --with-hdf5=$HOME/.ccache/hdf5 --prefix=$HOME/.ccache/moab
   - make -j2 > log-file 2>&1
   - make install
   - export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$HOME/.ccache/moab/lib/"
