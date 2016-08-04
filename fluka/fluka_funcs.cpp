@@ -805,11 +805,56 @@ void fludag_write_ididx(std::string ididx)
   file.close();
 }
 
+// Write material assignments using the simple style
+void fludag_write_simple(std::string matfile, std::string lfname) {
+
+  // get the material and density props
+  std::map<moab::EntityHandle,std::vector<std::string> > material_assignments = get_property_assignments("mat",3,":/");
+  
+  std::vector<std::string> material_props,density_props;
+
+  // loop over all volumes
+  for (unsigned int vol_i = 1 ; vol_i <= DAG->num_entities(3) ; vol_i++) {
+    int cellid = DAG->id_by_index( 3, vol_i );
+    moab::EntityHandle entity = DAG->entity_by_index( 3, vol_i );
+
+    material_props = material_assignments[entity];
+    // only one property allowed per volume
+    if( material_props.size() > 1 ) {
+      std::cout << "more than one material for volume with id " << cellid << std::endl;
+      std::cout << cellid << " has the following material assignments" << std::endl;
+      for ( int j = 0 ; j < material_props.size() ; j++ ) {
+	std::cout << material_props[j] << std::endl;
+      }
+      std::cout << "Please check your material assignments " << cellid << std::endl;
+      exit(EXIT_FAILURE);
+    }  
+    
+    // now that there is only one property
+    std::string material_name = material_props[0];
+    if ( !is_impl_comp ) {
+      if (material_name == "BLCKHOLE" || material_name == "GRAVEYARD") {
+	ostr << std::setw(10) << std::left  << "ASSIGNMAt";
+	ostr << std::setw(10) << std::right << "BLCKHOLE";
+	ostr << std::setw(10) << std::right << vol_i << std::endl;
+      } else {
+      // get the first 8 chars of the name
+	std::string mat_token = material_name.substr(0,8);
+      ostr << std::setw(10) << std::left  << "ASSIGNMAt";
+      ostr << std::setw(10) << std::right << mat_token;
+      ostr << std::setw(10) << std::right << vol_i << std::endl;
+      }
+    } else {
+      // we are the implicit compliment
+      ostr << std::setw(10) << std::left  << "ASSIGNMAt";
+      ostr << std::setw(10) << std::right << "VACUUM"; 
+      ostr << s
+    }
+}
+
 // FluDAG Material Card  Functions
 void fludag_write(std::string matfile, std::string lfname)
 {
-
-
   // Use DAG to read and count the volumes.
   std::map<int, std::string> map_name;
   if (0 == DAG->num_entities(3) ) {
@@ -820,6 +865,14 @@ void fludag_write(std::string matfile, std::string lfname)
   // get the pyne materials and tallies
   UWUW workflow_data = UWUW(matfile);
 
+  // check to see if uwuw file
+  if(workflow_data.material_library.size() == 0 ) {
+    // we are a non uwuw file
+    fludag_write_simple(matfile,lfname);
+    return;
+  } 
+
+  // get the workflow data
   std::list<pyne::Material> pyne_list;
   std::map<std::string, pyne::Material> pyne_map;
   pyne_map = workflow_data.material_library;
