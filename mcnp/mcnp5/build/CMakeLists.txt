@@ -43,6 +43,19 @@ if (NOT "/${MCNP_SRC_FILES};" MATCHES "/dagmc_mod.F90;")
 endif (NOT "/${MCNP_SRC_FILES};" MATCHES "/dagmc_mod.F90;")
 message(STATUS "DAG-MCNP5 version ${MCNP_VERSION} source files found")
 
+# MCNP source files all added
+if(BUILD_SOURCES)
+  set(result)
+  foreach(ITR ${MCNP_SRC_FILES})
+    if(ITR MATCHES "(.*)source.F90(.*)")
+      list(APPEND result ${ITR})
+    endif()
+  endforeach()
+  list(FIND MCNP_SRC_FILES ${result} pos)
+  list(REMOVE_AT MCNP_SRC_FILES ${pos})
+  list(APPEND MCNP_SRC_FILES "${PROJECT_SOURCE_DIR}/sources/source.F90")
+endif(BUILD_SOURCES)
+
 # C compiler flags
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -m64")
 
@@ -133,6 +146,11 @@ add_executable(${MCNP_EXEC} ${MCNP_SRC_FILES})
 
 # Make sure the executable is compiled as Fortran
 set_target_properties(${MCNP_EXEC} PROPERTIES LINKER_LANGUAGE Fortran)
+
+# source sampling
+if(BUILD_SOURCES)
+  target_link_libraries(${MCNP_EXEC} source_sampling)
+endif(BUILD_SOURCES)
 
 # Link appropriate libraries
 if (MCNP5_PLOT)
