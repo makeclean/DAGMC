@@ -1,0 +1,26 @@
+message(STATUS "Building Source Sampling library")
+
+# Source files
+set(SRC_FILES "measure.cpp source_sampling.cpp")
+
+# Public headers
+set(PUB_HEADERS "measure.h source_sampling.h")
+
+# Linked libraries
+#set(LINK_LIBS)
+##list(APPEND LINK_LIBS ${HDF5_hdf5_hl_LIBRARY})
+#list(APPEND LINK_LIBS ${HDF5_hdf5_LIBRARY})
+
+# Include directories
+include_directories(.)
+#include_directories(${HDF5_INCLUDE_DIRS})
+
+# Build pyne_dagmc library
+add_library(source_sampling ${LIB_TYPE} ${SRC_FILES})
+set_target_properties(source_sampling PROPERTIES PUBLIC_HEADER ${PUB_HEADERS})
+target_link_libraries(source_sampling ${LINK_LIBS})
+install(TARGETS source_sampling LIBRARY       DESTINATION ${INSTALL_LIB_DIR}
+                           ARCHIVE       DESTINATION ${INSTALL_LIB_DIR}
+                           PUBLIC_HEADER DESTINATION ${INSTALL_INCLUDE_DIR}
+                           LIBRARY       PERMISSIONS ${PERMS}
+                           ARCHIVE       PERMISSIONS ${PERMS})

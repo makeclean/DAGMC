@@ -64,6 +64,7 @@ if (BUILD_ALL)
   set(BUILD_MCNP5 ON)
   set(BUILD_GEANT4 ON)
   set(BUILD_FLUKA ON)
+  set(BUILD_SOURCES ON)
 endif (BUILD_ALL)
 if (BUILD_MCNP5)
   set(BUILD_TALLY ON)
@@ -71,6 +72,11 @@ endif (BUILD_MCNP5)
 
 # Build pyne_dagmc library
 add_subdirectory(pyne)
+
+# build sources library
+if(BUILD_SOURCES)
+  add_subdirectory(sources)
+endif(BUILD_SOURCES)
 
 # Build dagtally library
 if (BUILD_TALLY)
