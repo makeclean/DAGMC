@@ -18,7 +18,7 @@ include_directories(${MOAB_INCLUDE_DIRS})
 #include_directories(${HDF5_INCLUDE_DIRS})
 
 # Build pyne_dagmc library
-add_library(source_sampling ${LIB_TYPE} ${SRC_FILES})
+add_library(source_sampling STATIC ${SRC_FILES})
 #set_target_properties(source_sampling PROPERTIES PUBLIC_HEADER PUB_HEADERS)
 target_link_libraries(source_sampling ${LINK_LIBS})
 #install(TARGETS source_sampling LIBRARY       DESTINATION ${INSTALL_LIB_DIR}
