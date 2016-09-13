@@ -23,7 +23,7 @@ void generate_colors(int num_colors);
  * Write the DAGMC geometry to a POV Mesh2 type input
  */
 void write_mesh(std::vector<moab::EntityHandle> triangles, std::set<moab::EntityHandle> vertices,
-		std::vector<double>,bool box = false);
+		std::vector<double>, rgb_i colors, bool box = false);
 /**
  * Adds a camera to the problem and therefore sets at which point we look at
  */
@@ -73,8 +73,8 @@ int main(int argc, char* argv[]) {
       input_file = std::string(argv[i+1]);
       std::ifstream f(input_file.c_str());
       if(!f.good()) {
-	std::cout << "File doesnt exist" << std::endl;
-	return -1;
+      	std::cout << "File doesnt exist" << std::endl;
+      	return -1;
       }
     }
     
@@ -108,7 +108,7 @@ int main(int argc, char* argv[]) {
   }
 
   // open the output file
-  povout.open(output_file);
+  povout.open(output_file.c_str());
 
   // try to load UWUW data to assign colours
   UWUW *uwuw = new UWUW(input_file);
@@ -173,7 +173,7 @@ int main(int argc, char* argv[]) {
     std::cout << "Writing volume " << i+1 << " of " << volumes.size() << std::endl;
     // get the color for this volume
     rgb_i color_value = colorbar[i];
-    write_mesh(triangles,vertex_list,box_dims,box,color_value);
+    write_mesh(triangles,vertex_list,box_dims,color_value,box);
   }
   
   std::cout << "Adding camera ..." << std::endl;
@@ -205,7 +205,7 @@ void add_camera(std::vector<double> origin, std::vector<double> look_at) {
  * writes a pov ray mesh object 
  */
 void write_mesh(std::vector<moab::EntityHandle> triangles, std::set<moab::EntityHandle> vertices, 
-		std::vector<double> box_dims, bool box, rgb_i color_value) {
+		std::vector<double> box_dims, rgb_i color_value, bool box) {
   
   if ( box )
     povout << "difference {" << std::endl;

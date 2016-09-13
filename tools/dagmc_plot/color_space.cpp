@@ -18,9 +18,9 @@ std::vector<rgb_i> colorspace::getRGBtable(unsigned int num_divisions) {
   // build floating point list of rgb colors
   for ( unsigned int i = 0 ; i < num_divisions ; i++ ) {
       double h = bin_width*float(i);
-      std::cout << h << std::endl;
       rgb_f value = getRGBfromHSV(h,1.0,1.0);
       rgb_table.push_back(rgbFloatToInt(value));
+      std::cout << rgb_table[i].r << " " << rgb_table[i].g << " " << rgb_table[i].b << std::endl;
   } 
   return rgb_table;
 }
