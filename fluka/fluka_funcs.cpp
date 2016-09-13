@@ -791,8 +791,7 @@ std::set<int> make_exception_set()
 }
 
 // FluDAG Material Card  Functions
-void fludag_write_ididx(std::string ididx)
-{
+void fludag_write_ididx(std::string ididx) {
   int num_vols = DAG->num_entities(3);
   std::ofstream file;
   file.open(ididx.c_str());
@@ -805,12 +804,8 @@ void fludag_write_ididx(std::string ididx)
 }
 
 // FluDAG Material Card  Functions
-void fludag_write(std::string matfile, std::string lfname)
-{
-
-
-  // Use DAG to read and count the volumes.
-  std::map<int, std::string> map_name;
+void fludag_write(std::string matfile, std::string lfname) {
+  
   if (0 == DAG->num_entities(3) ) {
     std::cout << "Error: there are no volumes in this geometry!" << std::endl;
     return;
@@ -823,30 +818,44 @@ void fludag_write(std::string matfile, std::string lfname)
   std::map<std::string, pyne::Material> pyne_map;
   pyne_map = workflow_data.material_library;
 
+  std::ofstream lcadfile (lfname.c_str());
+  
+  if(pyne_map.material_library.size() == 0) // then its the legacy workflow
+    legacy_write_data(lcadfile);
+  else 
+    uwuw_write_data(pyne_map,lcadfile);
+
+  // all done
+  lcadfile.close();
+}
+
+// write legacy data
+void legacy_write_data(std::ofstream &lcadfile) {
+  
+}
+
+// write the uwuw data to file
+void uwuw_write_data(std::map<std::string,pyne::Material> pyne_map, std::ofstream &lcadfile) {
   // ASSIGNMA Cards
   std::ostringstream astr;
-  fludagwrite_assignma(astr, pyne_map, map_name);
-
+  fludagwrite_assignma(astr, pyne_map);
+  
   // write COMPOUND CARDS
   std::ostringstream mstr;
   fludag_all_materials(mstr, pyne_map);
-
+  
   // Write all the streams to the input file
   std::string header = "*...+....1....+....2....+....3....+....4....+....5....+....6....+....7...";
-  std::ofstream lcadfile (lfname.c_str());
   lcadfile << header << std::endl;
   lcadfile << astr.str();
   lcadfile << header << std::endl;
   lcadfile << mstr.str();
-
   lcadfile << header << std::endl;
+  
   lcadfile << "* UW**2 tallies" << std::endl;
   mstr.str("");
   fludag_all_tallies(mstr,workflow_data.tally_library);
   lcadfile << mstr.str();
-
-  // all done
-  lcadfile.close();
 }
 
 //---------------------------------------------------------------------------//
@@ -855,8 +864,7 @@ void fludag_write(std::string matfile, std::string lfname)
 // Put the ASSIGNMAt statements in the output ostringstream
 void fludagwrite_assignma(std::ostringstream& ostr,
                           std::map<std::string, pyne::Material> pyne_map,
-                          std::map<int, std::string> map_name)
-{
+                          std::map<int, std::string> map_name) {
 
   // get the material and density props
   std::map<moab::EntityHandle,std::vector<std::string> > material_assignments = get_property_assignments("mat",3,":/");
@@ -931,8 +939,7 @@ void fludagwrite_assignma(std::ostringstream& ostr,
 
 
 // Get tally cards for all tallies in the problem
-void fludag_all_tallies(std::ostringstream& mstr, std::map<std::string,pyne::Tally> tally_map)
-{
+void fludag_all_tallies(std::ostringstream& mstr, std::map<std::string,pyne::Tally> tally_map) {
   int start_unit = 21; // starting unit number for tallies
 
   std::map<std::string,pyne::Tally>::iterator it;
@@ -984,8 +991,8 @@ void fludag_all_tallies(std::ostringstream& mstr, std::map<std::string,pyne::Tal
 // fludag_all_materials
 //---------------------------------------------------------------------------//
 // Get material cards for all materials in the problem, both elemental and compounds
-void fludag_all_materials(std::ostringstream& mstr, std::map<std::string,pyne::Material> pyne_map)
-{
+void fludag_all_materials(std::ostringstream& mstr, std::map<std::string,pyne::Material> pyne_map) {
+  
   std::set<int> exception_set = make_exception_set();
 
   std::map<int, std::string> map_nucid_fname;
@@ -1060,8 +1067,7 @@ void region2name(int volindex, std::string &vname )  // file with cell/surface c
 
 // get all property in all volumes
 std::map<moab::EntityHandle,std::vector<std::string> > get_property_assignments(std::string property,
-    int dimension, std::string delimiters)
-{
+    int dimension, std::string delimiters) {
 
   std::map<moab::EntityHandle,std::vector<std::string> > prop_map;
 
