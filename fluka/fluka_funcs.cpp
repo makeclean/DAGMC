@@ -843,6 +843,7 @@ void fludag_write(std::string matfile, std::string lfname)
   lcadfile << "* UW**2 tallies" << std::endl;
   mstr.str("");
   fludag_all_tallies(mstr,workflow_data.tally_library);
+
   lcadfile << mstr.str();
 
   // all done
@@ -934,7 +935,7 @@ void fludagwrite_assignma(std::ostringstream& ostr,
 void fludag_all_tallies(std::ostringstream& mstr, std::map<std::string,pyne::Tally> tally_map)
 {
   int start_unit = 21; // starting unit number for tallies
-
+  int last_unit_number = start_unit; // last unit number accessed
   std::map<std::string,pyne::Tally>::iterator it;
 
   // generate number of tally/particle pairs
@@ -968,14 +969,19 @@ void fludag_all_tallies(std::ostringstream& mstr, std::map<std::string,pyne::Tal
     std::list<std::string>::iterator iter = std::find (tally_parts.begin(), tally_parts.end(), tally_id);
 
     int unit_number = std::distance(tally_parts.begin(), iter) + start_unit;
-
+    last_unit_number = unit_number;
     ss.str(std::string());
     ss << "-";
     ss << unit_number;
 
-
     mstr << tally.fluka(ss.str()) << std::endl;
   }
+
+  #ifdef NASA
+    std::cout << " NASA " << std::endl;
+    nasa_cancer_risk_scores(mstr,last_unit_number);
+  #endif
+
 
   return;
 }
@@ -1107,3 +1113,91 @@ std::map<moab::EntityHandle,std::vector<std::string> > get_property_assignments(
 
   return prop_map;
 }
+
+#ifdef NASA
+
+// determine on which volumes we are to determine cancer risk
+void nasa_cancer_risk_scores(std::ostringstream& mstr, int unit_number) {
+  // loop over the volumes looking for tally:NASA/CancerRisk
+  // if found, make a UWUW tally for that particle type and print a AUXSCORE
+
+  // get the tally data
+  std::map<moab::EntityHandle,std::vector<std::string> > tally_assignments = get_property_assignments("tally",3,":/");
+
+  // vector of tally properties
+  std::vector<std::string> tally_props;
+
+  //increment unit number by 1;
+  unit_number++;
+
+  // loop over all volumes
+  for (unsigned int vol_i = 1 ; vol_i <= DAG->num_entities(3) ; vol_i++) {
+    int cellid = DAG->id_by_index( 3, vol_i );
+    moab::EntityHandle entity = DAG->entity_by_index( 3, vol_i );
+    double volume = 0.;
+    moab::ErrorCode rval = DAG->measure_volume(entity,volume);
+    tally_props = tally_assignments[entity];
+    std::cout << tally_props.size() << std::endl;
+    if (tally_props.size() == 1 )
+      if ( tally_props[0] == "NASA") {
+	print_cancerrisk_score(mstr, vol_i, unit_number, volume);
+      }
+  }
+  return;
+}
+
+// print the auxscore for a heavy ion
+void print_auxscore(std::ostream& mstr, int z, int a, std::string tally_name) {
+  
+  mstr << std::setw(10) << std::left << "AUXSCORE";
+  mstr << std::setw(10) << std::right << "USRTRACK";
+  int az = -1*((a*100000)+(z*100)); 
+  mstr << std::setw(10) << std::right << az;
+  mstr << std::setw(10) << " ";
+  mstr << std::setw(8) << std::right << tally_name;
+  mstr << std::endl;
+}
+
+// print an individual score for the defined cancer risk scoring method
+void print_cancerrisk_score(std::ostringstream& mstr, int vol_idx, int unit_number, double volume) {
+  // for the given volume
+  for ( int i = 0 ; i < NUM_SPECIES ; i++ ) {
+    
+    // we keep each specicies in a seperate unit
+    int local_unit_number = unit_number + i;
+    
+    pyne::Tally tally;
+    std::string particle_name;
+    if ( z[i] <= 1 ) {
+      // use the ones in the header unless you are a heavy ion
+      particle_name = particle_names[i];
+    } else {
+      // make a pyne nucid
+      int nucid = z[i]*10000000 + a[i]*10000;
+      particle_name = pyne::nucname::name(nucid);
+      particle_name +=  "\0";
+    }
+    std::cout << particle_name << std::endl;
+
+    // make a new tally 
+    tally.tally_type = "Flux";
+    tally.entity_id = vol_idx;
+    tally.particle_name = particle_name;
+    tally.entity_type = "Volume";
+    tally.entity_name = std::to_string(vol_idx)+".";
+    std::string tally_name = "CAN"+std::to_string(z[i])+"/"+std::to_string(a[i])+"     "; // pad with spaces 
+    tally.tally_name = tally_name;
+    tally.entity_size = volume;
+    tally.normalization = 1.0;
+
+    // print the auxscore
+    if ( z[i] > 2 ) 
+      print_auxscore(mstr, z[i], a[i], tally_name);
+    
+    // print the tally
+    mstr << tally.fluka(std::to_string(local_unit_number));
+    mstr << std::endl;
+  }
+}
+
+#endif 

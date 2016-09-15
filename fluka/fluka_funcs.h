@@ -529,4 +529,32 @@ std::map<moab::EntityHandle,std::vector<std::string> > get_property_assignments(
 
 /*** end of uwuw functions ***/
 
+
+/* NASA Specific Functions */
+#ifdef NASA
+
+const int NUM_SPECIES = 59;
+const std::vector<int> z = {0,1,1,1,2,2,3,3,4,4,5,5,6,6,
+			    7,7,8,8,9,9,10,10,10,11,12,12,
+			    12,13,14,15,16,16,16,17,18,17,
+			    18,19,18,19,20,20,20,21,22,22,
+			    22,22,23,23,24,24,24,25,25,26,
+			    26,27,28};
+
+const std::vector<int> a = {1,1,2,3,3,4,6,7,8,9,10,11,12,
+			    13,14,15,16,17,18,19,20,21,22,
+			    23,24,25,26,27,28,29,30,31,32,
+			    33,34,35,36,37,38,39,40,41,42,
+			    43,44,45,46,47,48,49,50,51,52,
+			    53,54,55,56,57,58};
+
+const std::vector<std::string> particle_names = {"Neutron","Proton","Deuteron","Triton"};
+
+void nasa_cancer_risk_scores(std::ostringstream& mstr, int unit_number);
+void print_auxscore(std::ostream& mstr, int z, int a, std::string tally_name);
+void print_cancerrisk_score(std::ostringstream& mstr, int vol_idx, int unit_number, double volume);
+
+#endif
+
+
 #endif /* DAGMC_FLUKA_FLUKA_FUNCS_H */

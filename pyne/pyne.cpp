@@ -6837,6 +6837,8 @@ std::string pyne::particle::_names[NUM_PARTICLES] = {
   "AntiNeutron",
   "Proton",
   "AntiProton",
+  "Deuteron",
+  "Triton",
   // strange baryons
   "Lambda",
   "AntiLambda",
@@ -6878,6 +6880,8 @@ int pyne::particle::_pdcids[NUM_PARTICLES] = {
   -2112,
   2212,
   -2212,
+  0,
+  0,
   // strange Baryons
   3122,
   -3122,
@@ -6941,6 +6945,8 @@ void * pyne::particle::_fill_maps()
     "Anti Neutron",
     "Proton",
     "Anti Proton",
+    "Deuteron",
+    "Triton",
     // strange baryons
     "Lambda",
     "Anti Lambda",
@@ -6981,16 +6987,20 @@ void * pyne::particle::_fill_maps()
   part_to_mcnp6["Photon"]="P";
   part_to_mcnp6["Electron"]="E";
   part_to_mcnp6["Proton"]="H";
+  part_to_mcnp6["Deuteron"]="D";
+  part_to_mcnp6["Triton"]="T";
 
   part_to_fluka["Electron"]="ELECTRON";
   part_to_fluka["Positron"]="POSITRON";
   part_to_fluka["ElectronNeutrino"] ="NEUTRIE";
   part_to_fluka["ElectronAntiNeutrino"] ="ANEUTRIE";
+  part_to_fluka["Deuteron"] = "DEUTERON";
+  part_to_fluka["Triton"] = "TRITON";
   part_to_fluka["Muon"]="MUON+";
   part_to_fluka["AntiMuon"]="MUON-";
   part_to_fluka["MuonNeutrino"]="NEUTRIM";
-  part_to_fluka["MuonAntiNeutrino"]="ANEUTRIM",
-                                    part_to_fluka["Tauon"]="TAU+";
+  part_to_fluka["MuonAntiNeutrino"]="ANEUTRIM";
+  part_to_fluka["Tauon"]="TAU+";
   part_to_fluka["Anti Tauon"]="TAU-";
   part_to_fluka["TauNeutrino"]="NEUTRIT";
   part_to_fluka["TauAntiNeutrino"]="ANEUTRIT";
@@ -7185,6 +7195,7 @@ std::string pyne::particle::name(char *s)
 std::string pyne::particle::name(std::string s)
 {
   // check if is a hydrogen
+  std::cout << s << std::endl;
   if(pyne::nucname::isnuclide(s)) {
     if(pyne::particle::is_hydrogen(s))
       return "Proton";
@@ -7257,11 +7268,24 @@ std::string pyne::particle::fluka(char *s)
 
 std::string pyne::particle::fluka(std::string s)
 {
-  if (pyne::particle::is_heavy_ion(s))
-    return "HEAVYION";
-  else if(0 < part_to_fluka.count(pyne::particle::name(s)))
+  if (pyne::particle::is_heavy_ion(s)) {
+    int znum = pyne::nucname::znum(s);
+    if ( znum > 2 ) {
+      return "HEAVYION";
+    } else {
+      int anum = pyne::nucname::anum(s);
+      if( anum == 3 )
+	return "3-HELIUM";
+      else if ( anum == 4 )
+	return "4-HELIUM";
+      else {
+	std::cout << "Not a valid Fluka particle" << std::endl;
+	return "???????";
+      }
+    }
+  } else if (0 < part_to_fluka.count(pyne::particle::name(s))) {
     return part_to_fluka[pyne::particle::name(s)];
-  else {
+  } else {
     std::cout << "Not a valid Fluka particle" << std::endl;
     return "???????";
   }
@@ -16590,8 +16614,8 @@ std::string pyne::Tally::fluka(std::string unit_number)
            << tally_name; // may need to make sure less than 10 chars
     output << std::endl;
     output << std::setw(10) << std::left  << "USRTRACK";
-    output << std::setw(10) << std::right << "   10.E1";
-    output << std::setw(10) << std::right << "   1.E-3";
+    output << std::setw(10) << std::right << "   1.0E2";
+    output << std::setw(10) << std::right << "   1.E-6";
     output << std::setw(10) << std::right << "        ";
     output << std::setw(10) << std::right << "        ";
     output << std::setw(10) << std::right << "        ";

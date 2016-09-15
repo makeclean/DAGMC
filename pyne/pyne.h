@@ -1752,7 +1752,7 @@ class IndeterminateReactionForm : public std::exception
 #endif
 
 /// Number of pure particle types currently supported
-#define NUM_PARTICLES 32
+#define NUM_PARTICLES 34
 
 namespace pyne
 {

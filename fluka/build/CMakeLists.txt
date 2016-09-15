@@ -1,6 +1,9 @@
 message(STATUS "Building FluDAG")
 
 enable_language(Fortran)
+if(NASA)
+  add_definitions(-DNASA)
+endif(NASA)
 
 # Source files
 set(SRC_FILES mainFluDAG.cpp)
