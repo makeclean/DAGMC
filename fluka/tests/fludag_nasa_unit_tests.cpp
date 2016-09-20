@@ -61,7 +61,8 @@ TEST_F(FluDAGNasaTest, SetUp)
 // Tests
 //---------------------------------------------------------------------------//
 // Test test to make sure the auxscore card is correct
-TEST_F(FluDAGNasaTest, FileCorrectLi6) {
+TEST_F(FluDAGNasaTest, FileCorrectLi6)
+{
   // call the fluka function
   std::ostringstream out;
   print_auxscore(out,3,6,"TEST");
@@ -72,7 +73,8 @@ TEST_F(FluDAGNasaTest, FileCorrectLi6) {
 //---------------------------------------------------------------------------//
 //---------------------------------------------------------------------------//
 // Test test to make sure the auxscore card is correct
-TEST_F(FluDAGNasaTest, FileCorrectLi7) {
+TEST_F(FluDAGNasaTest, FileCorrectLi7)
+{
   // call the fluka function
   std::ostringstream out;
   print_auxscore(out,3,7,"TEST");
@@ -82,7 +84,8 @@ TEST_F(FluDAGNasaTest, FileCorrectLi7) {
 }
 //---------------------------------------------------------------------------//
 // Test test to make sure the auxscore card is correct
-TEST_F(FluDAGNasaTest, FileCorrectU238) {
+TEST_F(FluDAGNasaTest, FileCorrectU238)
+{
   // call the fluka function
   std::ostringstream out;
   print_auxscore(out,92,238,"TEST");

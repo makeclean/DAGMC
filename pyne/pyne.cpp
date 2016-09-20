@@ -7275,12 +7275,12 @@ std::string pyne::particle::fluka(std::string s)
     } else {
       int anum = pyne::nucname::anum(s);
       if( anum == 3 )
-	return "3-HELIUM";
+        return "3-HELIUM";
       else if ( anum == 4 )
-	return "4-HELIUM";
+        return "4-HELIUM";
       else {
-	std::cout << "Not a valid Fluka particle" << std::endl;
-	return "???????";
+        std::cout << "Not a valid Fluka particle" << std::endl;
+        return "???????";
       }
     }
   } else if (0 < part_to_fluka.count(pyne::particle::name(s))) {
