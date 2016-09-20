@@ -1,6 +1,7 @@
 message(STATUS "Building FluDAG")
 
 enable_language(Fortran)
+# nasa speific options
 if(NASA)
   add_definitions(-DNASA)
   # if nasa build pull the GCR source information
@@ -26,7 +27,8 @@ include_directories(${MOAB_INCLUDE_DIRS})
 
 # custom source routine
 if(NASA)
-  set(SOURCE_DIR ${CMAKE_SOURCE_DIR}/bld/fluka/build/sragcodes-prefix/src/sragcodes/RadSource)
+  # set the source path to the source.f file in SRAG codes
+  set(SOURCE_DIR ${CMAKE_BINARY_DIR}/fluka/build/sragcodes-prefix/src/sragcodes/RadSource)
   set(FLUKA_FILE ${SOURCE_DIR}/source.f)
   set(FLUKA_INCLUDES ${FLUKA_DIR}/flukapro)
 
@@ -36,19 +38,19 @@ if(NASA)
        DEPENDS ${FLUKA_FILE} sragcodes
        COMMENT "Custom command to compile source object with parenthetically named includes"
        )
-#  add_custom_target(source DEPENDS source.o sraglib )
+# add_custom_target(source DEPENDS source.o sraglib )
 endif(NASA)
 
 # Build FluDAG
-if(NASA)
+if(NASA) # build the NASA defaults
  add_executable (mainfludag ${SRC_FILES} source.o)
- target_link_libraries(mainfludag gcrsource ${LINK_LIBS})
+ target_link_libraries(mainfludag ${CMAKE_INSTALL_PREFIX}/lib/libgcrsource.a ${LINK_LIBS})
 else(NASA)
  add_executable (mainfludag ${SRC_FILES})
  target_link_libraries(mainfludag ${LINK_LIBS})
 endif(NASA)
 
-
+# install the executable
 install(TARGETS mainfludag DESTINATION ${INSTALL_BIN_DIR}
                            PERMISSIONS ${PERMS})
 
