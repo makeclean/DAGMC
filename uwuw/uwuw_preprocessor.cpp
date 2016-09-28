@@ -313,14 +313,15 @@ void uwuw_preprocessor::get_dagmc_properties()
     // if we have results back from parse props
     if ( tally_assignments.count(entity) != 0 ) {
       // if they aren't blank
-      if(tally_props[0] != "") {
-        // make the tally pair and
-        std::vector<std::string> :: iterator iter;
-        for ( iter = tally_props.begin() ; iter != tally_props.end() ; ++iter) {
-          std::string this_tally = *iter;
-          tally_info tally_data = make_tally_groupname(this_tally,3,entity);
-          tally_list.push_back(tally_data);
-        }
+      std::vector<std::string> :: iterator iter;
+      for ( iter = tally_props.begin() ; iter != tally_props.end() ; ++iter) {
+	std::string this_tally = *iter;
+	
+	if(this_tally != "" && this_tally != "NASA/CancerRisk") {
+	  // make the tally pair and
+	  tally_info tally_data = make_tally_groupname(this_tally,3,entity);
+	  tally_list.push_back(tally_data);
+	}
       }
     }
   }
