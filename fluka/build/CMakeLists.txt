@@ -7,11 +7,12 @@ if(NASA)
   # if nasa build pull the GCR source information
   include(ExternalProject)
   ExternalProject_Add(sragcodes
-  GIT_REPOSITORY https://github.com/kerrylee01/SRAGCodes
-  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
-             -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
-             -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-	     -DCMAKE_Fortran_COMPILER=${CMAKE_Fortran_COMPILER}
+    GIT_REPOSITORY https://github.com/makeclean/SRAGCodes
+    GIT_TAG fix_namespace_clash
+    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+               -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+               -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+	       -DCMAKE_Fortran_COMPILER=${CMAKE_Fortran_COMPILER}
   )
 endif(NASA)
 
