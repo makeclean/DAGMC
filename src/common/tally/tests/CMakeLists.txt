@@ -7,7 +7,6 @@ list(APPEND LINK_LIBS pthread)
 list(APPEND LINK_LIBS dagtally)
 
 # Include directories
-include_directories(..)
 include_directories(${GTEST_INCLUDE_DIR})
 
 # CXX compiler flags

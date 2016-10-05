@@ -49,61 +49,13 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_LIST_DIR}/cmake)
 find_package(HDF5 REQUIRED)
 find_package(MOAB REQUIRED)
 
-# DAGMC_LIBRARIES used instead of MOAB_LIBRARIES for MOAB 4.7+
-if (DAGMC_LIBRARIES)
-  set(DAG_LINK_LIBS "${DAGMC_LIBRARIES}")
-else ()
-  set(DAG_LINK_LIBS "dagmc ${MOAB_LIBRARIES}")
-endif (DAGMC_LIBRARIES)
+set(DAG_LINK_LIBS "dagmc ${MOAB_LIBRARIES}")
 
-# Build Gtest
-add_subdirectory(gtest)
+set(GTEST_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/tools/gtest/gtest-1.7.0/include/)
 
-# Figure out which physics codes to build
-if (BUILD_ALL)
-  set(BUILD_MCNP5 ON)
-  set(BUILD_GEANT4 ON)
-  set(BUILD_FLUKA ON)
-endif (BUILD_ALL)
-if (BUILD_MCNP5)
-  set(BUILD_TALLY ON)
-endif (BUILD_MCNP5)
 
-# Build pyne_dagmc library
-add_subdirectory(pyne)
-
-# Build dagtally library
-if (BUILD_TALLY)
-  add_subdirectory(tally)
-endif (BUILD_TALLY)
-
-# Build MCNP5
-if (BUILD_MCNP5)
-  set(BUILD_ANY ON)
-  add_subdirectory(mcnp)
-endif (BUILD_MCNP5)
-
-# Build Geant4
-if (BUILD_GEANT4)
-  set(BUILD_ANY ON)
-  add_subdirectory(geant4)
-endif (BUILD_GEANT4)
-
-# Build FLUKA
-if (BUILD_FLUKA)
-  set(BUILD_ANY ON)
-  add_subdirectory(fluka)
-endif (BUILD_FLUKA)
-
-# Include UWUW in dagmciface library
-if (BUILD_ANY)
-  add_subdirectory(uwuw)
-endif (BUILD_ANY)
-
-# Build dagmciface library
-if (DI_SRC_FILES)
-  add_subdirectory(common)
-endif (DI_SRC_FILES)
+# Build the DAGMC Toolkit
+add_subdirectory(src)
 
 # Build tools
 add_subdirectory(tools)
