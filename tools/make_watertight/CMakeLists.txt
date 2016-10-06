@@ -20,7 +20,7 @@ list(APPEND PUB_HEADERS mw_func.hpp)
 
 # Libraries
 set(LINK_LIBS)
-list(APPEND LINK_LIBS ${DAG_LINK_LIBS})
+list(APPEND LINK_LIBS ${MOAB_LIBRARIES})
 
 # Define executables
 add_executable(make_watertight make_watertight.cpp ${SRC_FILES})

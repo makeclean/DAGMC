@@ -49,15 +49,12 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_LIST_DIR}/cmake)
 find_package(HDF5 REQUIRED)
 find_package(MOAB REQUIRED)
 
-# DAGMC_LIBRARIES used instead of MOAB_LIBRARIES for MOAB 4.7+
-if (DAGMC_LIBRARIES)
-  set(DAG_LINK_LIBS "${DAGMC_LIBRARIES}")
-else ()
-  set(DAG_LINK_LIBS "dagmc ${MOAB_LIBRARIES}")
-endif (DAGMC_LIBRARIES)
 
 # Build Gtest
 add_subdirectory(gtest)
+
+add_subdirectory(dagmc)
+
 
 # Figure out which physics codes to build
 if (BUILD_ALL)

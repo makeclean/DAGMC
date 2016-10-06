@@ -22,7 +22,7 @@ list(APPEND PUB_HEADERS test_classes.hpp)
 
 # Libraries
 set(LINK_LIBS)
-list(APPEND LINK_LIBS ${DAG_LINK_LIBS})
+list(APPEND LINK_LIBS ${MOAB_LIBRARIES})
 list(APPEND LINK_LIBS gtest)
 
 # Define executables
