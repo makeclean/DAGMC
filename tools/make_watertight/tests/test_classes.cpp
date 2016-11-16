@@ -11,6 +11,11 @@ void MakeWatertightTest::SetUp()
 {
   // set this classes test filename
   setFilename();
+
+  // setup the MakeWatertight class
+  mw = new MakeWatertight(MBI());
+  cw = new CheckWatertight(MBI());
+
   // delete meshset
   result = MBI()->delete_mesh();
   EXPECT_EQ(result,moab::MB_SUCCESS);
@@ -57,6 +62,24 @@ void MakeWatertightTest::TearDown()
   EXPECT_EQ(result,moab::MB_SUCCESS);
 };
 
+moab::ErrorCode MakeWatertightTest::check_num_ents(int ent_dimension, int expected_num)
+{
+  moab::ErrorCode result;
+  moab::Range entities;
+  moab::Tag geom_tag;
+  result = MBI()->tag_get_handle( "GEOM_DIMENSION", geom_tag);
+  MB_CHK_SET_ERR(result, "could not get the geometry dimension tag");
+  EXPECT_EQ(result, moab::MB_SUCCESS);
+  void *tag_ptr = &geom_tag;
+  const void *val_ptr = &ent_dimension;
+  result = MBI()->get_entities_by_type_and_tag(0, moab::MBENTITYSET, &geom_tag, &val_ptr, 1, entities, moab::Interface::INTERSECT, true);
+  MB_CHK_SET_ERR(result, "could not get the number of entities by dimension");
+  EXPECT_EQ(result, moab::MB_SUCCESS);
+
+  EXPECT_EQ(expected_num, entities.size());
+
+  return result;
+}
 
 moab::ErrorCode MakeWatertightTest::move_vert(moab::EntityHandle vertex, double dx, double dy, double dz, bool verbose)
 {
@@ -64,7 +87,7 @@ moab::ErrorCode MakeWatertightTest::move_vert(moab::EntityHandle vertex, double 
 //get coordinates from the mesh
   double coords[3];
   result= MBI()->get_coords(&vertex, 1, coords);
-  if(gen::error(moab::MB_SUCCESS!=result, "could not get the vertex coordinates")) return result;
+  MB_CHK_SET_ERR(result, "could not get the vertex coordinates");
 
   if(verbose) {
     //original coordinates
@@ -87,7 +110,7 @@ moab::ErrorCode MakeWatertightTest::move_vert(moab::EntityHandle vertex, double 
 
   //write new coordinates to the mesh
   result = MBI()->set_coords(&vertex, 1, coords);
-  if (gen::error(moab::MB_SUCCESS!=result, "could not set the vertex coordinates")) return result;
+  MB_CHK_SET_ERR(result, "could not set the vertex coordinates");
 
   return moab::MB_SUCCESS;
 }
@@ -98,7 +121,7 @@ moab::ErrorCode MakeWatertightTest::rand_vert_move(moab::EntityHandle vertex, do
   //get coordinates from the mesh
   double coords[3];
   result = MBI()->get_coords(&vertex, 1, coords);
-  if(gen::error(moab::MB_SUCCESS!=result, "could not get the vertex coordinates")) return result;
+  MB_CHK_SET_ERR(result, "could not get the vertex coordinates");
 
   // get random values for the changes in x,y,z
   double dx,dy,dz;
@@ -139,7 +162,7 @@ moab::ErrorCode MakeWatertightTest::rand_vert_move(moab::EntityHandle vertex, do
 
   //write new coordinates to the mesh
   result = MBI()->set_coords(&vertex, 1, coords);
-  if (gen::error(moab::MB_SUCCESS!=result, "could not set the vertex coordinates")) return result;
+  MB_CHK_SET_ERR(result, "could not set the vertex coordinates");
 
   return moab::MB_SUCCESS;
 }
@@ -150,7 +173,7 @@ moab::ErrorCode MakeWatertightTest::single_vert_bump(moab::Range verts, double b
   moab::EntityHandle vertex = verts.back();
   //move the desired vertex by the allotted distance
   result = move_vert(vertex, bump_dist_x, bump_dist_y, bump_dist_z);
-  if(gen::error(moab::MB_SUCCESS!=result, "could not move single vert")) return result;
+  MB_CHK_SET_ERR(result, "could not move single vert");
 
   return moab::MB_SUCCESS;
 }
@@ -163,9 +186,9 @@ moab::ErrorCode MakeWatertightTest::locked_pair_bump(moab::Range verts, double b
 
   //move the desired verticies by the allotted distance(s)
   result = move_vert(vertex1, bump_dist_x, bump_dist_y, bump_dist_z, verbose);
-  if(gen::error(moab::MB_SUCCESS!=result, "could not move vertex1")) return result;
+  MB_CHK_SET_ERR(result, "could not move vertex1");
   result = move_vert(vertex2, bump_dist_x, bump_dist_y, bump_dist_z, verbose);
-  if(gen::error(moab::MB_SUCCESS!=result, "could not move vertex2")) return result;
+  MB_CHK_SET_ERR(result, "could not move vertex2");
 
   return moab::MB_SUCCESS;
 }
@@ -178,9 +201,9 @@ moab::ErrorCode MakeWatertightTest::locked_pair_bump_rand(moab::Range verts, dou
 
   //move the desired verticies by the allotted distance(s)
   result = rand_vert_move(vertex1, facet_tol, verbose);
-  if(gen::error(moab::MB_SUCCESS!=result, "could not move vertex1")) return result;
+  MB_CHK_SET_ERR(result, "could not move vertex1");
   result = rand_vert_move(vertex2, facet_tol, verbose);
-  if(gen::error(moab::MB_SUCCESS!=result, "could not move vertex2")) return result;
+  MB_CHK_SET_ERR(result, "could not move vertex2");
 
   return moab::MB_SUCCESS;
 }
@@ -199,9 +222,9 @@ moab::ErrorCode MakeWatertightTest::rand_locked_pair_bump(moab::Range verts, dou
 
   //move the desired verticies by the allotted distance(s)
   result = move_vert(vertex1, bump_dist_x, bump_dist_y, bump_dist_z, verbose);
-  if(gen::error(moab::MB_SUCCESS!=result, "could not move vertex1")) return result;
+  MB_CHK_SET_ERR(result, "could not move vertex1");
   result = move_vert(vertex2, bump_dist_x, bump_dist_y, bump_dist_z, verbose);
-  if(gen::error(moab::MB_SUCCESS!=result, "could not move vertex2")) return result;
+  MB_CHK_SET_ERR(result, "could not move vertex2");
 
   return moab::MB_SUCCESS;
 }
@@ -220,9 +243,9 @@ moab::ErrorCode MakeWatertightTest::rand_locked_pair_bump_rand(moab::Range verts
 
   //move the desired verticies by the allotted distance(s)
   result = rand_vert_move(vertex1, facet_tol, verbose);
-  if(gen::error(moab::MB_SUCCESS!=result, "could not move vertex1")) return result;
+  MB_CHK_SET_ERR(result, "could not move vertex1");
   result = rand_vert_move(vertex2, facet_tol, verbose);
-  if(gen::error(moab::MB_SUCCESS!=result, "could not move vertex2")) return result;
+  MB_CHK_SET_ERR(result, "could not move vertex2");
 
   return moab::MB_SUCCESS;
 }
@@ -233,7 +256,7 @@ moab::ErrorCode MakeWatertightTest::rand_vert_bump(moab::Range verts, double fac
   moab::EntityHandle vertex = verts.back();
   //move the desired vertex by the allotted distance
   result = rand_vert_move(vertex, facet_tol, verbose);
-  if(gen::error(moab::MB_SUCCESS!=result, "could not move single vert")) return result;
+  MB_CHK_SET_ERR(result, "could not move single vert");
 
   return moab::MB_SUCCESS;
 }
@@ -247,9 +270,9 @@ moab::ErrorCode MakeWatertightTest::adjplone_locked_pair_bump(moab::Range verts,
 
   //move the desired verticies by the allotted distance(s)
   result = move_vert(vertex1, bump_dist_x, bump_dist_y, bump_dist_z, verbose);
-  if(gen::error(moab::MB_SUCCESS!=result, "could not move vertex1")) return result;
+  MB_CHK_SET_ERR(result, "could not move vertex1");
   result = move_vert(vertex2, bump_dist_x, bump_dist_y, bump_dist_z, verbose);
-  if(gen::error(moab::MB_SUCCESS!=result, "could not move vertex2")) return result;
+  MB_CHK_SET_ERR(result, "could not move vertex2");
 
   return moab::MB_SUCCESS;
 }
@@ -262,9 +285,9 @@ moab::ErrorCode MakeWatertightTest::adjplone_locked_pair_bump_rand(moab::Range v
 
   //move the desired verticies by the allotted distance(s)
   result = rand_vert_move(vertex1, facet_tol, verbose);
-  if(gen::error(moab::MB_SUCCESS!=result, "could not move vertex1")) return result;
+  MB_CHK_SET_ERR(result, "could not move vertex1");
   result = rand_vert_move(vertex2, facet_tol, verbose);
-  if(gen::error(moab::MB_SUCCESS!=result, "could not move vertex2")) return result;
+  MB_CHK_SET_ERR(result, "could not move vertex2");
 
   return moab::MB_SUCCESS;
 }
@@ -282,9 +305,9 @@ moab::ErrorCode MakeWatertightTest::nonadj_locked_pair_bump(moab::Range verts, d
 
   //move the desired verticies by the allotted distance(s)
   result = move_vert(vertex1, bump_dist_x, bump_dist_y, bump_dist_z, verbose);
-  if(gen::error(moab::MB_SUCCESS!=result, "could not move vertex1")) return result;
+  MB_CHK_SET_ERR(result, "could not move vertex1");
   result = move_vert(vertex2, bump_dist_x, bump_dist_y, bump_dist_z, verbose);
-  if(gen::error(moab::MB_SUCCESS!=result, "could not move vertex2")) return result;
+  MB_CHK_SET_ERR(result, "could not move vertex2");
 
   return moab::MB_SUCCESS;
 }
@@ -302,9 +325,9 @@ moab::ErrorCode MakeWatertightTest::nonadj_locked_pair_bump_rand(moab::Range ver
 
   //move the desired verticies by the allotted distance(s)
   result = rand_vert_move(vertex1, facet_tol, verbose);
-  if(gen::error(moab::MB_SUCCESS!=result, "could not move vertex1")) return result;
+  MB_CHK_SET_ERR(result, "could not move vertex1");
   result = rand_vert_move(vertex2, facet_tol, verbose);
-  if(gen::error(moab::MB_SUCCESS!=result, "could not move vertex2")) return result;
+  MB_CHK_SET_ERR(result, "could not move vertex2");
 
   return moab::MB_SUCCESS;
 }
@@ -315,7 +338,7 @@ moab::ErrorCode MakeWatertightTest::write_mod_file(std::string filename)
   std::string output_filename = filename + "_mod.h5m";
   //write file
   result = MBI()->write_mesh(output_filename.c_str());
-  if(gen::error(moab::MB_SUCCESS!=result,"could not write the mesh to output_filename")) return result;
+  MB_CHK_SET_ERR(result,"could not write the mesh to output_filename");
 
   return moab::MB_SUCCESS;
 }
@@ -323,19 +346,19 @@ moab::ErrorCode MakeWatertightTest::write_mod_file(std::string filename)
 bool MakeWatertightTest::seal_and_check(moab::EntityHandle input_set, double facet_tolerance, bool verbose)
 {
   // seal the model using make_watertight
-  result = mw_func::make_mesh_watertight(input_set, facet_tolerance, verbose);
-  if(gen::error(moab::MB_SUCCESS!=result, "could not make the mesh watertight")) return false;
+  result = mw->make_mesh_watertight(input_set, facet_tolerance, verbose);
+  MB_CHK_SET_ERR(result, "could not make the mesh watertight");
 
   // Check to see if make_watertight fixed the model by topology
   bool sealed, test = true, topo_test = true;
-  result = cw_func::check_mesh_for_watertightness(input_set, facet_tolerance, sealed, test, verbose, topo_test);
-  if(gen::error(moab::MB_SUCCESS!=result, "could not check model for watertightness")) return false;
+  result = cw->check_mesh_for_watertightness(input_set, facet_tolerance, sealed, test, verbose, topo_test);
+  MB_CHK_SET_ERR(result, "could not check model for watertightness");
   if(!sealed) return sealed;
 
   // Check to see if make_watertight fixed the model via proximity tolerance
   topo_test = false;
-  result = cw_func::check_mesh_for_watertightness(input_set, facet_tolerance, sealed, test, verbose, topo_test);
-  if(gen::error(moab::MB_SUCCESS!=result, "could not check model for watertightness")) return false;
+  result = cw->check_mesh_for_watertightness(input_set, facet_tolerance, sealed, test, verbose, topo_test);
+  MB_CHK_SET_ERR(result, "could not check model for watertightness");
 
   return sealed;
 }
@@ -385,7 +408,7 @@ moab::ErrorCode MakeWatertightCylinderTest::move_vert_theta(moab::EntityHandle v
   }
   //set new vertex coordinates
   result = MBI()->set_coords(&vertex, 1, coords);
-  if (gen::error(moab::MB_SUCCESS!=result, "could not set the vertex coordinates")) return result;
+  MB_CHK_SET_ERR(result, "could not set the vertex coordinates");
 
   return moab::MB_SUCCESS;
 }
@@ -401,7 +424,6 @@ moab::ErrorCode MakeWatertightCylinderTest::move_vert_R(moab::EntityHandle verte
 
   if(verbose) {
     //original coordinates
-    std::cout << "Vertex ID: " << gen::geom_id_by_handle(vertex) << std::endl;
     std::cout << std::endl << "Original Coordinates" << std::endl;
     std::cout << "x = " << coords[0] << std::endl;
     std::cout << "y = " << coords[1] << std::endl;
@@ -427,7 +449,7 @@ moab::ErrorCode MakeWatertightCylinderTest::move_vert_R(moab::EntityHandle verte
 
   //set new vertex coordinates
   result = MBI()->set_coords(&vertex, 1, coords);
-  if (gen::error(moab::MB_SUCCESS!=result, "could not set the vertex coordinates")) return result;
+  MB_CHK_SET_ERR(result, "could not set the vertex coordinates");
 
   return moab::MB_SUCCESS;
 }
@@ -439,7 +461,7 @@ moab::ErrorCode MakeWatertightCylinderTest::single_vert_bump_R(moab::Range verts
   moab::EntityHandle vertex=verts.back();
   //move the desired vertex by the allotted distance
   result = move_vert_R(vertex, facet_tol, verbose);
-  if(gen::error(moab::MB_SUCCESS!=result, "could not move single vert")) return result;
+  MB_CHK_SET_ERR(result, "could not move single vert");
 
   return moab::MB_SUCCESS;
 }
@@ -461,9 +483,9 @@ moab::ErrorCode MakeWatertightCylinderTest::rand_locked_pair_bump_theta(moab::Ra
 
   //move the desired verticies by the allotted distance(s)
   result = move_vert_theta(vertex1, facet_tol, verbose);
-  if(gen::error(moab::MB_SUCCESS!=result, "could not move vertex1")) return result;
+  MB_CHK_SET_ERR(result, "could not move vertex1");
   result = move_vert_theta(vertex2, facet_tol, verbose);
-  if(gen::error(moab::MB_SUCCESS!=result, "could not move vertex2")) return result;
+  MB_CHK_SET_ERR(result, "could not move vertex2");
 
   return moab::MB_SUCCESS;
 }
@@ -508,7 +530,7 @@ moab::ErrorCode MakeWatertightCylinderTest::theta_vert_bump(moab::Range verts, d
   //write new coordinates to the mesh
   // might not be necesarry any longer as we move to doing tests on a moab-instance basis
   result = MBI()->set_coords(&vertex, 1, coords);
-  if (gen::error(moab::MB_SUCCESS!=result, "could not set the vertex coordinates")) return result;
+  MB_CHK_SET_ERR(result, "could not set the vertex coordinates");
   // alter output filename
 
   return moab::MB_SUCCESS;
@@ -524,9 +546,9 @@ moab::ErrorCode MakeWatertightCylinderTest::locked_pair_bump_theta(moab::Range v
   moab::EntityHandle vertex2 = verts.back()-1;
 
   result = move_vert_theta(vertex1, tolerance, verbose);
-  if(gen::error(moab::MB_SUCCESS!=result,"could not move vertex1 along theta")) return result;
+  MB_CHK_SET_ERR(result,"could not move vertex1 along theta");
   result = move_vert_theta(vertex2, tolerance, verbose);
-  if(gen::error(moab::MB_SUCCESS!=result,"could not move vertex1 along theta")) return result;
+  MB_CHK_SET_ERR(result,"could not move vertex1 along theta");
 
   return moab::MB_SUCCESS;
 }
@@ -541,9 +563,9 @@ moab::ErrorCode MakeWatertightCylinderTest::adjplone_locked_pair_bump_theta(moab
 
   //move the desired verticies by the allotted distance(s)
   result = move_vert_theta(vertex1, facet_tol, verbose);
-  if(gen::error(moab::MB_SUCCESS!=result, "could not move vertex1")) return result;
+  MB_CHK_SET_ERR(result, "could not move vertex1");
   result = move_vert_theta(vertex2, facet_tol, verbose);
-  if(gen::error(moab::MB_SUCCESS!=result, "could not move vertex2")) return result;
+  MB_CHK_SET_ERR(result, "could not move vertex2");
 
   return moab::MB_SUCCESS;
 }
@@ -556,9 +578,9 @@ moab::ErrorCode MakeWatertightCylinderTest::locked_pair_bump_R(moab::Range verts
 
   //move the desired verticies by the allotted distance(s)
   result = move_vert_R(vertex1, facet_tol, verbose);
-  if(gen::error(moab::MB_SUCCESS!=result, "could not move vertex1")) return result;
+  MB_CHK_SET_ERR(result, "could not move vertex1");
   result = move_vert_R(vertex2, facet_tol, verbose);
-  if(gen::error(moab::MB_SUCCESS!=result, "could not move vertex2")) return result;
+  MB_CHK_SET_ERR(result, "could not move vertex2");
 
   return moab::MB_SUCCESS;
 }
@@ -577,9 +599,9 @@ moab::ErrorCode MakeWatertightCylinderTest::rand_locked_pair_bump_R(moab::Range 
   moab::EntityHandle vertex2=(verts.back()-index-1);
   //move the desired verticies by the allotted distance(s)
   result = move_vert_R(vertex1, facet_tol, verbose);
-  if(gen::error(moab::MB_SUCCESS!=result, "could not move vertex1")) return result;
+  MB_CHK_SET_ERR(result, "could not move vertex1");
   result = move_vert_R(vertex2, facet_tol, verbose);
-  if(gen::error(moab::MB_SUCCESS!=result, "could not move vertex2")) return result;
+  MB_CHK_SET_ERR(result, "could not move vertex2");
 
   return moab::MB_SUCCESS;
 }
@@ -593,9 +615,9 @@ moab::ErrorCode MakeWatertightCylinderTest::adjplone_locked_pair_bump_R(moab::Ra
 
   //move the desired verticies by the allotted distance(s)
   result = move_vert_R(vertex1, facet_tol, verbose);
-  if(gen::error(moab::MB_SUCCESS!=result, "could not move vertex1")) return result;
+  MB_CHK_SET_ERR(result, "could not move vertex1");
   result = move_vert_R(vertex2, facet_tol, verbose);
-  if(gen::error(moab::MB_SUCCESS!=result, "could not move vertex2")) return result;
+  MB_CHK_SET_ERR(result, "could not move vertex2");
 
   return moab::MB_SUCCESS;
 }
@@ -613,9 +635,9 @@ moab::ErrorCode MakeWatertightCylinderTest::nonadj_locked_pair_bump_R(moab::Rang
   moab::EntityHandle vertex2 = (verts.back()-index);
   //move the desired verticies by the allotted distance(s)
   result = move_vert_R(vertex1, facet_tol, verbose);
-  if(gen::error(moab::MB_SUCCESS!=result, "could not move vertex1")) return result;
+  MB_CHK_SET_ERR(result, "could not move vertex1");
   result = move_vert_R(vertex2, facet_tol, verbose);
-  if(gen::error(moab::MB_SUCCESS!=result, "could not move vertex2")) return result;
+  MB_CHK_SET_ERR(result, "could not move vertex2");
 
   return moab::MB_SUCCESS;
 }
@@ -634,9 +656,9 @@ moab::ErrorCode MakeWatertightCylinderTest::nonadj_locked_pair_bump_theta(moab::
 
   //move the desired verticies by the allotted distance(s)
   result = move_vert_theta(vertex1, facet_tol, verbose);
-  if(gen::error(moab::MB_SUCCESS!=result, "could not move vertex1")) return result;
+  MB_CHK_SET_ERR(result, "could not move vertex1");
   result = move_vert_theta(vertex2, facet_tol, verbose);
-  if(gen::error(moab::MB_SUCCESS!=result, "could not move vertex2")) return result;
+  MB_CHK_SET_ERR(result, "could not move vertex2");
 
   return moab::MB_SUCCESS;
 }

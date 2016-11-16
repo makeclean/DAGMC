@@ -13,27 +13,10 @@
 #include "moab/Types.hpp"
 
 #include "gtest/gtest.h"
-#include "mw_func.hpp"
-#include "cw_func.hpp"
-#include "gen.hpp"
-#include "arc.hpp"
-#include "zip.hpp"
+#include "MakeWatertight.hpp"
+#include "CheckWatertight.hpp"
 
 moab::Interface *MBI();
-
-/// struct to hold coordinates of skin edge, it's surface id, and a matched flag
-struct coords_and_id {
-  double x1;
-  double y1;
-  double z1;
-  double x2;
-  double y2;
-  double z2;
-  int  surf_id;
-  bool matched;
-  moab::EntityHandle vert1;
-  moab::EntityHandle vert2;
-};
 
 //---------------------------------------------------------------------------//
 // TEST FIXTURES
@@ -45,6 +28,10 @@ class MakeWatertightTest : public ::testing::Test
   void reload_mesh();
   virtual void TearDown();
   virtual void setFilename() {};
+
+  // make sure the expected number of entities with dimension are present
+  moab::ErrorCode check_num_ents(int ent_dimension, int expected_num);
+
   // moves the vertex by dx, dy, dz
   moab::ErrorCode move_vert(moab::EntityHandle vertex, double dx, double dy, double dz, bool verbose = false);
 
@@ -89,6 +76,8 @@ class MakeWatertightTest : public ::testing::Test
 
  protected:
   std::string filename;
+  MakeWatertight* mw;
+  CheckWatertight* cw;
   moab::ErrorCode result;
   moab::EntityHandle input_fileset;
   moab::Range verts;
@@ -154,3 +143,17 @@ class MakeWatertightCylinderTest : public MakeWatertightTest
   moab::ErrorCode nonadj_locked_pair_bump_theta(moab::Range verts, double facet_tol, bool verbose = false);
 
 };
+
+// Rename of the general test class
+class MakeWatertightNoCurveSphereTest : public MakeWatertightTest
+{
+ protected:
+  // set test file name
+  virtual void setFilename() {
+    filename = "no_curve_sphere.h5m";
+  };
+
+  moab::ErrorCode sphere_deletion_test(moab::EntityHandle input_set, double facet_tolerance, bool verbose = false);
+};
+
+

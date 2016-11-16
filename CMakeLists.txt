@@ -96,14 +96,8 @@ if (BUILD_FLUKA)
 endif (BUILD_FLUKA)
 
 # Include UWUW in dagmciface library
-if (BUILD_ANY)
-  add_subdirectory(uwuw)
-endif (BUILD_ANY)
-
-# Build dagmciface library
-if (DI_SRC_FILES)
-  add_subdirectory(common)
-endif (DI_SRC_FILES)
+add_subdirectory(uwuw)
+add_subdirectory(common) 
 
 # Build tools
 add_subdirectory(tools)

@@ -21,8 +21,7 @@ using moab::DagMC;
 #endif
 
 // globals
-
-#define DAG DagMC::instance()
+extern moab::DagMC *DAG;
 
 #include <fstream>
 #include <numeric>
@@ -827,9 +826,6 @@ void fludag_write(std::string matfile, std::string lfname)
   // ASSIGNMA Cards
   std::ostringstream astr;
   fludagwrite_assignma(astr, pyne_map, map_name);
-
-  // MATERIAL Cards
-  pyne::NUC_DATA_PATH = workflow_data.full_filepath; // for atomic data
 
   // write COMPOUND CARDS
   std::ostringstream mstr;

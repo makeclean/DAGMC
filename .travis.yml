@@ -1,11 +1,13 @@
 language: c++
 sudo: required
+notifications:
+  email:
+    recipients:
+      - dagmcci@googlegroups.com
+  slack: cnerg:d48My26ZXfvHlg0On2WwNQFi
 env: 
   matrix:
-    - MOAB_VERSION="Version4.8.1"
-    - MOAB_VERSION="Version4.8.2"
-    - MOAB_VERSION="Version4.9.0"
-    - MOAB_VERSION="Version4.9.1"
+    - MOAB_VERSION="Version4.9.2"
     - MOAB_VERSION="master"
 services:
     - docker
@@ -28,6 +30,6 @@ install:
   - commit_id=$(sudo docker ps -l | tail -n1 | awk '{print $1}')
   - sudo docker commit $commit_id makeclean/dagmc-ci
 script:
-  - sudo docker run makeclean/dagmc-ci /bin/sh -c "cd /root/dagmc/ ; ./.run_tests.sh"
+  - sudo docker run makeclean/dagmc-ci /bin/sh -c "cd /root/dagmc/ ; export TRAVIS_PULL_REQUEST=$TRAVIS_PULL_REQUEST ; export MW_REG_TEST_MODELS_URL=$MW_REG_TEST_MODELS_URL ; ./.run_tests.sh"
   - commit_id=$(sudo docker ps -l | tail -n1 | awk '{print $1}')
   - sudo docker commit $commit_id makeclean/dagmc-ci

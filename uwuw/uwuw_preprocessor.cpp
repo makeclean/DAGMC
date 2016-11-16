@@ -1,6 +1,6 @@
 #include "uwuw_preprocessor.hpp"
 
-#define DAG moab::DagMC::instance()
+moab::DagMC *DAG;
 
 // constructor
 uwuw_preprocessor::uwuw_preprocessor(std::string material_library_filename, std::string dagmc_filename,
@@ -8,6 +8,9 @@ uwuw_preprocessor::uwuw_preprocessor(std::string material_library_filename, std:
 {
   // make new name concatenator class
   ncr = new name_concatenator();
+
+  // make new DAGMC instance
+  DAG = new moab::DagMC();
 
   // load the materials
   material_library = mat_lib.load_pyne_materials(material_library_filename,"/materials");
@@ -134,7 +137,9 @@ pyne::Material uwuw_preprocessor::create_new_material(pyne::Material material, s
   pyne::Material new_mat; // to return
   pyne::comp_map comp = material.comp;
 
-  new_mat = pyne::Material(comp,1.0,material.density, 0.0);
+  // make sure to bring metadata with us
+  new_mat = pyne::Material(comp,1.0,material.density, 0.0, material.metadata);
+
   // use the name concatenator to make the fluka name
   std::string fluka_name = ncr->make_name_8bytes(material.metadata["name"].asString());
 
@@ -658,7 +663,6 @@ std::string name_concatenator::shift_and_increment(std::string name)
   // while we haven't yet found a unique fluka_name
   while (used_b8_names.count(name) == 1 ) {
     std::size_t found = name.find_last_of(" ");
-    //    std::cout << found << " " << count << std::endl;
     if ( (count == 0 || count == 9 ) && found != std::string::npos)
       for ( int i = 0 ; i < 7 ; i++ ) {
         name[i] = name[i+1];
@@ -673,9 +677,9 @@ std::string name_concatenator::shift_and_increment(std::string name)
       name[6] = int_as_string[0];
       name[7] = int_as_string[1];
     }  else if(count >= 100 && count < 1000 ) {
-      name[6] = int_as_string[0];
-      name[7] = int_as_string[1];
-      name[8] = int_as_string[2];
+      name[5] = int_as_string[0];
+      name[6] = int_as_string[1];
+      name[7] = int_as_string[2];
     }
     if(count == 1000) {
       std::cout << "Maximum limit of material increments reached" << std::endl;
