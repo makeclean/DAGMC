@@ -73,10 +73,14 @@ subroutine source
  
    call particle_birth(rands, xxx, yyy, zzz, erg, wgt)
    icl_tmp = find_cell()
-   if (mat(icl_tmp).eq.0 .and. tries < idum(2)) then
+   ! speical override, only create particles in vaccum
+   if (mat(icl_tmp).ne.0 .and. tries < idum(2)) then
        tries = tries + 1
        goto 200
    end if
+
+   ! special override for lh source
+   erg = 14.08 ! set to fusion neutron erg
 
    if(tries.eq.idum(2)) then
        goto 100
