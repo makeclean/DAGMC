@@ -36,5 +36,12 @@ else ()
 endif (BUILD_STATIC)
 install(TARGETS uwuw_preproc DESTINATION ${INSTALL_BIN_DIR})
 
+add_executable(material_maker uwuw_material_maker.cpp)
+target_link_libraries(material_maker ${HDF5_hdf5_hl_LIBRARY} ${HDF5_hdf5_LIBRARY}
+  pyne_dagmc dagmciface)
+
+install(TARGETS uwuw_preproc DESTINATION ${INSTALL_BIN_DIR} PERMISSIONS ${PERMS})
+install(TARGETS material_maker DESTINATION ${INSTALL_BIN_DIR} PERMISSIONS ${PERMS})
+
 # Build UWUW tests
 add_subdirectory(tests)
