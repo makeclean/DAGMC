@@ -25,7 +25,7 @@ endmacro (run_test)
 
 # Installation directories
 set(INSTALL_BIN_DIR     bin     CACHE PATH "Installation directory for executables")
-set(INSTALL_LIB_DIR     lib     CACHE PATH "Installation directory for libraries")
+set(INSTALL_LIB_DIR     ${CMAKE_INSTALL_PREFIX}/lib     CACHE PATH "Installation directory for libraries")
 set(INSTALL_INCLUDE_DIR include CACHE PATH "Installation directory for header files")
 set(INSTALL_SHARE_DIR   share   CACHE PATH "Installation directory for other files")
 
@@ -35,6 +35,7 @@ set(PERMS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE)
 # Determine if we're building static libraries
 if (STATIC_LIB)
   set(LIB_TYPE "STATIC")
+  set(HDF5_USE_STATIC_LIBRARIES ON)
   set(BUILD_SHARED_LIBRARIES OFF)
   set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static")
