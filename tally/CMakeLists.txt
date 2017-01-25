@@ -36,8 +36,8 @@ set(LINK_LIBS)
 list(APPEND LINK_LIBS ${DAG_LINK_LIBS})
 list(APPEND LINK_LIBS lapack)
 list(APPEND LINK_LIBS blas)
-list(APPEND LINK_LIBS gfortran)
-list(APPEND LINK_LIBS quadmath)
+list(APPEND LINK_LIBS ${GFORTRAN_LIBRARY})
+list(APPEND LINK_LIBS ${QUADMATH_LIBRARY})
 
 # Include directories
 include_directories(.)
