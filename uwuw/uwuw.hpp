@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <map>
 #include <string>
+#include <list>
+#include "hdf5.h"
 
 //===========================================================================//
 /**
@@ -31,6 +33,10 @@
  */
 //===========================================================================//
 
+#define NUC_PATH "/nucid"
+#define TALLY_PATH "/tally"
+#define MAT_PATH "/material"
+
 class UWUW
 {
  public:
@@ -38,7 +44,7 @@ class UWUW
    * \brief Constructor
    * Empty constructor
    */
-  UWUW(); // empty constructor
+  UWUW(bool verbose = false); // empty constructor
 
   /**
    * \brief Instantiates instance of the UWUW class, populates 3 member variables,
@@ -51,7 +57,7 @@ class UWUW
    * the load_pyne_materials() methods populates a map of material name vs Material object
    * the load_pyne_tallies() methods populates a map of tally name vs tally object
    */
-  UWUW(char* filename); // c style filename
+  UWUW(char* filename, bool verbose = false); // c style filename
 
   /**
    * \brief Instantiates instance of the UWUW class, populates 3 member variables,
@@ -64,25 +70,56 @@ class UWUW
    * the load_pyne_materials() methods populates a map of material name vs Material object
    * the load_pyne_tallies() methods populates a map of tally name vs tally object
    */
-  UWUW(std::string filename); // normal constructor
+  UWUW(std::string filename, bool verbose = false); // normal constructor
 
   /**
    * \brief Standard destructor
    */
   ~UWUW(); // destructor
 
-  // Member variables
+private:
+  /**
+   * Assuming that a material library exists in memory, writes
+   * the associated nucid list to the file pointed to.
+   *
+   * \param[in] filename  - the filename to write the dataset to
+   * \param[in] datapath - the datapath to write the dataset to
+   */
+  void write_nucids(std::string filename, std::string datapath = NUC_PATH);
 
+   /**
+    * 
+    */
+    void write_materials(std::string output_filename, std::string datapath = MAT_PATH);
+
+   /**
+    * 
+    */
+    void write_tallies(std::string output_filename, std::string datapath = TALLY_PATH);
+
+  /**
+   * Assuming that a material library is loaded, makes an array
+   * of nucids for use in write_nucids
+   * 
+   * \param[in] - none - assumes that all state exists in class
+   * \returns[int] array of nucids [ints]
+   */
+  std::vector<int> get_nucid_vector();
+
+public:
+  // Member variables
   /**
    * \brief material_library is a std::map of <material name, Material object>
    * iterate through this map to get its contents
    */
   std::map<std::string, pyne::Material> material_library; // material library
+
   /**
    * \brief tally_library is a std::map of <tally name, Tally object>
    * iterate through this map to get its contents
    */
-  std::map<std::string, pyne::Tally> tally_library; // tally library
+  std::list<pyne::Tally> tally_library; // tally library
+
   /**
    * \brief full filepath is variable set to /path/+filename
    * This is needed to set the pyne::nucdata path
@@ -106,20 +143,22 @@ class UWUW
   // make sure the file, filename exists
   bool check_file_exists(std::string filename);
 
+  bool verbosity;
+
   /**
    * \brief loads the pyne materials in map of name vs Material
    * \param[in] filename of the h5m file
    * \return std::map of material name vs Material object
    */
  public:
-  std::map<std::string, pyne::Material> load_pyne_materials(std::string filename, std::string datapath = "/materials");
+  std::map<std::string, pyne::Material> load_pyne_materials(std::string filename, std::string datapath = MAT_PATH);
 
   /**
    * \brief loads the pyne tallies in map of name vs Material
    * \param[in] filename of the h5m file
    * \return std::map of tally name vs Tally object
    */
-  std::map<std::string, pyne::Tally> load_pyne_tallies(std::string filename, std::string datapath = "/tally");
+  std::list<pyne::Tally> load_pyne_tallies(std::string filename, std::string datapath = TALLY_PATH);
 
   /**
    * \brief determines in that datapath exists in the hdf5 file
@@ -136,5 +175,17 @@ class UWUW
    * \return the number of elements to the array
    */
   int get_length_of_table(std::string filename, std::string datapath);
+
+  /**
+   *
+   */
+   void write_uwuw(std::string datapath);
+
+  /**
+   *
+   */
+   void write_uwuw(char* datapath);
+
+   
 
 };

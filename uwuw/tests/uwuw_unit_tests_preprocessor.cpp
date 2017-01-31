@@ -198,7 +198,7 @@ TEST_F(UWUWTest,materialMetadata)
   // process materials
   uwuw_preproc->process_materials();
   // write the new material library
-  uwuw_preproc->write_uwuw_materials();
+  uwuw_preproc->write_data();
 
   // now read in the material library
   UWUW *uwuw = new UWUW(out_file);
@@ -257,10 +257,7 @@ class UWUWPreprocTest : public ::testing::Test
 TEST_F(UWUWPreprocTest,testMaterials)
 {
   // write the material data
-  uwuw_preproc->write_uwuw_materials();
-
-  // write the tally data
-  uwuw_preproc->write_uwuw_tallies();
+  uwuw_preproc->write_data();
 
   std::remove("output_test_file.h5m");
 }
@@ -271,10 +268,7 @@ TEST_F(UWUWPreprocTest,testMaterials)
 TEST_F(UWUWPreprocTest,testTallies)
 {
   // write the material data
-  uwuw_preproc->write_uwuw_materials();
-
-  // write the tally data
-  uwuw_preproc->write_uwuw_tallies();
+  uwuw_preproc->write_data();
 
   std::remove("output_test_file.h5m");
 }

@@ -33,8 +33,8 @@ class TrackLengthMeshTallyTest : public ::testing::Test
     event.particle = 1;
     event.current_cell = 1;
     event.track_length = 1.0;
-    event.position = {0.0,0.0,0.0};
-    event.direction = {1.0,0.0,0.0};
+    //    event.position = {0.0,0.0,0.0};
+    // event.direction = {1.0,0.0,0.0};
     event.total_cross_section = 1.0;
     event.particle_energy = 5.0;
     event.particle_weight = 1.0;

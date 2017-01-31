@@ -50,10 +50,7 @@ int main(int argc, char* argv[])
   }
 
   // write the material data
-  uwuw_preproc->write_uwuw_materials();
-
-  // write the tally data
-  uwuw_preproc->write_uwuw_tallies();
+  uwuw_preproc->write_data();
 
   // thats all
   return 0;

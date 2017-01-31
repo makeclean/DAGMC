@@ -115,16 +115,9 @@ class uwuw_preprocessor
   void process_tallies();
 
   /**
-   * \brief Writes out the PyNE Material objects, that are stored in the class member material_library variable
-   * into the output file output_file as specified by the constructor.
-   */
-  void write_uwuw_materials();
-
-  /**
-   * \brief Writes out the PyNE Tally objects that are stored in the class member variable tally_list into
-   * the output file output_file as specified by the constructor.
-   */
-  void write_uwuw_tallies();
+  * \brief writes all the processed data into the hdf5 file
+  */
+  void write_data();
 
   /**
    * \brief Print the summary of uwuw information
@@ -207,7 +200,7 @@ class uwuw_preprocessor
   pyne::Material create_new_material(pyne::Material material, std::string density);
 
   void property_vector(std::vector<int> props);
-
+  
   // public class members
  public:
   bool verbose; ///< controls the verbosity of the class output
@@ -220,13 +213,14 @@ class uwuw_preprocessor
   std::list<tally_info> tally_list; ///< unique list of tally information
   std::set<std::string> particles; ///< unqiue set of particles requested
   std::set<std::string> tallies; ///< set of tally types
-  std::list<pyne::Tally> uwuw_tally_library; ///< unique list of tally objects
+  std::list<pyne::Tally> uwuw_tally_list; ///< unique list of tally objects
   std::map<std::string, pyne::Material> material_library; ///< material_library input by reading from library file
   std::map<std::string, pyne::Material> uwuw_material_library; ///< material library to write out to DAGMC file
   name_concatenator *ncr; ///< unique naming class pointer
   moab::DagMC *DAG; ///< DAGMC pointer
   dagmcMetaData *dmd; ///< DAGMC metadata pointer
   UWUW mat_lib; ///< static UWUW class for reading the material library
+  UWUW *uwuw_lib; ///< non-static UWUW class to store the output library in
 
   std::vector<int> no_props; ///< list of cells with no properties
   std::vector<int> multiple_props; ///< list of cells with multiple properties

@@ -2,13 +2,16 @@
 
 // constructor
 uwuw_preprocessor::uwuw_preprocessor(std::string material_library_filename, std::string dagmc_filename,
-                                     std::string output_file,  bool verbosity, bool fatal_errors)
+                                     std::string output_file, bool verbosity, bool fatal_errors)
 {
   // make new name concatenator class
   ncr = new name_concatenator();
 
   // make new DAGMC instance
   DAG = new moab::DagMC();
+
+  // make a new library to store the data in
+  uwuw_lib = new UWUW::UWUW();
 
   // load the materials
   material_library = mat_lib.load_pyne_materials(material_library_filename,"/materials");
@@ -37,49 +40,9 @@ uwuw_preprocessor::~uwuw_preprocessor()
 {
 }
 
-// write the new material library
-void uwuw_preprocessor::write_uwuw_materials()
-{
-  std::map<std::string,pyne::Material> :: iterator it;
-
-  // loop over the processed material library and write each one to the file
-  for ( it = uwuw_material_library.begin() ; it != uwuw_material_library.end() ; ++it ) {
-    // the current material
-    pyne::Material mat = it->second;
-    // write the material to the file
-    if(verbose) {
-      std::cout << "writing material, " << mat.metadata["name"].asString();
-      std::cout << "writing material, " << mat.metadata["fluka_name"].asString();
-      std::cout << " to file " << output_filename << std::endl;
-    }
-    // write the uwuw materials to the geometry
-    mat.write_hdf5(output_filename,"/materials");
-  }
-
-  return;
-}
-
-// write the new material library
-void uwuw_preprocessor::write_uwuw_tallies()
-{
-  std::list<pyne::Tally> :: iterator it;
-
-  std::string tally_destination = "/tally"; // to avoid compiler warning
-
-  // loop over the processed material library and write each one to the file
-  for ( it = uwuw_tally_library.begin() ; it != uwuw_tally_library.end() ; ++it ) {
-    // the current tally
-    pyne::Tally tally = *it;
-    if(verbose) {
-      std::cout << "Writing tally " << tally.tally_name;
-      std::cout << " to file " << output_filename << std::endl;
-    }
-
-    // write the material to the file
-    tally.write_hdf5(output_filename,tally_destination);
-  }
-
-  return;
+// write the associated UWUW data 
+void uwuw_preprocessor::write_data() {
+  uwuw_lib->write_uwuw(output_filename);
 }
 
 
@@ -173,6 +136,8 @@ void uwuw_preprocessor::process_materials()
       uwuw_material_library[*s_it]  = new_material;
     }
   }
+
+  uwuw_lib->material_library = uwuw_material_library;
   return;
 }
 
@@ -227,8 +192,12 @@ void uwuw_preprocessor::process_tallies()
                                         tally_str.entity_size,
                                         1.0); // normalisation
 
-    uwuw_tally_library.push_back(new_tally);
+    uwuw_tally_list.push_back(new_tally);
   }
+  
+  // attach data to uwuw class
+  uwuw_lib->tally_library = uwuw_tally_list;
+  return;
 }
 
 void uwuw_preprocessor::check_material_props(std::vector<std::string> material_props,
