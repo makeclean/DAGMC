@@ -28,7 +28,6 @@ class UWUWTest : public ::testing::Test
  */
 TEST_F(UWUWTest,SetUp)
 {
-
 }
 
 /*
@@ -135,7 +134,6 @@ TEST_F(UWUWTest, material_datapath)
   mat2.write_hdf5("new_mat_test.h5","/materials"
                   ,"/nucid");
 
-
   workflow_data->~UWUW();
 
   workflow_data = new UWUW(std::string("new_mat_test.h5"));
@@ -144,4 +142,96 @@ TEST_F(UWUWTest, material_datapath)
   EXPECT_EQ(workflow_data->material_library.size(),2);
   return;
 }
+
+/*
+ * Test write of full material library, reread should be same
+ */
+TEST_F(UWUWTest,write_library1){
+  workflow_data->write_uwuw("test_library.h5");
+  UWUW *test = new UWUW("test_library.h5");
+  EXPECT_EQ(test->material_library.size(),2);
+  std::map<std::string,pyne::Material> lib1 = test->material_library;
+  std::map<std::string,pyne::Material> lib2 = workflow_data->material_library;
+  std::map<std::string,pyne::Material> :: iterator it;
+  // for each material in the library
+  for ( it = lib1.begin() ; it != lib1.end() ; it++) {
+    // get the original one and the one just read from the library
+    pyne::Material m1 = lib1[it->first];
+    pyne::Material m2 = lib2[it->first];
+    // assert some simple behaviour
+    EXPECT_EQ(m1.density,m2.density);
+    EXPECT_EQ(m1.mass,m2.mass);
+    // loop over the compositions to ensure the same
+    pyne::comp_map c1 = m1.comp;
+    pyne::comp_map c2 = m2.comp;
+    pyne::comp_iter mat_it;
+    // first is nucid, second is mass frac
+    for ( mat_it = c1.begin() ; mat_it != c1.end() ; mat_it++){
+      int nuc_id = mat_it->first;
+      double frac = mat_it->second;
+      EXPECT_EQ(frac,c2[nuc_id]);
+    }
+  }
+  std::remove("test_library.h5");
+}
+
+/*
+ * Test write of full material library, reread should be same
+ */
+TEST_F(UWUWTest,write_library2){
+  // make new uwuw instance
+  UWUW *new_data = new UWUW();
+
+  // library
+  std::map<std::string, pyne::Material> mat_lib;
+  
+  // make a new composiiton
+  pyne::comp_map composition;
+  composition[pyne::nucname::id("H-1")]=0.5;
+  composition[pyne::nucname::id("He-4")]=0.5;
+  pyne::Material new_material = pyne::Material(composition,-1.,2.1,-1.);
+  new_material.metadata["name"] = "Material1";
+  mat_lib["Material1"] = new_material;
+  
+  // make another new material
+  pyne::comp_map composition2;
+  composition2[pyne::nucname::id("Fe-56")]=0.5;
+  composition2[pyne::nucname::id("Mn-54")]=0.5;
+  pyne::Material new_material2 = pyne::Material(composition2,-1.,12.6,-1.);
+  new_material2.metadata["name"] = "Material2";
+  mat_lib["Material2"] = new_material2;
+
+
+  new_data->material_library = mat_lib;
+  new_data->write_uwuw("test_library.h5");
+
+  UWUW *test = new UWUW("test_library.h5");
+
+  EXPECT_EQ(test->material_library.size(),2);
+  std::map<std::string,pyne::Material> lib1 = mat_lib;
+  std::map<std::string,pyne::Material> lib2 = test->material_library;
+  std::map<std::string,pyne::Material> :: iterator it;
+  // for each material in the library
+  for ( it = lib1.begin() ; it != lib1.end() ; it++) {
+    // get the original one and the one just read from the library
+    pyne::Material m1 = lib1[it->first];
+    pyne::Material m2 = lib2[it->first];
+    // assert some simple behaviour
+    EXPECT_EQ(m1.density,m2.density);
+    EXPECT_EQ(m1.mass,m2.mass);
+    // loop over the compositions to ensure the same
+    pyne::comp_map c1 = m1.comp;
+    pyne::comp_map c2 = m2.comp;
+    pyne::comp_iter mat_it;
+    // first is nucid, second is mass frac
+    for ( mat_it = c1.begin() ; mat_it != c1.end() ; mat_it++){
+      int nuc_id = mat_it->first;
+      double frac = mat_it->second;
+      EXPECT_EQ(frac,c2[nuc_id]);
+    }
+  }
+  std::remove("test_library.h5");
+  delete new_data;
+}
+
 

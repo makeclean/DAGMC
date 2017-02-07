@@ -33,9 +33,10 @@
  */
 //===========================================================================//
 
-#define NUC_PATH "/nucid"
-#define TALLY_PATH "/tally"
-#define MAT_PATH "/material"
+// default locations for the UWUW data to be stored
+#define UWUW_NUC_PATH "/nucid"
+#define UWUW_TALLY_PATH "/tally"
+#define UWUW_MAT_PATH "/materials"
 
 class UWUW
 {
@@ -85,17 +86,17 @@ private:
    * \param[in] filename  - the filename to write the dataset to
    * \param[in] datapath - the datapath to write the dataset to
    */
-  void write_nucids(std::string filename, std::string datapath = NUC_PATH);
+  void write_nucids(std::string filename, std::string datapath = UWUW_NUC_PATH);
 
    /**
     * 
     */
-    void write_materials(std::string output_filename, std::string datapath = MAT_PATH);
+    void write_materials(std::string output_filename, std::string datapath = UWUW_MAT_PATH);
 
    /**
     * 
     */
-    void write_tallies(std::string output_filename, std::string datapath = TALLY_PATH);
+    void write_tallies(std::string output_filename, std::string datapath = UWUW_TALLY_PATH);
 
   /**
    * Assuming that a material library is loaded, makes an array
@@ -151,14 +152,14 @@ public:
    * \return std::map of material name vs Material object
    */
  public:
-  std::map<std::string, pyne::Material> load_pyne_materials(std::string filename, std::string datapath = MAT_PATH);
+  std::map<std::string, pyne::Material> load_pyne_materials(std::string filename, std::string datapath = UWUW_MAT_PATH);
 
   /**
    * \brief loads the pyne tallies in map of name vs Material
    * \param[in] filename of the h5m file
    * \return std::map of tally name vs Tally object
    */
-  std::list<pyne::Tally> load_pyne_tallies(std::string filename, std::string datapath = TALLY_PATH);
+  std::list<pyne::Tally> load_pyne_tallies(std::string filename, std::string datapath = UWUW_TALLY_PATH);
 
   /**
    * \brief determines in that datapath exists in the hdf5 file

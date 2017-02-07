@@ -189,8 +189,11 @@ void UWUW::write_uwuw(char *filename) {
 void UWUW::write_materials(std::string output_filename, std::string datapath) {
   std::map<std::string,pyne::Material> :: iterator it;
 
+  // write the nucid table
+  write_nucids(output_filename);
+
   // loop over the processed material library and write each one to the file
-  for ( it = material_library.begin() ; it != material_library.end() ; ++it ) {
+  for ( it = material_library.begin() ; it != material_library.end() ; it++ ) {
     // the current material
     pyne::Material mat = it->second;
     // write the material to the file
@@ -203,13 +206,12 @@ void UWUW::write_materials(std::string output_filename, std::string datapath) {
     mat.write_hdf5(output_filename,datapath);
   }
 
-  // write the nucid table
-  write_nucids(output_filename);
   return;
 }
 
 // write the nucids to the file and datapath specified
 void UWUW::write_nucids(std::string filename, std::string datapath) {
+
   // Turn off annoying HDF5 errors
   herr_t status;
   H5Eset_auto2(H5E_DEFAULT, NULL, NULL);
@@ -219,7 +221,12 @@ void UWUW::write_nucids(std::string filename, std::string datapath) {
   H5Pset_fclose_degree(fapl,H5F_CLOSE_STRONG);
 
   // open the file
-  hid_t db = H5Fopen(filename.c_str(), H5F_ACC_RDONLY, fapl);
+  hid_t db;
+
+  if(pyne::file_exists(filename))
+    db = H5Fopen(filename.c_str(), H5F_ACC_RDWR,fapl);
+  else
+    db = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, fapl);
 
   // actual nucid's to write
   std::vector<int> nuc_data = get_nucid_vector();
