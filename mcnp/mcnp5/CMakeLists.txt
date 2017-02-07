@@ -46,8 +46,8 @@ endif (NOT "/${MCNP_SRC_FILES};" MATCHES "/dagmc_mod.F90;")
 message(STATUS "DAG-MCNP5 version ${MCNP_VERSION} source files found")
 
 # add pyne source
-LIST(APPEND MCNP_SRC_FILES ../Source/src/source_sampling.cpp)
-LIST(APPEND MCNP_SRC_FILES ../Source/src/measure.cpp)
+LIST(APPEND MCNP_SRC_FILES Source/src/source_sampling.cpp)
+LIST(APPEND MCNP_SRC_FILES Source/src/measure.cpp)
 
 # C compiler flags
 if (${CMAKE_C_COMPILER_ID} STREQUAL Intel)
