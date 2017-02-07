@@ -176,7 +176,7 @@ void pyne::Sampler::mesh_tag_data(moab::Range ves,
   // THIS rval FAILS because we do not know number of energy groups a priori.
   // That's okay. That's what the next line is all about:
   num_e_groups = num_groups(src_tag);
-  std::vector<double> pdf(num_ves*num_e_groups);
+  std::vector<double> pdf(num_ves*num_e_groups); 
   rval = mesh->tag_get_data(src_tag, ves, &pdf[0]);
   if (rval != moab::MB_SUCCESS)
     throw std::runtime_error("Problem getting source tag data.");
@@ -338,7 +338,6 @@ int pyne::Sampler::num_groups(moab::Tag tag) {
   if (rval != moab::MB_SUCCESS)
       throw std::runtime_error("Problem getting tag size.");
   return tag_size/sizeof(double);
-  
 }
 
 
