@@ -13,13 +13,11 @@ set(LINK_LIBS)
 list(APPEND LINK_LIBS ${FLUKA_DIR}/libflukahp.a)
 list(APPEND LINK_LIBS pyne_dagmc)
 list(APPEND LINK_LIBS dagmciface)
-list(APPEND LINK_LIBS lapack)
-list(APPEND LINK_LIBS blas)
 list(APPEND LINK_LIBS gfortran)
-list(APPEND LINK_LIBS quadmath)
 
 # Include directories
 include_directories(.)
+include_directories(${CMAKE_SOURCE_DIR}/common)
 include_directories(${HDF5_INCLUDE_DIRS})
 include_directories(${MOAB_INCLUDE_DIRS})
 
@@ -30,7 +28,8 @@ target_link_libraries(fludag ${LINK_LIBS})
 install(TARGETS fludag LIBRARY       DESTINATION ${INSTALL_LIB_DIR}
                        ARCHIVE       DESTINATION ${INSTALL_LIB_DIR}
                        PUBLIC_HEADER DESTINATION ${INSTALL_INCLUDE_DIR}
-                       LIBRARY       PERMISSIONS ${PERMS})
+                       LIBRARY       PERMISSIONS ${PERMS}
+                       ARCHIVE       PERMISSIONS ${PERMS})
 
 # Build FluDAG
 add_subdirectory(build)
