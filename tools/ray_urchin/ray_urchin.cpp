@@ -1,55 +1,133 @@
-void dagmc_load_and_init(DagMC &dagmc, std::string filename)
-{
 
-  EntityHandle input_file_set;
-  ErroCode ret;
-  
-  ret = dagmc.load_file( filename.c_str() );
-  CHKERR( ret, "Failed to load file ", filename);
-
-  ret = dagmc.init_OBBTree();
-  CHKERR( ret, "Failed to build OBB tree and/or indices.", "");
-
-}
-
-void rays_load_and_init( std::string ray_file, std::vector< int > &ray_nums, std::vector< CartVect > &ray_list)
+// function to open a text file and read a set of unit vectors
+// input:
+//   std::string ray_file - path/filename of ray information
+// output:
+//   int[3]& ray_nums - total number of rays + lat/long number of rays
+//   std::vector< CartVect >& ray_list - vector of ray unit vectors
+Errorcode rays_load_and_init( std::string ray_file, int[3] &ray_nums, std::vector< CartVect > &ray_list)
 {
 
   ifstream ray_file_stream;
   ray_file_stream.open(ray_file);
 
-  double x, y, z;
+  if (!ray_file_stream)
+    MB_SET_ERR("Unable to open ray file " + ray_file);
 
-  ray_num.resize(3);
-  ray_file_stream >> ray_num[0] >> ray_num[1] >> ray_num[2];
+  // read the total number of rays as well as the longitudinal and lattitudinal numbers
+  ray_file_stream >> ray_nums[0] >> ray_nums[1] >> ray_nums[2];
+
+  // populate with the up/down unit vectors
+  ray_list.push_back(CartVect(0,0,1));
+  ray_list.push_back(CartVect(0,0,-1));
   
+  // read unit vectors until the file ends
   while !(ray_file_stream.eof())
     {
-      ray_file_stream >> x >> y >> z;
-      ray_list.push_bach(CartVect(x,y,z));
+      double u, v, w;
+      ray_file_stream >> u >> v >> w;
+      ray_list.push_back(CartVect(u,v,w));
     }
+
+  ray_file_stream.close();
+
+  return MB_SUCCESS;
+}
+
+// function to find the volume that contains the starting point,
+//    first checking a provided volume ID
+// input:
+//     DagMC& dagmc - reference to DagMC instance
+//     CartVect start_p - location of starting point
+//     int start_vol_id - volume ID of possible starting volume
+// output:
+//     EntityHandle& start_vol_handle - entity handle of volume with starting point
+ErrorCode find_start_vol(Dagmc& dagmc, const CartVect start_p, const int start_vol_id,
+                         EntityHandle& start_vol_handle) {
+
+  ErrorCode ret;
+  std::vector<EntityHandle> vols = dagmc.volumes();
+  int inside = 0;
+  
+  start_vol_handle = dagmc.entity_by_id(3,start_vol_id);
+  
+  if (start_vol_id >= 0) {
+    ret = dagmc.point_in_volume(start_vol_handle,start_p.array(), inside);
+    MB_CHK_ERR(ret);
+    if (!inside)
+      MB_SET_ERR_CONT("Starting point is not in provided starting volume.");
+  }
+  
+  if (!inside) {
+    for (std::vector<EntityHandle>::iterator vol = vols.begin(); vol != vols.end && !inside; vol++) {
+      start_vol_handle = *vol;
+      ret = dagmc.point_in_volume(*vol, start_p.array(), inside);
+      MB_CHK_ERR(ret);
+    }
+  }
+  
+  if (!inside) {
+    return MB_ENTITY_NOT_FOUND;
+  }
+  
+  return MB_SUCCESS;
+
+}
+
+// function to find the graveyard volume
+// input:
+//    DagMC dagmc - dagmc instance
+EntityHandle find_graveyard(DagMC& dagmc) {
+
+  // get group with name "graveyard"
+  // get members of that group
+  // return entity handle of that group
+
   
 }
 
-std::vector< std::pair< int, double> >& get_ray_hist(CartVect start_pt, int start_vol, CartVect& dir, std::set< int >& includ_vols){
+// function to repeatedly fire a ray from a point to the boundary and
+//    accumulate a list of pairs for each volume traversed,
+//    with each pair containing the volume handle and the distance traversed
+// input:
+//    DagMC& dagmc - the DagMC instance
+//    CartVect start_pt - the starting point of the rays
+//    EntityHandle start_vol_handle - the handle for the starting volume
+//    CartVect dir - the unit vector for the current ray
+//    EntityHandle graveyard_handle - handle for the graveyard volume
+// output:
+//    std::set< EntityHandle >& include_vols - list of volume entities touched so far
+//    (return) Ray_History& - ray history from start_pt to boundary
+Ray_History& get_ray_hist(DagMC& dagmc,
+                                                              const CartVect start_pt,
+                                                              const EntityHandle start_vol_handle,
+                                                              const CartVect dir,
+                                                              const EntityHandle graveyard_handle,
+                                                              std::set< EntityHandle >& include_vols){
 
-  std::vector< std::pair< int, double> > ray_hist;
-  
-  int vol = start_vol;
+  Ray_History ray_hist;
+
+  EntityHandle vol = start_vol_handle;
   CartVect pt = start_pt;
   double dist;
-  EntityHandle surf;
+  EntityHandle new_vol = vol;
+  EntityHandle surf = 0;
   
   //   fire ray to get all intersections to graveyard : {dir => {cell => track length}}
-  while (vol != graveyard_vol){
-    ret = dagmc.ray_fire( vol, start_pt, dir, surf, dist);
+  while (vol != graveyard_handle)){
+    ret = dagmc.ray_fire( vol, start_pt.array(), dir.array(), surf, dist);
+    MB_CHK_ERR_CONT(ret);
     ray_hist.push_back(std::pair(vol,dist));
-    vol = dagmc.next_vol(vol, surf);
     include_vols.insert(vol);
+
+    ret = dagmc.next_vol(surf,vol,new_vol);
+    MB_CHK_ERR_CONT(ret);
+    vol = new_vol;
   }
   
   // pop all the void regions off the end of the list
-  while (get_material(ray_hist.end()->first) == 0)
+  int void_matl = 0;
+  while (get_material(ray_hist.end()->first) == void_matl)
     {
       include_vols.remove(ray_hist.end()->first);
       ray_hist.pop();
@@ -59,12 +137,19 @@ std::vector< std::pair< int, double> >& get_ray_hist(CartVect start_pt, int star
 }
 
 
-void write_urchin(std::vector<int>& ray_nums,
-                  CartVect& start_pt,
-                  int start_vol,
-                  std::set< int >& includ_vols,
-                  std::vector< CartVect >& ray_list,
-                  std::map< CartVect, std::vector< std::pair< int, double > > >& ray_hist) {
+// function to write out all ray data in the HZETRN2015 format
+// input:
+//    int[3]& ray_nums - total number of rays and lat/long rays
+//    EntityHandle start_vol_handle - handle for starting volume
+//    std::set< EntityHandle >& include_vols - superset of all volumes touched by alll rays
+//    std::vector< CartVect >& ray_list - list of ray unit directions
+//    std::map< CartVect, Ray_History >& ray_hist - map of directions to ray histories
+void write_urchin(const int[3]& ray_nums,
+                  const CartVect& start_pt,
+                  const EntityHandle start_vol_handle,
+                  const std::set< EntityHandle >& include_vols,
+                  const std::vector< CartVect >& ray_list,
+                  const std::map< CartVect, Ray_History >& ray_hist) {
 
   // - write header
   std::cout << "***GEOMETRY_DEFN***" << std::endl;
@@ -95,7 +180,7 @@ void write_urchin(std::vector<int>& ray_nums,
     //    - write ray direction
     std::cout << *dir << "\t" << *(dir+1) <<  "\t" << *(dir+2) << "\t" << ray_hist[*dir].size() << std::endl;
     //    - write track-map for that ray
-    for (std::vector< std::pair< int, double > >::iterator slab = ray_hist[*dir].begin();
+    for (Ray_History_iter slab = ray_hist[*dir].begin();
          slab != ray_hist[*dir].end();
          slab++) {
       std::cout << slab->first << "\t" slab->second << std::endl;
@@ -106,13 +191,44 @@ void write_urchin(std::vector<int>& ray_nums,
   
 }
 
+Ray_Urchin::Ray_Urchin(const std::string cad_file,
+                       const std::string ray_file,
+                       const CartVect start_pt_in,
+                       const int start_vol_id) {
+  
+  dagmc = new DagMC();
+  
+  ret = dagmc.load_file( input_file.c_str() );
+  MB_CHK_SET_ERR_CONT(ret,"Failed to load file " + input_file);
+  
+  ret = dagmc.init_OBBTree();
+  MB_CHK_SET_ERR_CONT(ret, "Failed to build OBB tree and/or indices.");
+  
+  // read rayfile
+  int ray_nums[3];
+  std::vector< CartVect > ray_list;
+  ret = rays_load_and_init(ray_file, ray_nums, ray_list);
+  MB_CHK_ERR_CONT(ret);
+
+  // find cell of starting point
+  CartVect start_p(starting_point);
+  EntityHandle start_vol_handle = 0;
+  // search for start vol
+  ret = find_start_vol(start_p, start_vol_id, &start_vol_handle);
+  MB_CHK_SET_ERR_CONT(ret,"Can't find starting volume for provided starting point.");
+
+  // find graveyard handle
+  EntityHandle graveyard_handle = find_graveyard(dagmc);
+
+  
+}
+
+
+
 int main(int argc, char* argvp[] ){
 
   // Pseudo-code
-  // initialize MOAB & DAGMC
   
-  // read input
-
   ProgOptions po("ray_urchin: fire rays from a point outward through a geometry along many rays");
   std::string dagversion;
   DagMC::version( &dagversion );
@@ -131,44 +247,31 @@ int main(int argc, char* argvp[] ){
   po.addRequiredArg<std::vector<double>>( "starting_point", "(x,y,z) location of ray origins", &starting_point);
 
   // todo: optional volume ID as input
-  int start_vol;
-  po.addOpt<int>("vols,V", "Volume ID of starting volume", &start_vol)
+  int start_vol_id = -1;
+  po.addOpt<int>("vols,V", "Volume ID of starting volume", &start_vol_id)
   
   po.parseCommandLine( argc, argv );
 
   // check for valid input ????
   
   // read DAGMC file and setup for transport
-  dagmc_load_and_init(input_file);
+  ErroCode ret;
   
-  // read rayfile
-  std::vector< int > ray_nums;
-  std::vector< CartVect > ray_list;
-  ret = rays_load_and_init(ray_file, ray_nums, ray_list);
-
-  // find cell of starting point
-  CartVect start_p(starting_point);
-  if (start_vol) {
-    // check that start point is in vol
-  } else {
-    // search for start vol
-    start_vol = find_start_vol(start_p);
-  }
-
+  
   // start list of touched volumes
-  std::set< int > include_vols;
+  std::set< EntityHandle > include_vols;
   
   // for each ray
-  std::map< CartVect, std::vector< std::pair< int, double > > > ray_hist;
+  std::map< CartVect, Ray_History > ray_hist;
   for (std::vector< CartVect >::iterator dir = ray_list.begin();
        dir != ray_list.end();
        dir++){
 
-    ray_hist[*dir] = get_ray_hist(start_pt, start_vol, *dir, include_vols);
+    ray_hist[*dir] = get_ray_hist(start_pt, start_vol, *dir, graveyard_handle, include_vols);
     
   }
 
   // write file
-  write_urchin();
+  write_urchin(ray_nums, start_pt, start_vol_handle, include_vols, ray_list, ray_hist);
   
 }
