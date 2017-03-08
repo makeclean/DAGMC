@@ -2,6 +2,7 @@
 
 #include "DagMC.hpp"
 #include "dagmcmetadata.hpp"
+#include "thread_manager.hpp"
 using moab::DagMC;
 
 #include <limits>
@@ -15,9 +16,12 @@ using moab::DagMC;
 #include <fenv.h>
 #endif
 
+#define DAGMC(X) DTM->get_dagmc_instance(X)
+#define HISTORY(X) DTM->get_dagmc_raystate(X)
+
 // globals
 
-moab::DagMC *DAG;
+DagThreadManager *DTM;
 dagmcMetaData *DMD;
 UWUW *workflow_data;
 
@@ -34,6 +38,8 @@ static std::ostream* raystat_dump = NULL;
 #endif
 
 
+
+
 /* Static values used by dagmctrack_ */
 
 static DagMC::RayHistory history;
@@ -46,18 +52,18 @@ static bool visited_surface = false;
 static bool use_dist_limit = false;
 static double dist_limit; // needs to be thread-local
 
-
 void dagmcinit_(char *cfile, int *clen,  // geom
                 char *ftol,  int *ftlen, // faceting tolerance
                 int *parallel_file_mode, // parallel read mode
-                double* dagmc_version, int* moab_version, int* max_pbl )
+                double* dagmc_version, int* moab_version, int* max_pbl)
 {
 
   moab::ErrorCode rval;
 
   // make new DagMC
-  DAG = new moab::DagMC();
-
+  DTM = new DagThreadManager();
+  moab::DagMC *DAG = DAGMC(0);
+  
 #ifdef ENABLE_RAYSTAT_DUMPS
   // the file to which ray statistics dumps will be written
   raystat_dump = new std::ofstream("dagmc_raystat_dump.csv");
@@ -74,7 +80,7 @@ void dagmcinit_(char *cfile, int *clen,  // geom
   if (moab::MB_SUCCESS != rval) {
     std::cerr << "DAGMC failed to read input file: " << cfile << std::endl;
     exit(EXIT_FAILURE);
-  }
+   }
 
 #ifdef CUBIT_LIBS_PRESENT
   // The Cubit 10.2 libraries enable floating point exceptions.
@@ -102,17 +108,21 @@ void dagmcinit_(char *cfile, int *clen,  // geom
   // all metadata now loaded
 
   pblcm_history_stack.resize( *max_pbl+1 ); // fortran will index from 1
-
 }
+
+void dagmcinitalise_threads_() {
+  // initialse all threads
+  DTM->initialise_child_threads();
+};
 
 void dagmcwritefacets_(char *ffile, int *flen)  // facet file
 {
   // terminate all filenames with null char
   ffile[*flen]  = '\0';
 
-  moab::ErrorCode rval = DAG->write_mesh(ffile,*flen);
+  moab::ErrorCode rval = DAGMC(0)->write_mesh(ffile,*flen);
   if (moab::MB_SUCCESS != rval) {
-    std::cerr << "DAGMC failed to write mesh file: " << ffile <<  std::endl;
+    std::cerr << "DAGMCMC failed to write mesh file: " << ffile <<  std::endl;
     exit(EXIT_FAILURE);
   }
 
@@ -185,14 +195,14 @@ void dagmcwritemcnp_(char* dagfile, char *lfile, int *llen, char *mcnp_version_m
 // write all cell related data
 void write_cell_cards(std::ostringstream &lcadfile, char* mcnp_version_major)
 {
-  int num_cells = DAG->num_entities( 3 );
+  int num_cells = DAGMC(0)->num_entities( 3 );
 
   std::string mat_num, density;
 
   // loop over all cells
   for( int i = 1; i <= num_cells; ++i ) {
-    int cellid = DAG->id_by_index( 3, i );
-    moab::EntityHandle entity = DAG->entity_by_index( 3, i );
+    int cellid = DAGMC(0)->id_by_index( 3, i );
+    moab::EntityHandle entity = DAGMC(0)->entity_by_index( 3, i );
 
     // deal with material number & density
     if(workflow_data->material_library.size() == 0) {
@@ -281,7 +291,7 @@ void write_cell_cards(std::ostringstream &lcadfile, char* mcnp_version_major)
     // add descriptive comments for special volumes
     if (mat_name.find("Graveyard") != std::string::npos) {
       importances += "  $ graveyard";
-    } else if (DAG->is_implicit_complement(entity)) {
+    } else if (DAGMC(0)->is_implicit_complement(entity)) {
       importances += "  $ implicit complement";
     }
 
@@ -296,13 +306,13 @@ void write_cell_cards(std::ostringstream &lcadfile, char* mcnp_version_major)
 // write the surface data as appropriate
 void write_surface_cards(std::ostringstream &lcadfile)
 {
-  int num_surfaces = DAG->num_entities( 2 );
+  int num_surfaces = DAGMC(0)->num_entities( 2 );
 
   std::string surface_property = "";
   // loop over all cells
   for( int i = 1; i <= num_surfaces; ++i ) {
-    int surfid = DAG->id_by_index( 2, i );
-    moab::EntityHandle entity = DAG->entity_by_index(2,i);
+    int surfid = DAGMC(0)->id_by_index( 2, i );
+    moab::EntityHandle entity = DAGMC(0)->entity_by_index(2,i);
     std::string boundary_prop = DMD->surface_boundary_data_eh[entity];
     if(boundary_prop.find("Reflecting") != std::string::npos)
       surface_property = "*";
@@ -345,11 +355,12 @@ void write_tally_data(std::ostringstream &lcadfile)
   }
 }
 
-void dagmcangl_(int *jsu, double *xxx, double *yyy, double *zzz, double *ang)
+void dagmcangl_(int *jsu, double *xxx, double *yyy, double *zzz, double *ang, int *thread_id)
 {
-  moab::EntityHandle surf = DAG->entity_by_index( 2, *jsu );
+  moab::EntityHandle surf = DTM->get_dagmc_instance(*thread_id)->entity_by_index( 2, *jsu );
   double xyz[3] = {*xxx, *yyy, *zzz};
-  moab::ErrorCode rval = DAG->get_angle(surf, xyz, ang, &history );
+  moab::DagMC::RayHistory history = HISTORY(*thread_id)->history;
+  moab::ErrorCode rval = DTM->get_dagmc_instance(*thread_id)->get_angle(surf, xyz, ang, &history );
   if (moab::MB_SUCCESS != rval) {
     std::cerr << "DAGMC: failed in calling get_angle" <<  std::endl;
     exit(EXIT_FAILURE);
@@ -368,13 +379,13 @@ void dagmcangl_(int *jsu, double *xxx, double *yyy, double *zzz, double *ang)
 
 void dagmcchkcel_by_angle_( double *uuu, double *vvv, double *www,
                             double *xxx, double *yyy, double *zzz,
-                            int *jsu, int *i1, int *j)
+                            int *jsu, int *i1, int *j, int *thread_id)
 {
 
 
 #ifdef TRACE_DAGMC_CALLS
   std::cout<< " " << std::endl;
-  std::cout<< "chkcel_by_angle: vol=" << DAG->id_by_index(3,*i1) << " surf=" << DAG->id_by_index(2,*jsu)
+  std::cout<< "chkcel_by_angle: vol=" << DAGMC(*thread_id)->id_by_index(3,*i1) << " surf=" << DAGMC(*thread_id)->id_by_index(2,*jsu)
            << " xyz=" << *xxx  << " " << *yyy << " " << *zzz << std::endl;
   std::cout<< "               : uvw = " << *uuu << " " << *vvv << " " << *www << std::endl;
 #endif
@@ -382,11 +393,12 @@ void dagmcchkcel_by_angle_( double *uuu, double *vvv, double *www,
   double xyz[3] = {*xxx, *yyy, *zzz};
   double uvw[3] = {*uuu, *vvv, *www};
 
-  moab::EntityHandle surf = DAG->entity_by_index( 2, *jsu );
-  moab::EntityHandle vol  = DAG->entity_by_index( 3, *i1 );
+  moab::EntityHandle surf = DAGMC(*thread_id)->entity_by_index( 2, *jsu );
+  moab::EntityHandle vol  = DAGMC(*thread_id)->entity_by_index( 3, *i1 );
 
   int result;
-  moab::ErrorCode rval = DAG->test_volume_boundary( vol, surf, xyz, uvw, result, &history );
+  moab::DagMC::RayHistory history = HISTORY(*thread_id)->history;
+  moab::ErrorCode rval = DAGMC(*thread_id)->test_volume_boundary( vol, surf, xyz, uvw, result, &history);
   if( moab::MB_SUCCESS != rval ) {
     std::cerr << "DAGMC: failed calling test_volume_boundary" << std::endl;
     exit(EXIT_FAILURE);
@@ -411,25 +423,25 @@ void dagmcchkcel_by_angle_( double *uuu, double *vvv, double *www,
 }
 
 void dagmcchkcel_(double *uuu,double *vvv,double *www,double *xxx,
-                  double *yyy,double *zzz, int *i1, int *j)
+                  double *yyy,double *zzz, int *i1, int *j, int *thread_id)
 {
 
 
 #ifdef TRACE_DAGMC_CALLS
   std::cout<< " " << std::endl;
-  std::cout<< "chkcel: vol=" << DAG->id_by_index(3,*i1) << " xyz=" << *xxx
+  std::cout<< "chkcel: vol=" << DAGMC(*thread_id)->id_by_index(3,*i1) << " xyz=" << *xxx
            << " " << *yyy << " " << *zzz << std::endl;
   std::cout<< "      : uvw = " << *uuu << " " << *vvv << " " << *www << std::endl;
 #endif
 
   int inside;
-  moab::EntityHandle vol = DAG->entity_by_index( 3, *i1 );
+  moab::EntityHandle vol = DAGMC(*thread_id)->entity_by_index( 3, *i1 );
   double xyz[3] = {*xxx, *yyy, *zzz};
   double uvw[3] = {*uuu, *vvv, *www};
-  moab::ErrorCode rval = DAG->point_in_volume( vol, xyz, inside, uvw );
+  moab::ErrorCode rval = DAGMC(*thread_id)->point_in_volume( vol, xyz, inside, uvw );
 
   if (moab::MB_SUCCESS != rval) {
-    std::cerr << "DAGMC: failed in point_in_volume" <<  std::endl;
+    std::cerr << "DAGMC: failed in point_in_volume from thread " << *thread_id <<  std::endl;
     exit(EXIT_FAILURE);
   }
 
@@ -457,59 +469,59 @@ void dagmcchkcel_(double *uuu,double *vvv,double *www,double *xxx,
 }
 
 
-void dagmcdbmin_( int *ih, double *xxx, double *yyy, double *zzz, double *huge, double* dbmin)
+void dagmcdbmin_( int *ih, double *xxx, double *yyy, double *zzz, double *huge, double* dbmin, int *thread_id)
 {
   double point[3] = {*xxx, *yyy, *zzz};
 
   // get handle for this volume (*ih)
-  moab::EntityHandle vol  = DAG->entity_by_index( 3, *ih );
+  moab::EntityHandle vol  = DAGMC(*thread_id)->entity_by_index( 3, *ih );
 
   // get distance to closest surface
-  moab::ErrorCode rval = DAG->closest_to_location(vol,point,*dbmin);
+  moab::ErrorCode rval = DAGMC(*thread_id)->closest_to_location(vol,point,*dbmin);
 
   // if failed, return 'huge'
   if (moab::MB_SUCCESS != rval) {
     *dbmin = *huge;
-    std::cerr << "DAGMC: error in closest_to_location, returning huge value from dbmin_" <<  std::endl;
+    std::cerr << "DAGMC: error in closest_to_location, returning huge value from dbmin_ from thread id " << *thread_id << std::endl;
   }
 
 #ifdef TRACE_DAGMC_CALLS
-  std::cout << "dbmin " << DAG->id_by_index( 3, *ih ) << " dist = " << *dbmin << std::endl;
+  std::cout << "dbmin " << DAGMC(*thread_id)->id_by_index( 3, *ih ) << " dist = " << *dbmin << std::endl;
 #endif
 
 }
 
-void dagmcnewcel_( int *jsu, int *icl, int *iap )
+void dagmcnewcel_( int *jsu, int *icl, int *iap, int *thread_id)
 {
 
-  moab::EntityHandle surf = DAG->entity_by_index( 2, *jsu );
-  moab::EntityHandle vol  = DAG->entity_by_index( 3, *icl );
+  moab::EntityHandle surf = DAGMC(*thread_id)->entity_by_index( 2, *jsu );
+  moab::EntityHandle vol  = DAGMC(*thread_id)->entity_by_index( 3, *icl );
   moab::EntityHandle newvol = 0;
 
-  moab::ErrorCode rval = DAG->next_vol( surf, vol, newvol );
+  moab::ErrorCode rval = DAGMC(*thread_id)->next_vol( surf, vol, newvol );
   if( moab::MB_SUCCESS != rval ) {
     *iap = -1;
     std::cerr << "DAGMC: error calling next_vol, newcel_ returning -1" << std::endl;
   }
 
-  *iap = DAG->index_by_handle( newvol );
+  *iap = DAGMC(*thread_id)->index_by_handle( newvol );
 
   visited_surface = true;
 
 #ifdef TRACE_DAGMC_CALLS
-  std::cout<< "newcel: prev_vol=" << DAG->id_by_index(3,*icl) << " surf= "
-           << DAG->id_by_index(2,*jsu) << " next_vol= " << DAG->id_by_index(3,*iap) <<std::endl;
+  std::cout<< "newcel: prev_vol=" << DAGMC(*thread_id)->id_by_index(3,*icl) << " surf= "
+           << DAGMC(thread_id)->id_by_index(2,*jsu) << " next_vol= " << DAGMC->id_by_index(3,*iap) <<std::endl;
 
 #endif
 }
 
-void dagmc_surf_reflection_( double *uuu, double *vvv, double *www, int* verify_dir_change )
+void dagmc_surf_reflection_( double *uuu, double *vvv, double *www, int* verify_dir_change, int *thread_id)
 {
 
 
 #ifdef TRACE_DAGMC_CALLS
   // compute and report the angle between old and new
-  CartVect oldv(last_uvw);
+  CartVect oldv(HISTORY(*thread_id)->last_uvw);
   CartVect newv( *uuu, *vvv, *www );
 
   std::cout << "surf_reflection: " << angle(oldv,newv)*(180.0/M_PI) << std::endl;;
@@ -525,10 +537,10 @@ void dagmc_surf_reflection_( double *uuu, double *vvv, double *www, int* verify_
   }
 
   if( update ) {
-    last_uvw[0] = *uuu;
-    last_uvw[1] = *vvv;
-    last_uvw[2] = *www;
-    history.reset_to_last_intersection();
+    HISTORY(*thread_id)->last_uvw[0] = *uuu;
+    HISTORY(*thread_id)->last_uvw[1] = *vvv;
+    HISTORY(*thread_id)->last_uvw[2] = *www;
+    HISTORY(*thread_id)->history.reset_to_last_intersection();
   }
 
 #ifdef TRACE_DAGMC_CALLS
@@ -542,9 +554,9 @@ void dagmc_surf_reflection_( double *uuu, double *vvv, double *www, int* verify_
 
 }
 
-void dagmc_particle_terminate_( )
+void dagmc_particle_terminate_(int *thread_id)
 {
-  history.reset();
+  HISTORY(*thread_id)->history.reset();
 
 #ifdef TRACE_DAGMC_CALLS
   std::cout << "particle_terminate:" << std::endl;
@@ -560,11 +572,11 @@ void dagmc_particle_terminate_( )
 // *jsu             - previous surface index
 void dagmctrack_(int *ih, double *uuu,double *vvv,double *www,double *xxx,
                  double *yyy,double *zzz,double *huge,double *dls,int *jap,int *jsu,
-                 int *nps )
+                 int *nps, int *thread_id)
 {
   // Get data from IDs
-  moab::EntityHandle vol = DAG->entity_by_index( 3, *ih );
-  moab::EntityHandle prev = DAG->entity_by_index( 2, *jsu );
+  moab::EntityHandle vol = DAGMC(*thread_id)->entity_by_index( 3, *ih );
+  moab::EntityHandle prev = DAGMC(*thread_id)->entity_by_index( 2, *jsu );
   moab::EntityHandle next_surf = 0;
   double next_surf_dist;
 
@@ -575,10 +587,17 @@ void dagmctrack_(int *ih, double *uuu,double *vvv,double *www,double *xxx,
   double point[3] = {*xxx,*yyy,*zzz};
   double dir[3]   = {*uuu,*vvv,*www};
 
+  int last_nps = HISTORY(*thread_id)->last_nps;
+  double last_uvw[3] ;
+
+  last_uvw[0] = HISTORY(*thread_id)->last_uvw[0];
+  last_uvw[1] = HISTORY(*thread_id)->last_uvw[1];
+  last_uvw[2] = HISTORY(*thread_id)->last_uvw[2];
+  
   /* detect streaming or reflecting situations */
   if( last_nps != *nps || prev == 0 ) {
     // not streaming or reflecting: reset history
-    history.reset();
+    HISTORY(*thread_id)->history.reset();
 #ifdef TRACE_DAGMC_CALLS
     std::cout << "track: new history" << std::endl;
 #endif
@@ -586,8 +605,8 @@ void dagmctrack_(int *ih, double *uuu,double *vvv,double *www,double *xxx,
   } else if( last_uvw[0] == *uuu && last_uvw[1] == *vvv && last_uvw[2] == *www ) {
     // streaming -- use history without change
     // unless a surface was not visited
-    if( !visited_surface ) {
-      history.rollback_last_intersection();
+    if( !HISTORY(*thread_id)->visited_surface ) {
+      HISTORY(*thread_id)->history.rollback_last_intersection();
 #ifdef TRACE_DAGMC_CALLS
       std::cout << "     : (rbl)" << std::endl;
 #endif
@@ -597,15 +616,15 @@ void dagmctrack_(int *ih, double *uuu,double *vvv,double *www,double *xxx,
 #endif
   } else {
     // not streaming or reflecting
-    history.reset();
+    HISTORY(*thread_id)->history.reset();
 
 #ifdef TRACE_DAGMC_CALLS
     std::cout << "track: reset" << std::endl;
 #endif
 
   }
-
-  moab::ErrorCode result = DAG->ray_fire(vol, point, dir,
+  moab::DagMC::RayHistory history = HISTORY(*thread_id)->history;
+  moab::ErrorCode result = DAGMC(*thread_id)->ray_fire(vol, point, dir,
                                          next_surf, next_surf_dist, &history,
                                          (use_dist_limit ? dist_limit : 0 )
 #ifdef ENABLE_RAYSTAT_DUMPS
@@ -619,15 +638,19 @@ void dagmctrack_(int *ih, double *uuu,double *vvv,double *www,double *xxx,
     exit( EXIT_FAILURE );
   }
 
-
   for( int i = 0; i < 3; ++i ) {
-    last_uvw[i] = dir[i];
+    HISTORY(*thread_id)->last_uvw[i] = dir[i];
   }
-  last_nps = *nps;
+
+  HISTORY(*thread_id)->last_nps = *nps;
+  // int p1 = *nps;
+  //  DagMCRayState state = DTM->get_dagmc_raystate(*thread_id);
+  //  state.last_nps = p1;
+  //  DTM->get_dagmc_raystate(*thread_id)->last_nps = p1;
 
   // Return results: if next_surf exists, then next_surf_dist will be nearer than dist_limit (if any)
   if( next_surf != 0 ) {
-    *jap = DAG->index_by_handle( next_surf );
+    *jap = DAGMC(*thread_id)->index_by_handle( next_surf );
     *dls = next_surf_dist;
   } else {
     // no next surface
@@ -656,8 +679,8 @@ void dagmctrack_(int *ih, double *uuu,double *vvv,double *www,double *xxx,
 
 #ifdef TRACE_DAGMC_CALLS
 
-  std::cout<< "track: vol=" << DAG->id_by_index(3,*ih) << " prev_surf=" << DAG->id_by_index(2,*jsu)
-           << " next_surf=" << DAG->id_by_index(2,*jap) << " nps=" << *nps <<std::endl;
+  std::cout<< "track: vol=" << DAGMC(*thread_id)->id_by_index(3,*ih) << " prev_surf=" << DAGMC(*thread_id)->id_by_index(2,*jsu)
+           << " next_surf=" << DAGMC(*thread_id)->id_by_index(2,*jap) << " nps=" << *nps <<std::endl;
   std::cout<< "     : xyz=" << *xxx << " " << *yyy << " "<< *zzz << " dist = " << *dls << std::flush;
   if( use_dist_limit && *jap == 0 ) std::cout << " > distlimit" << std::flush;
   std::cout << std::endl;
@@ -666,7 +689,7 @@ void dagmctrack_(int *ih, double *uuu,double *vvv,double *www,double *xxx,
 
 }
 
-void dagmc_bank_push_( int* nbnk )
+void dagmc_bank_push_( int* nbnk)
 {
   if( ((unsigned)*nbnk) != history_bank.size() ) {
     std::cerr << "bank push size mismatch: F" << *nbnk << " C" << history_bank.size() << std::endl;
@@ -734,14 +757,14 @@ void dagmc_getpar_( int* n )
 }
 
 
-void dagmcvolume_(int* mxa, double* vols, int* mxj, double* aras)
+void dagmcvolume_(int* mxa, double* vols, int* mxj, double* aras, int *thread_id)
 {
   moab::ErrorCode rval;
 
   // get size of each volume
-  int num_vols = DAG->num_entities(3);
+  int num_vols = DAGMC(*thread_id)->num_entities(3);
   for (int i = 0; i < num_vols; ++i) {
-    rval = DAG->measure_volume( DAG->entity_by_index(3, i+1), vols[i*2] );
+    rval = DAGMC(*thread_id)->measure_volume( DAGMC(*thread_id)->entity_by_index(3, i+1), vols[i*2] );
     if( moab::MB_SUCCESS != rval ) {
       std::cerr << "DAGMC: could not measure volume " << i+1 << std::endl;
       exit( EXIT_FAILURE );
@@ -749,9 +772,9 @@ void dagmcvolume_(int* mxa, double* vols, int* mxj, double* aras)
   }
 
   // get size of each surface
-  int num_surfs = DAG->num_entities(2);
+  int num_surfs = DAGMC(*thread_id)->num_entities(2);
   for (int i = 0; i < num_surfs; ++i) {
-    rval = DAG->measure_area( DAG->entity_by_index(2, i+1), aras[i*2] );
+    rval = DAGMC(*thread_id)->measure_area( DAGMC(*thread_id)->entity_by_index(2, i+1), aras[i*2] );
     if( moab::MB_SUCCESS != rval ) {
       std::cerr << "DAGMC: could not measure surface " << i+1 << std::endl;
       exit( EXIT_FAILURE );
@@ -768,7 +791,7 @@ void dagmc_setdis_(double *d)
 #endif
 }
 
-void dagmc_set_settings_(int* fort_use_dist_limit, int* use_cad, double* overlap_thickness, int* srccell_mode )
+void dagmc_set_settings_(int* fort_use_dist_limit, int* use_cad, double* overlap_thickness, int* srccell_mode, int *thread_id)
 {
 
   if( *fort_use_dist_limit ) {
@@ -780,20 +803,19 @@ void dagmc_set_settings_(int* fort_use_dist_limit, int* use_cad, double* overlap
     std::cout << "DAGMC source cell optimization is ENABLED (warning: experimental!)" << std::endl;
   }
 
-  DAG->set_overlap_thickness( *overlap_thickness );
+  DAGMC(*thread_id)->set_overlap_thickness( *overlap_thickness );
 
 }
 
 void dagmc_init_settings_(int* fort_use_dist_limit, int* use_cad,
-                          double* overlap_thickness, double* facet_tol, int* srccell_mode )
+                          double* overlap_thickness, double* facet_tol, int* srccell_mode, int *thread_id)
 {
 
   *fort_use_dist_limit = use_dist_limit ? 1 : 0;
 
-  *overlap_thickness = DAG->overlap_thickness();
+  *overlap_thickness = DAGMC(*thread_id)->overlap_thickness();
 
-  *facet_tol = DAG->faceting_tolerance();
-
+  *facet_tol = DAGMC(*thread_id)->faceting_tolerance();
 
   if( *srccell_mode ) {
     std::cout << "DAGMC source cell optimization is ENABLED (warning: experimental!)" << std::endl;
@@ -804,7 +826,22 @@ void dagmc_init_settings_(int* fort_use_dist_limit, int* use_cad,
 void dagmc_teardown_()
 {
   delete DMD;
-  delete DAG;
+  delete DTM;
+}
+
+// set the number of threads
+void dagmc_set_num_threads_(int *num_threads) {
+  DTM->set_num_threads(*num_threads);
+}
+
+// setup child threads
+void dagmc_setup_child_threads_() {
+  DTM->setup_child_threads();
+}
+
+// intialise child threads
+void dagmc_init_child_threads_() {
+  DTM->initialise_child_threads();
 }
 
 // these functions should be replaced when we adopt C++11

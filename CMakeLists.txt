@@ -45,6 +45,7 @@ endif (STATIC_LIB)
 # Allow use of find_package(HDF5), find_package(MOAB), etc.
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_LIST_DIR}/cmake)
 
+set(CMAKE_CXX_FLAGS "-w")
 
 # Make sure we have HDF5 and MOAB
 find_package(HDF5 REQUIRED)

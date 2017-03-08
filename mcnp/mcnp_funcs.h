@@ -56,7 +56,7 @@ extern "C" {
 
   /* Get normal of surface with id *jsu at location (*xxx,*yyy,*zzz) and store
      in three doubles at ang (an arry of length 3) */
-  void dagmcangl_(int *jsu, double *xxx, double *yyy, double *zzz, double *ang);
+  void dagmcangl_(int *jsu, double *xxx, double *yyy, double *zzz, double *ang, int* thread_id);
 
 
   /* Given point and direction, determine if the particle is going into
@@ -67,14 +67,15 @@ extern "C" {
    */
   void dagmcchkcel_by_angle_( double *uuu, double *vvv, double *www,
                               double *xxx, double *yyy, double *zzz,
-                              int *jsu, int *i1, int *j);
+                              int *jsu, int *i1, int *j, int* thread_id);
 
   /* Point-in-volume query.  Determine if the particle at given coordinates
    * is inside or outside of cell i1.  Return j=1 if outside or on boundary,
    * and j=0 if inside.
    */
   void dagmcchkcel_(double *uuu,double *vvv,double *www,double *xxx,
-                    double *yyy,double *zzz, int *i1, int *j);
+                    double *yyy,double *zzz, int *i1, int *j,
+		    int* thread_id);
 
   /* Determine distance to nearest surface
    * *ih - current RefVolume ID
@@ -84,7 +85,7 @@ extern "C" {
    */
   void dagmcdbmin_( int *ih,
                     double *xxx, double *yyy, double *zzz,
-                    double *huge, double* dbmin);
+                    double *huge, double* dbmin, int* thread_id);
 
 
   /* Get next Cell
@@ -92,7 +93,7 @@ extern "C" {
    * *icl - Previous cell ID
    * *iap - Next cell ID (output parameter)
    */
-  void dagmcnewcel_( int *jsu, int *icl, int* iap );
+  void dagmcnewcel_( int *jsu, int *icl, int* iap, int* thread_id );
 
   /**
    * Tell dagmc that a particle has changed direction at the most recently reached surface boundary,
@@ -104,9 +105,9 @@ extern "C" {
    * which occasionally calls this function without having changed the direction;
    * it's less invasive to do the check in C++ instead of Fortran.)
    */
-  void dagmc_surf_reflection_( double *uuu, double *vvv, double *www, int* verify_dir_change );
+  void dagmc_surf_reflection_( double *uuu, double *vvv, double *www, int* verify_dir_change, int *thread_id);
 
-  void dagmc_particle_terminate_( );
+  void dagmc_particle_terminate_(int *thread_id );
 
   /* Do ray fire
    * *ih  - Volume ID to do ray fire against
@@ -120,21 +121,21 @@ extern "C" {
    */
   void dagmctrack_(int *ih, double *uuu,double *vvv,double *www,double *xxx,
                    double *yyy,double *zzz,double *huge,double *dls,int *jap,int *jsu,
-                   int *nps );
+                   int *nps, int *thread_id );
 
   /* Measure entities
    * vols - 2xN array where first column contains, as output, measure of every volume.
    * aras - 2xN array where first column contains, as output, measure of every surface
    */
-  void dagmcvolume_(int* mxa, double* vols, int* mxj, double* aras);
+  void dagmcvolume_(int* mxa, double* vols, int* mxj, double* aras, int* thread_id);
 
   /* Set distance limit */
   void dagmc_setdis_(double *d);
 
-  void dagmc_set_settings_(int* use_dist_limit, int* use_cad, double* overlap_thickness, int* srccell_mode);
+  void dagmc_set_settings_(int* use_dist_limit, int* use_cad, double* overlap_thickness, int* srccell_mode, int *thread_id);
 
   void dagmc_init_settings_(int* use_dist_limit, int* use_cad,
-                            double* overlap_thickness, double* facet_tol, int* srccell_mode );
+                            double* overlap_thickness, double* facet_tol, int* srccell_mode, int* thread_id);
 
   void dagmc_teardown_();
 
