@@ -68,8 +68,6 @@ using namespace moab;
 
 #define plot true
 
-//#define G4SPECSDEBUG 1
-///////////////////////////////////////////////////////////////////////////////
 //
 // Standard contructor has blank name and defines no facets.
 //
@@ -131,7 +129,6 @@ DagSolid::DagSolid (const G4String &name, DagMC* dagmc, int volID)
   if ( plot ) {
     //  G4cout<<"please wait for visualization... "<<G4endl;
     for(unsigned i=0 ; i<surfs.size() ; i++) {
-      My_sulf_hit=surfs[i];
       moab->get_number_entities_by_type( surfs[i], MBTRI, num_entities);
       //G4cout<<"Number of triangles = "<<num_entities<<" in surface index: "<<fdagmc->index_by_handle(surfs[i])<<G4endl;
       //G4cout<<"please wait for visualization... "<<G4endl;
@@ -224,16 +221,36 @@ EInside DagSolid::Inside (const G4ThreeVector &p) const
   G4double minDist = 0.0;
 
   int result;
-  ErrorCode ec;
-  ec = fdagmc->point_in_volume(fvolEntity, point, result,
-                               direction);  // if uvw is not given, this function generate uvw ran
-
-  if (ec != MB_SUCCESS) {
-    G4cout << "failed to get point in volume" << std::endl;
-    exit(1);
+  ErrorCode rval;
+  rval = fdagmc->point_in_volume(fvolEntity, point, result,
+				 direction);  // if uvw is not given, this function generate uvw ran
+  if(rval != moab::MB_SUCCESS) {
+    std::ostringstream message;
+    message << "Failure from point_in_volume" << G4endl
+	    << "ErrorCode " << rval << G4endl
+            << "Position:"  << G4endl << G4endl
+            << "p.x() = "   << p.x()/mm << " mm" << G4endl
+            << "p.y() = "   << p.y()/mm << " mm" << G4endl
+            << "p.z() = "   << p.z()/mm << " mm" << G4endl << G4endl
+            << "Proposed Result = " << result << G4endl;
+    G4Exception("DagSolid::Inside(p)","GeomSolidsFailure",
+		EventMustBeAborted,message);
   }
 
-  ec = fdagmc->closest_to_location(fvolEntity,point,minDist);
+  rval = fdagmc->closest_to_location(fvolEntity,point,minDist);
+  if(rval != moab::MB_SUCCESS) {
+    std::ostringstream message;
+    message << "Failure from clost_to_location" << G4endl
+	    << "ErrorCode " << rval << G4endl
+            << "Position:"  << G4endl << G4endl
+            << "p.x() = "   << p.x()/mm << " mm" << G4endl
+            << "p.y() = "   << p.y()/mm << " mm" << G4endl
+            << "p.z() = "   << p.z()/mm << " mm" << G4endl << G4endl
+            << "Proposed distance :" << G4endl << G4endl
+            << "snxt = "    << minDist/mm << " mm" << G4endl;
+    G4Exception("DagSolid::Inside(p)","GeomSolidsFailure",
+		EventMustBeAborted,message);
+  }
 
   // if on surface
   if (minDist <= delta) {
@@ -255,11 +272,21 @@ EInside DagSolid::Inside (const G4ThreeVector &p) const
 
 G4ThreeVector DagSolid::SurfaceNormal (const G4ThreeVector &p) const
 {
-
-  G4double ang[3]= {0,0,1};
+  G4double ang[3]= {0,0,0};
   G4double position[3]= {p.x()/cm,p.y()/cm,p.z()/cm}; //convert to cm
-
-  fdagmc->get_angle(My_sulf_hit, position, ang);
+  
+  moab::ErrorCode rval = fdagmc->get_angle(last_surf_hit, position, ang);
+  if(rval != moab::MB_SUCCESS) {
+    std::ostringstream message;
+    message << "Failure from get_angle" << G4endl
+	    << "ErrorCode " << rval << G4endl
+            << "Position:"  << G4endl << G4endl
+            << "p.x() = "   << p.x()/mm << " mm" << G4endl
+            << "p.y() = "   << p.y()/mm << " mm" << G4endl
+            << "p.z() = "   << p.z()/mm << " mm" << G4endl;
+    G4Exception("DagSolid::SurfaceNormal(p)","GeomSolidsFailure",
+		EventMustBeAborted,message);
+  }
 
   G4ThreeVector normal = G4ThreeVector(ang[0],ang[1],ang[2]);
 
@@ -270,30 +297,49 @@ G4ThreeVector DagSolid::SurfaceNormal (const G4ThreeVector &p) const
 //
 // G4double DistanceToIn(const G4ThreeVector& p, const G4ThreeVector& v)
 //
-G4double DagSolid::DistanceToIn (const G4ThreeVector &p,
+G4double DagSolid::DistanceToIn (const G4ThreeVector &p, 
                                  const G4ThreeVector &v) const
 {
 
-  G4double minDist = kInfinity;
   G4double position[3] = {p.x()/cm,p.y()/cm,p.z()/cm}; //convert to cm
   G4double dir[3] = {v.x(),v.y(),v.z()};
   EntityHandle next_surf;
-  G4double distance;
+  G4double distance = kInfinity;
 
   DagMC::RayHistory history;
 
   // perform the ray fire with modified dag call
-  fdagmc->ray_fire(fvolEntity,position,dir,next_surf,distance,&history,0,-1);
+  moab::ErrorCode rval = fdagmc->ray_fire(fvolEntity,position,dir,next_surf,distance,&history,0,-1);
+  if(rval != moab::MB_SUCCESS) {
+    std::ostringstream message;
+    message << "Failure from ray_fire" << G4endl
+	    << "ErrorCode " << rval << G4endl
+            << "Position:"  << G4endl << G4endl
+            << "p.x() = "   << p.x()/mm << " mm" << G4endl
+            << "p.y() = "   << p.y()/mm << " mm" << G4endl
+            << "p.z() = "   << p.z()/mm << " mm" << G4endl << G4endl
+            << "Direction:" << G4endl << G4endl
+            << "v.x() = "   << v.x() << G4endl
+            << "v.y() = "   << v.y() << G4endl
+            << "v.z() = "   << v.z() << G4endl << G4endl
+            << "Proposed distance :" << G4endl << G4endl
+            << "snxt = "    << distance/mm << " mm" << G4endl;
+    G4Exception("DagSolid::DistanceToIn(p,v)","GeomSolidsFailure",
+		EventMustBeAborted,message);
+  }
+  
+  last_surf_hit = next_surf;
   history.reset();
   distance *= cm; // convert back to mm
 
   if ( next_surf == 0 ) // no intersection
     return kInfinity;
-  else if (  -delta >= distance && distance <= delta )
+
+  // if we travel less than delta, do not move
+  if ( distance < delta )
     return 0.0;
   else
     return distance;
-
 }
 
 
@@ -307,16 +353,26 @@ G4double DagSolid::DistanceToIn (const G4ThreeVector &p,
 
 G4double DagSolid::DistanceToIn (const G4ThreeVector &p) const
 {
-  G4double minDist = kInfinity;
+  G4double safety = 0.0;
   G4double point[3]= {p.x()/cm, p.y()/cm, p.z()/cm}; // convert position to cm
+  moab::ErrorCode rval;
+  rval = fdagmc->closest_to_location(fvolEntity, point, safety);
+  if(rval != moab::MB_SUCCESS) {
+    std::ostringstream message;
+    message << "Failure from clostest_to_location" << G4endl
+	    << "ErrorCode " << rval << G4endl
+            << "Position:"  << G4endl << G4endl
+            << "p.x() = "   << p.x()/mm << " mm" << G4endl
+            << "p.y() = "   << p.y()/mm << " mm" << G4endl
+            << "p.z() = "   << p.z()/mm << " mm" << G4endl << G4endl
+            << "Proposed distance :" << G4endl << G4endl
+            << "snxt = "    << safety/mm << " mm" << G4endl;
+    G4Exception("DagSolid::DistanceToIn(p)","GeomSolidsFailure",
+		EventMustBeAborted,message);
+  }
+  safety *= cm; // convert back to mm
 
-
-  fdagmc->closest_to_location(fvolEntity, point, minDist);
-  minDist *= cm; // convert back to mm
-  if ( minDist <= delta )
-    return 0.0;
-  else
-    return minDist;
+  return safety;
 }
 
 
@@ -350,7 +406,26 @@ G4double DagSolid::DistanceToOut (const G4ThreeVector &p,
   double next_dist;
   DagMC::RayHistory history;
 
-  fdagmc->ray_fire(fvolEntity,position,dir,next_surf,next_dist,&history,0,1);
+  moab::ErrorCode rval = fdagmc->ray_fire(fvolEntity,position,dir,next_surf,next_dist,&history,0,1);
+  if(rval != moab::MB_SUCCESS) {
+    std::ostringstream message;
+    message << "Failure from ray_fire" << G4endl
+	    << "ErrorCode " << rval << G4endl
+            << "Position:"  << G4endl << G4endl
+            << "p.x() = "   << p.x()/mm << " mm" << G4endl
+            << "p.y() = "   << p.y()/mm << " mm" << G4endl
+            << "p.z() = "   << p.z()/mm << " mm" << G4endl << G4endl
+            << "Direction:" << G4endl << G4endl
+            << "v.x() = "   << v.x() << G4endl
+            << "v.y() = "   << v.y() << G4endl
+            << "v.z() = "   << v.z() << G4endl << G4endl
+            << "Proposed distance :" << G4endl << G4endl
+            << "snxt = "    << next_dist/mm << " mm" << G4endl;
+    G4Exception("DagSolid::DistanceToOut(p,v,...)","GeomSolidsFailure",
+		EventMustBeAborted,message);
+  }
+
+  last_surf_hit = next_surf;
   history.reset();
   next_dist *= cm; // convert back to mm
 
@@ -386,15 +461,29 @@ G4double DagSolid::DistanceToOut (const G4ThreeVector &p,
 
 G4double DagSolid::DistanceToOut (const G4ThreeVector &p) const
 {
-  G4double minDist = kInfinity;
+  G4double safety = 0.0;
   G4double point[3]= {p.x()/cm, p.y()/cm, p.z()/cm}; // convert to cm
 
-  fdagmc->closest_to_location(fvolEntity, point, minDist);
-  minDist *= cm; // convert back to mm
-  if ( minDist < delta )
+  moab::ErrorCode rval = fdagmc->closest_to_location(fvolEntity, point, safety);
+  if(rval != moab::MB_SUCCESS) {
+    std::ostringstream message;
+    message << "Failure from clostest_to_location" << G4endl
+	    << "ErrorCode " << rval << G4endl
+            << "Position:"  << G4endl << G4endl
+            << "p.x() = "   << p.x()/mm << " mm" << G4endl
+            << "p.y() = "   << p.y()/mm << " mm" << G4endl
+            << "p.z() = "   << p.z()/mm << " mm" << G4endl << G4endl
+            << "Proposed distance :" << G4endl << G4endl
+            << "snxt = "    << safety/mm << " mm" << G4endl;
+    G4Exception("DagSolid::DistanceToOut(p)","GeomSolidsFailure",
+		EventMustBeAborted,message);
+  }
+
+  safety *= cm; // convert back to mm
+  if ( safety < delta )
     return 0.0;
   else
-    return minDist;
+    return safety;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

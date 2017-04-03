@@ -156,9 +156,9 @@ class DagSolid : public G4TessellatedSolid
   G4int fvolID;
   EntityHandle fvolEntity;
 
-  mutable EntityHandle Last_sulf_hit;
   mutable G4int nVertices;
-  EntityHandle My_sulf_hit;
+  mutable EntityHandle last_surf_hit;
+  
 
 };
 
