@@ -85,11 +85,9 @@ DagSolid::DagSolid ()
   yMaxExtent = -kInfinity;
   zMinExtent =  kInfinity;
   zMaxExtent = -kInfinity;
-//G4TessellatedSolid
-//  SetRandomVectors();
 
-  // SetRndVectors();
-
+  // geometric precision for surfaces
+  delta = 0.5*kCarTolerance;
 }
 
 
@@ -238,7 +236,7 @@ EInside DagSolid::Inside (const G4ThreeVector &p) const
   ec = fdagmc->closest_to_location(fvolEntity,point,minDist);
 
   // if on surface
-  if (minDist <= 0.5*kCarTolerance) {
+  if (minDist <= delta) {
     return kSurface;
   } else {
     if ( result == 0 )
@@ -291,7 +289,7 @@ G4double DagSolid::DistanceToIn (const G4ThreeVector &p,
 
   if ( next_surf == 0 ) // no intersection
     return kInfinity;
-  else if ( -kCarTolerance*0.5 >= distance && distance <= kCarTolerance*0.5 )
+  else if (  -delta >= distance && distance <= delta )
     return 0.0;
   else
     return distance;
@@ -315,7 +313,7 @@ G4double DagSolid::DistanceToIn (const G4ThreeVector &p) const
 
   fdagmc->closest_to_location(fvolEntity, point, minDist);
   minDist *= cm; // convert back to mm
-  if ( minDist <= kCarTolerance*0.5 )
+  if ( minDist <= delta )
     return 0.0;
   else
     return minDist;
@@ -369,7 +367,7 @@ G4double DagSolid::DistanceToOut (const G4ThreeVector &p,
     minDist = next_dist;
 
   // particle considered to be on surface
-  if (minDist > 0.0 && minDist <= 0.5*kCarTolerance ) {
+  if (minDist > 0.0 && minDist <= delta ) {
     return 0.0;
   } else if ( minDist < kInfinity) {
     if(calcNorm) // if calc norm true,s should set validNorm true
@@ -393,7 +391,7 @@ G4double DagSolid::DistanceToOut (const G4ThreeVector &p) const
 
   fdagmc->closest_to_location(fvolEntity, point, minDist);
   minDist *= cm; // convert back to mm
-  if ( minDist < kCarTolerance/2.0 )
+  if ( minDist < delta )
     return 0.0;
   else
     return minDist;

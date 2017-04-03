@@ -148,6 +148,7 @@ class DagSolid : public G4TessellatedSolid
   G4double                 zMinExtent;
   G4double                 zMaxExtent;
 
+  G4double                 delta; /// 0.5*tolerance for geometric precision tests
 
   G4String Myname;
 
