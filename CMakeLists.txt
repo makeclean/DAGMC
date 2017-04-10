@@ -6,6 +6,12 @@ if (CMAKE_MAJOR_VERSION GREATER 3 OR CMAKE_MAJOR_VERSION EQUAL 3)
   cmake_policy(SET CMP0040 OLD)
 endif (CMAKE_MAJOR_VERSION GREATER 3 OR CMAKE_MAJOR_VERSION EQUAL 3)
 
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+ set(CMAKE_CXX_FLAGS "-pg")
+ set(CMAKE_EXE_LINKER_FLAGS "-pg")
+ set(CMAKE_SHARED_LINKER_FLAGS "-pg")
+endif()
+
 # Setup test macro
 macro (setup_test test_name ext driver libs)
   add_executable(${test_name} ${test_name}.${ext} ${driver})

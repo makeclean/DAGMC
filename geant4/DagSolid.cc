@@ -86,6 +86,7 @@ DagSolid::DagSolid ()
 
   // geometric precision for surfaces
   delta = 0.5*kCarTolerance;
+  last_surf_hit = 0;
 }
 
 
@@ -104,15 +105,18 @@ DagSolid::DagSolid (const G4String &name, DagMC* dagmc, int volID)
   fvolID=volID;
   fvolEntity = fdagmc->entity_by_index(3, volID);
 
+  delta = 0.5*kCarTolerance;
+  last_surf_hit = 0;
+  
   double min[3],max[3];
   fdagmc->getobb(fvolEntity,min,max);
 
-  xMinExtent =  min[0];
-  xMaxExtent =  max[0];
-  yMinExtent =  min[1];
-  yMaxExtent =  max[1];
-  zMinExtent =  min[2];
-  zMaxExtent =  max[2];
+  xMinExtent =  min[0]*cm;
+  xMaxExtent =  max[0]*cm;
+  yMinExtent =  min[1]*cm;
+  yMaxExtent =  max[1]*cm;
+  zMinExtent =  min[2]*cm;
+  zMaxExtent =  max[2]*cm;
 
   int num_entities;
   std::vector<EntityHandle> surfs;
@@ -149,14 +153,6 @@ DagSolid::DagSolid (const G4String &name, DagMC* dagmc, int volID)
         //  G4cout << vertex[0] << " " << vertex[1] << " " << vertex[2] << G4endl;
         AddFacet((G4VFacet*)facet);
 
-        for (G4int k=0 ; k < 3 ; k++) {
-          if ( vertex[k].x() < xMinExtent ) xMinExtent = vertex[k].x();
-          if ( vertex[k].x() > xMaxExtent ) xMaxExtent = vertex[k].x();
-          if ( vertex[k].y() < yMinExtent ) yMinExtent = vertex[k].y();
-          if ( vertex[k].y() > yMaxExtent ) yMaxExtent = vertex[k].y();
-          if ( vertex[k].z() < zMinExtent ) zMinExtent = vertex[k].z();
-          if ( vertex[k].z() > zMaxExtent ) zMaxExtent = vertex[k].z();
-        }
       }
       tris.clear();
     }
@@ -199,9 +195,14 @@ DagSolid::~DagSolid ()
 {}
 
 
-///////////////////////////////////////////////////////////////////////////////
 //
+// 
 // EInside DagSolid::Inside (const G4ThreeVector &p) const
+//
+// This method must return:
+//  • kOutside if the point at offset p is outside the shape boundaries plus Tolerance/2,
+//  • kSurface if the point is <= Tolerance/2 from a surface, or
+//  • kInside otherwise.
 //
 EInside DagSolid::Inside (const G4ThreeVector &p) const
 {
@@ -236,7 +237,9 @@ EInside DagSolid::Inside (const G4ThreeVector &p) const
     G4Exception("DagSolid::Inside(p)","GeomSolidsFailure",
 		EventMustBeAborted,message);
   }
-
+  // note: would be nice to early exit from this function
+  // but we to be more careful than that, if point is wihtin
+  // kCartolerance/2.0 of surface we are actually on the surface
   rval = fdagmc->closest_to_location(fvolEntity,point,minDist);
   if(rval != moab::MB_SUCCESS) {
     std::ostringstream message;
@@ -251,11 +254,13 @@ EInside DagSolid::Inside (const G4ThreeVector &p) const
     G4Exception("DagSolid::Inside(p)","GeomSolidsFailure",
 		EventMustBeAborted,message);
   }
-
+  // convert to mm
+  minDist/=mm;
   // if on surface
   if (minDist <= delta) {
     return kSurface;
   } else {
+    // either outside or  inside
     if ( result == 0 )
       return kOutside;
     else
@@ -272,13 +277,17 @@ EInside DagSolid::Inside (const G4ThreeVector &p) const
 
 G4ThreeVector DagSolid::SurfaceNormal (const G4ThreeVector &p) const
 {
-  G4double ang[3]= {0,0,0};
   G4double position[3]= {p.x()/cm,p.y()/cm,p.z()/cm}; //convert to cm
-  
-  moab::ErrorCode rval = fdagmc->get_angle(last_surf_hit, position, ang);
+
+  // right now we are assuming that this is called only after a succesful rayfire
+  // hence last_surf_hit is used. we should modify closest_to_location to allow
+  // returning of the surface as well as distance
+
+  moab::CartVect angle;
+  moab::ErrorCode rval = fdagmc->closest_to_location(fvolEntity,position,angle,last_surf_hit);
   if(rval != moab::MB_SUCCESS) {
     std::ostringstream message;
-    message << "Failure from get_angle" << G4endl
+    message << "Failure from closest_to_location" << G4endl
 	    << "ErrorCode " << rval << G4endl
             << "Position:"  << G4endl << G4endl
             << "p.x() = "   << p.x()/mm << " mm" << G4endl
@@ -288,7 +297,7 @@ G4ThreeVector DagSolid::SurfaceNormal (const G4ThreeVector &p) const
 		EventMustBeAborted,message);
   }
 
-  G4ThreeVector normal = G4ThreeVector(ang[0],ang[1],ang[2]);
+  G4ThreeVector normal = G4ThreeVector(angle[0],angle[1],angle[2]);
 
   return normal;
 }
@@ -297,6 +306,13 @@ G4ThreeVector DagSolid::SurfaceNormal (const G4ThreeVector &p) const
 //
 // G4double DistanceToIn(const G4ThreeVector& p, const G4ThreeVector& v)
 //
+// Return the distance along the normalised vector v to the shape,
+// from the point at offset p. If there is no intersection,
+//  return kInfinity. The first intersection resulting from `leaving' a
+// surface/volume is discarded. Hence, this is tolerant
+// of points on surface of shape.
+// 
+///////////////////////////////////////////////////////////////////////////////
 G4double DagSolid::DistanceToIn (const G4ThreeVector &p, 
                                  const G4ThreeVector &v) const
 {
@@ -332,25 +348,26 @@ G4double DagSolid::DistanceToIn (const G4ThreeVector &p,
   history.reset();
   distance *= cm; // convert back to mm
 
-  if ( next_surf == 0 ) // no intersection
+  if ( next_surf == 0 ) { // no intersection
     return kInfinity;
-
-  // if we travel less than delta, do not move
-  if ( distance < delta )
+  } else if (distance <= delta) {    
     return 0.0;
-  else
+  } else {
     return distance;
+  }
+  // if less than delta, return 0
 }
 
 
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-
 // G4double DistanceToIn(const G4ThreeVector& p)
 //
 // Calculate distance to nearest surface of shape from an outside point p.
-
+// The distance can be an underestimate.
+//
+//////////////
 G4double DagSolid::DistanceToIn (const G4ThreeVector &p) const
 {
   G4double safety = 0.0;
@@ -382,18 +399,20 @@ G4double DagSolid::DistanceToIn (const G4ThreeVector &p) const
 //                        const G4bool calcNorm=false,
 //                        G4bool *validNorm=0, G4ThreeVector *n=0);
 //
-// Return distance along the normalised vector v to the shape, from a
-// point at an offset p inside or on the surface of the shape.
-// Intersections with surfaces, when the point is not greater
-// than kCarTolerance/2 from a surface, must be ignored.
-//     If calcNorm is true, then it must also set validNorm to either
-//     * true, if the solid lies entirely behind or on the exiting
+// Return distance along the normalised vector v to the shape,
+// from a point at an offset p inside or on the surface of
+// the shape. Intersections with surfaces, when the point is not
+// greater than kCarTolerance/2 from a surface, must
+// be ignored.
+// 
+// If calcNorm is true, then it must also set validNorm to either
+//    • true, if the solid lies entirely behind or on the exiting
 //        surface. Then it must set n to the outwards normal vector
 //        (the Magnitude of the vector is not defined).
-//     * false, if the solid does not lie entirely behind or on the
-//       exiting surface.
+//    • false, if the solid does not lie entirely behind or on the
+//         exiting surface.
 // If calcNorm is false, then validNorm and n are unused.
-
+//
 G4double DagSolid::DistanceToOut (const G4ThreeVector &p,
                                   const G4ThreeVector &v, const G4bool calcNorm,
                                   G4bool *validNorm, G4ThreeVector *n) const
@@ -406,21 +425,22 @@ G4double DagSolid::DistanceToOut (const G4ThreeVector &p,
   double next_dist;
   DagMC::RayHistory history;
 
-  moab::ErrorCode rval = fdagmc->ray_fire(fvolEntity,position,dir,next_surf,next_dist,&history,0,1);
+  moab::ErrorCode rval = fdagmc->ray_fire(fvolEntity,position,dir,next_surf,
+					    next_dist,&history,0,1);
   if(rval != moab::MB_SUCCESS) {
     std::ostringstream message;
     message << "Failure from ray_fire" << G4endl
 	    << "ErrorCode " << rval << G4endl
-            << "Position:"  << G4endl << G4endl
-            << "p.x() = "   << p.x()/mm << " mm" << G4endl
-            << "p.y() = "   << p.y()/mm << " mm" << G4endl
-            << "p.z() = "   << p.z()/mm << " mm" << G4endl << G4endl
-            << "Direction:" << G4endl << G4endl
-            << "v.x() = "   << v.x() << G4endl
-            << "v.y() = "   << v.y() << G4endl
-            << "v.z() = "   << v.z() << G4endl << G4endl
-            << "Proposed distance :" << G4endl << G4endl
-            << "snxt = "    << next_dist/mm << " mm" << G4endl;
+	    << "Position:"  << G4endl << G4endl
+	    << "p.x() = "   << p.x()/mm << " mm" << G4endl
+	    << "p.y() = "   << p.y()/mm << " mm" << G4endl
+	    << "p.z() = "   << p.z()/mm << " mm" << G4endl << G4endl
+	    << "Direction:" << G4endl << G4endl
+	    << "v.x() = "   << v.x() << G4endl
+	    << "v.y() = "   << v.y() << G4endl
+	    << "v.z() = "   << v.z() << G4endl << G4endl
+	    << "Proposed distance :" << G4endl << G4endl
+	    << "snxt = "    << next_dist/mm << " mm" << G4endl;
     G4Exception("DagSolid::DistanceToOut(p,v,...)","GeomSolidsFailure",
 		EventMustBeAborted,message);
   }
@@ -433,6 +453,8 @@ G4double DagSolid::DistanceToOut (const G4ThreeVector &p,
   if(next_surf == 0 )
     return kInfinity;
 
+  // true if solid lies entirely behind or on the surface
+  // otherwise false
   if (calcNorm) {
     *n         = SurfaceNormal(p+minDist*v);
     *validNorm = false;
@@ -442,14 +464,15 @@ G4double DagSolid::DistanceToOut (const G4ThreeVector &p,
     minDist = next_dist;
 
   // particle considered to be on surface
-  if (minDist > 0.0 && minDist <= delta ) {
+  if ( minDist <= delta ) {
+    *validNorm = true;
     return 0.0;
-  } else if ( minDist < kInfinity) {
-    if(calcNorm) // if calc norm true,s should set validNorm true
+  } else if ( minDist > delta && minDist < kInfinity) {
+    if(calcNorm) // if calc norm true, s should set validNorm true
       *validNorm = true;
     return minDist;
   } else {
-    return 0.0; //was kinfinity
+    return kInfinity; //was kinfinity
   }
 }
 

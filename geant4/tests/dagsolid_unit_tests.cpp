@@ -87,7 +87,7 @@ TEST_F(DagSolidTest,point_out_outside_tolerance)
 }
 
 /*
- * Point on surface tolerance, kCarTolerance/2.0 = 5.0e-9
+ * Point on surface tolerance, kCarTolerance/2.0 = 5.0e-9 mm 
  * of a surface should return outside
  */
 TEST_F(DagSolidTest,point_out_surface_tolerance)
@@ -252,8 +252,8 @@ TEST_F(DagSolidTest,test_7)
   bool v_norm = false;
   double distance = vol_1->DistanceToOut(position,direction,true,&v_norm,&normal);
 
-  // when the point is inside or on the surface of the volume, v_norm should be true
-  EXPECT_TRUE(v_norm);
+  // when the point is inside or on the surface of the volume, v_norm should be false
+  EXPECT_FALSE(v_norm);
   // distance should be set to 0.0 in this case
   EXPECT_EQ(0.0,distance);
   return;
