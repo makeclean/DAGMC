@@ -111,12 +111,12 @@ DagSolid::DagSolid (const G4String &name, DagMC* dagmc, int volID)
   double min[3],max[3];
   fdagmc->getobb(fvolEntity,min,max);
 
-  xMinExtent =  min[0]*cm;
-  xMaxExtent =  max[0]*cm;
-  yMinExtent =  min[1]*cm;
-  yMaxExtent =  max[1]*cm;
-  zMinExtent =  min[2]*cm;
-  zMaxExtent =  max[2]*cm;
+  xMinExtent =  min[0]/mm;
+  xMaxExtent =  max[0]/mm;
+  yMinExtent =  min[1]/mm;
+  yMaxExtent =  max[1]/mm;
+  zMinExtent =  min[2]/mm;
+  zMaxExtent =  max[2]/mm;
 
   int num_entities;
   std::vector<EntityHandle> surfs;
@@ -472,6 +472,7 @@ G4double DagSolid::DistanceToOut (const G4ThreeVector &p,
       *validNorm = true;
     return minDist;
   } else {
+    G4cout << minDist << G4endl;
     return kInfinity; //was kinfinity
   }
 }
