@@ -38,11 +38,11 @@ include_directories(${GTEST_INCLUDE_DIR})
 include_directories(${MOAB_INCLUDE_DIRS})
 
 # Link to libraries
-target_link_libraries(make_watertight_cylinder_tests ${LINK_LIBS})
-target_link_libraries(make_watertight_cone_tests ${LINK_LIBS})
-target_link_libraries(make_watertight_no_curve_sphere_tests ${LINK_LIBS})
-target_link_libraries(make_watertight_sphere_n_box_test ${LINK_LIBS})
-target_link_libraries(make_watertight_regression_tests ${LINK_LIBS})
+target_link_libraries(make_watertight_cylinder_tests ${LINK_LIBS} pthread sz aec)
+target_link_libraries(make_watertight_cone_tests ${LINK_LIBS} pthread sz aec)
+target_link_libraries(make_watertight_no_curve_sphere_tests ${LINK_LIBS} pthread sz aec)
+target_link_libraries(make_watertight_sphere_n_box_test ${LINK_LIBS} pthread sz aec)
+target_link_libraries(make_watertight_regression_tests ${LINK_LIBS} pthread sz aec)
 
 # Install tests and test models
 install(TARGETS make_watertight_cylinder_tests make_watertight_cone_tests make_watertight_no_curve_sphere_tests make_watertight_sphere_n_box_test DESTINATION tests PERMISSIONS ${PERMS})

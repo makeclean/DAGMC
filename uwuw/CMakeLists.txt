@@ -17,13 +17,13 @@ set (UWUW_PREPROC_SRC "uwuw_preproc.cpp")
 add_executable(uwuw_preproc ${UWUW_PREPROC_SRC})
 target_link_libraries(uwuw_preproc dagmciface  
   ${DAG_LINK_LIBS} ${HDF5_hdf5_hl_LIBRARY} ${HDF5_hdf5_LIBRARY} 
-  uwuw_preprocessor pyne_dagmc)
+  uwuw_preprocessor pyne_dagmc pthread sz z aec)
 
 set(UWUW_PREPROCESSOR_SRC "uwuw_preprocessor.cpp")
 add_library(uwuw_preprocessor ${UWUW_PREPROCESSOR_SRC})
 target_link_libraries(uwuw_preprocessor dagmciface  
   ${DAG_LINK_LIBS} ${HDF5_hdf5_hl_LIBRARY} ${HDF5_hdf5_LIBRARY}
-  pyne_dagmc)
+  pyne_dagmc pthread sz z aec)
 
 # Build UWUW tests
 add_subdirectory(tests)

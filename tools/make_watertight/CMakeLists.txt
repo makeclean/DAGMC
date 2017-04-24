@@ -31,13 +31,13 @@ include_directories(.)
 include_directories(${MOAB_INCLUDE_DIRS})
 
 # Link executables to moab/dagmc libraries
-target_link_libraries(make_watertight ${LINK_LIBS})
-target_link_libraries(check_watertight ${LINK_LIBS})
+target_link_libraries(make_watertight ${LINK_LIBS} pthread sz aec)
+target_link_libraries(check_watertight ${LINK_LIBS} pthread sz aec)
 
 #Create library with make_watertight functionality
 add_library(makeWatertight ${LIB_TYPE} Zip.cpp Arc.cpp Cleanup.cpp Gen.cpp CheckWatertight.cpp MakeWatertight.cpp)
 set_target_properties(makeWatertight PROPERTIES PUBLIC_HEADER "${MW_HEADERS}")
-target_link_libraries(makeWatertight ${LINK_LIBS})
+target_link_libraries(makeWatertight ${LINK_LIBS} pthread sz aec)
 
 # Install
 install(TARGETS check_watertight make_watertight DESTINATION ${INSTALL_BIN_DIR} PERMISSIONS ${PERMS})

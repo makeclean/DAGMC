@@ -7,6 +7,7 @@ list(APPEND LINK_LIBS pthread)
 list(APPEND LINK_LIBS dagmciface)
 list(APPEND LINK_LIBS pyne_dagmc)
 list(APPEND LINK_LIBS ${DAG_LINK_LIBS})
+list(APPEND LINK_LIBS pthread sz aec)
 
 # Include directories
 include_directories(..)
