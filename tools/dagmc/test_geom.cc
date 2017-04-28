@@ -4,6 +4,7 @@
 #include "MBTagConventions.hpp"
 #include "moab/Range.hpp"
 #include "moab/CartVect.hpp"
+#include "moab/GeomQueryTool.hpp"
 
 #ifdef MOAB_HAVE_MPI
 #include "moab_mpi.h"
