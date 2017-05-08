@@ -14,6 +14,7 @@ add_executable(ray_urchin  ${SRC_FILES})
 # Include directories
 include_directories(.)
 include_directories(${MOAB_INCLUDE_DIRS})
+include_directories(${PROJECT_SOURCE_DIR}/common)
 
 # Link executables to moab/dagmc libraries
 target_link_libraries(ray_urchin ${LINK_LIBS})
@@ -21,5 +22,3 @@ target_link_libraries(ray_urchin ${LINK_LIBS})
 # Install
 install(TARGETS ray_urchin DESTINATION ${INSTALL_BIN_DIR} PERMISSIONS ${PERMS})
 
-# build tests
-#add_subdirectory(tests)
