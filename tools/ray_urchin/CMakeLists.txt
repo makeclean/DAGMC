@@ -7,6 +7,7 @@ list(APPEND SRC_FILES ray_urchin.cpp)
 # Libraries
 set(LINK_LIBS)
 list(APPEND LINK_LIBS ${DAG_LINK_LIBS})
+list(APPEND LINK_LIBS dagmciface)
 
 # Define executables
 add_executable(ray_urchin  ${SRC_FILES})

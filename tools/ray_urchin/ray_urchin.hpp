@@ -1,9 +1,10 @@
 #include "DagMC.hpp"
-#include "dagmcMetaData.hpp"
+#include "dagmcmetadata.hpp"
 #include "moab/Core.hpp"
+#include <utility>
 
 typedef std::vector< std::pair< moab::EntityHandle, double > > Ray_History; ///< collection of volumes that the ray has encountered
-typedef std::vector< std::pair< moab::EntityHandele, double> >::iterator Ray_History_iter; ///< iterator for Ray_History type
+typedef std::vector< std::pair< moab::EntityHandle, double> >::iterator Ray_History_iter; ///< iterator for Ray_History type
 
 class Ray_Urchin {
 
@@ -18,28 +19,14 @@ public:
 
   // function to setup the internal state of urchin to 
   // be ready to fire rays
-  moab::ErrorCode Setup()
+  moab::ErrorCode Setup();
 
-  // function to open a text file and read a set of unit vectors
-  // input:
-  //   std::string ray_file - path/filename of ray information
-  // output:
-  //   int[3]& ray_nums - total number of rays + lat/long number of rays
-  //   std::vector< CartVect >& ray_list - vector of ray unit vectors
-  moab::ErrorCode rays_load_and_init(int[3] &ray_nums, 
-                                    std::vector<moab::CartVect> &ray_list)
+ 
+  moab::ErrorCode process_rays();
   
-  
-  Ray_History get_ray_hist(const moab::CartVect dir,
-                           std::set<moab::EntityHandle> &include_vols )
-
-
-
   // function to write output from urchin
-  void write_hzetrn2015(const int[3]& ray_nums,
-                    const std::set< EntityHandle >& include_vols,
-                    const std::vector< CartVect >& ray_list,
-                    const std::map< CartVect, Ray_History >& ray_hist
+  void write_hzetrn2015();
+
 
 // private functions
 private:
@@ -52,19 +39,39 @@ private:
   // function to fine the volume that contains the starting point
   moab::ErrorCode find_start_vol();
 
+ // function to open a text file and read a set of unit vectors
+  // input:
+  //   std::string ray_file - path/filename of ray information
+  // output:
+  //   int[3]& ray_nums - total number of rays + lat/long number of rays
+  //   std::vector< CartVect >& ray_list - vector of ray unit vectors
+  moab::ErrorCode rays_load_and_init(int (&ray_nums)[3], 
+                                    std::vector<moab::CartVect> &ray_list);
+  
+  // 
+  Ray_History get_ray_hist(const moab::CartVect dir,
+                           std::set<moab::EntityHandle> &include_vols );
 
 // private member variables
 private:
   moab::DagMC* dagmc;
   dagmcMetaData* dmd;
 
-  const std::string dagmc_file;
-  const std::string urchin_file; 
+  std::string dagmc_file;
+  std::string urchin_file; 
 
-  const int start_vol_id;
+  int start_vol_id;
   moab::CartVect start_position;
   moab::EntityHandle start_vol_handle;
   moab::EntityHandle graveyard_handle;
+
+  int ray_nums[3]; // number of rays for each direction?
+  std::vector<moab::CartVect> ray_list; // list of rays fired
+  std::map<int,Ray_History> ray_hist; /// collection of histories for each direction
+  std::set<moab::EntityHandle> include_vols; /// list of touched volumes
+
+
+
 };
 
 
