@@ -210,7 +210,7 @@ void Ray_Urchin::write_hzetrn2015() {
 
   // - write header
   std::cout << "***GEOMETRY_DEFN***" << std::endl;
-  std::cout << ray_nums[0] << "t" << ray_nums[1] << "\t" << ray_nums[2] << std::endl << std::endl;
+  std::cout << ray_nums[0] << "\t" << ray_nums[1] << "\t" << ray_nums[2] << std::endl << std::endl;
   
   // - write 'raytrace' flag
   std::cout << "raytrace" << std::endl << std::endl;
@@ -243,12 +243,13 @@ void Ray_Urchin::write_hzetrn2015() {
     int count = dir - ray_list.begin();
 
     //    - write ray direction
-    std::cout << *dir << "\t" << *(dir+1) <<  "\t" << *(dir+2) << "\t" << ray_hist[count].size() << std::endl;
+    moab::CartVect direction = *dir;
+    std::cout << direction << "\t" << ray_hist[count].size() << std::endl;
     //    - write track-map for that ray
     for (Ray_History_iter slab = ray_hist[count].begin();
          slab != ray_hist[count].end();
          slab++) {
-      std::cout << slab->first << "\t" << slab->second << std::endl;
+      std::cout << dagmc->get_entity_id(slab->first) << "\t" << slab->second << std::endl;
     }
   }  
 }
@@ -288,7 +289,7 @@ int main(int argc, char* argv[] ){
   std::string position;
   // moab does not allow vector of doubles or floats, only ints
   // need to read as string then decompose into vector 
-  po.addRequiredArg<std::string>( "starting_point", "(x,y,z) location of ray origins",&position);
+  po.addOpt<std::string>( "starting_point", "(x,y,z) location of ray origins",&position);
 
   // todo: optional volume ID as input
   int start_vol_id = -1;
@@ -298,6 +299,7 @@ int main(int argc, char* argv[] ){
 
   // get the argument
   po.getOpt("starting_point", &position);
+  position = "0. 0. 0.";
   std::vector<double> starting_point = string_to_double_vec(position);
   if(starting_point.size() != 3 ) {
     std::cout << "Insufficient number of entries for coordinate" << std::endl;
