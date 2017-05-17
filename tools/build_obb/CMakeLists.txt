@@ -6,7 +6,9 @@ list(APPEND SRC_FILES build_obb.cpp)
 
 # Libraries
 set(LINK_LIBS)
+list(APPEND LINK_LIBS dagmc)
 list(APPEND LINK_LIBS ${DAG_LINK_LIBS})
+list(APPEND LINK_LIBS ${HDF5_LINK_LIBS})
 
 # Define executables
 add_executable(build_obb ${SRC_FILES})

@@ -12,8 +12,10 @@ set(PUB_HEADERS fluka_funcs.h)
 set(LINK_LIBS)
 list(APPEND LINK_LIBS ${FLUKA_DIR}/libflukahp.a)
 list(APPEND LINK_LIBS pyne_dagmc)
-list(APPEND LINK_LIBS dagmciface)
+list(APPEND LINK_LIBS dagmc)
 list(APPEND LINK_LIBS gfortran)
+list(APPEND LINK_LIBS ${HDF5_LINK_LIBS})
+list(APPEND LINK_LIBS ${DAG_LINK_LIBS})
 
 # Include directories
 include_directories(.)

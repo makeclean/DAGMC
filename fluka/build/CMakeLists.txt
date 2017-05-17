@@ -10,7 +10,8 @@ set(LINK_LIBS)
 list(APPEND LINK_LIBS fludag)
 list(APPEND LINK_LIBS ${FLUKA_DIR}/libflukahp.a)
 list(APPEND LINK_LIBS ${DAG_LINK_LIBS})
-list(APPEND LINK_LIBS dagmciface)
+list(APPEND LINK_LIBS ${HDF5_LINK_LIBS})
+list(APPEND LINK_LIBS dagmc)
 
 # Include directories
 include_directories(.)

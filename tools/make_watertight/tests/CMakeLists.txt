@@ -23,6 +23,7 @@ list(APPEND PUB_HEADERS test_classes.hpp)
 # Libraries
 set(LINK_LIBS)
 list(APPEND LINK_LIBS ${DAG_LINK_LIBS})
+list(APPEND LINK_LIBS ${HDF5_LINK_LIBS})
 list(APPEND LINK_LIBS gtest)
 
 # Define executables

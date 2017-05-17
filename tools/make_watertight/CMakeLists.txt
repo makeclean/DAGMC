@@ -21,6 +21,7 @@ list(APPEND MW_HEADERS MakeWatertight.hpp)
 # Libraries
 set(LINK_LIBS)
 list(APPEND LINK_LIBS ${DAG_LINK_LIBS})
+list(APPEND LINK_LIBS ${HDF5_LINK_LIBS})
 
 # Define executables
 add_executable(make_watertight make_watertight.cpp ${SRC_FILES})

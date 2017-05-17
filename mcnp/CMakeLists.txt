@@ -1,10 +1,10 @@
-message(STATUS "Including MCNP in dagmciface library")
+message(STATUS "Including MCNP in dagmc library")
 
 # dagmciface source files
-set(DI_SRC_FILES ${DI_SRC_FILES} ${CMAKE_CURRENT_LIST_DIR}/mcnp_funcs.cpp PARENT_SCOPE)
+set(DAGMC_SRC_FILES ${DAGMC_SRC_FILES} ${CMAKE_CURRENT_LIST_DIR}/mcnp_funcs.cpp PARENT_SCOPE)
 
 # dagmciface public headers
-set(DI_PUB_HEADERS ${DI_PUB_HEADERS} ${CMAKE_CURRENT_LIST_DIR}/mcnp_funcs.h PARENT_SCOPE)
+set(DAGMC_PUB_HEADERS ${DAGMC_PUB_HEADERS} ${CMAKE_CURRENT_LIST_DIR}/mcnp_funcs.h PARENT_SCOPE)
 
 # Build MCNP5
 if (BUILD_MCNP5)
