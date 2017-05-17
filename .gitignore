@@ -3,6 +3,7 @@
 *.swp
 *~
 #*
+*orig
 
 # Ignore built documentation
 gh-build
