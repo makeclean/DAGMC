@@ -299,13 +299,13 @@ int main(int argc, char* argv[] ){
 
   // get the argument
   po.getOpt("starting_point", &position);
-  position = "0. 0. 0.";
   std::vector<double> starting_point = string_to_double_vec(position);
   if(starting_point.size() != 3 ) {
     std::cout << "Insufficient number of entries for coordinate" << std::endl;
     return 1;
   }
 
+  // start point
   moab::CartVect start_pt(starting_point[0],
                           starting_point[1],
                           starting_point[2]);
@@ -317,10 +317,12 @@ int main(int argc, char* argv[] ){
   moab::ErrorCode ret;
   ret = urch->Setup();
   MB_CHK_SET_ERR_CONT(ret,"Failed to perform setup for Urchin.");
-  
+
+  // process all the rays
   ret = urch->process_rays();
   MB_CHK_SET_ERR_CONT(ret,"Error During ray processing for Urchin.");
 
+  // write out all the ray data in hzetran format
   urch->write_hzetrn2015();
 
   delete urch;
