@@ -19,7 +19,7 @@ include_directories(${PROJECT_SOURCE_DIR}/common)
 
 # Link executables to moab/dagmc libraries
 target_link_libraries(ray_urchin ${LINK_LIBS})
-
+target_compile_features(ray_urchin PRIVATE cxx_range_for)
 # Install
 install(TARGETS ray_urchin DESTINATION ${INSTALL_BIN_DIR} PERMISSIONS ${PERMS})
 
