@@ -1,10 +1,20 @@
 message(STATUS "Including MCNP in dagmc library")
 
+include_directories(${PROJECT_SOURCE_DIR}/dagmc)
+include_directories(${PROJECT_SOURCE_DIR}/tally)
+include_directories(${MOAB_INCLUDE_DIRS})
+
 # dagmciface source files
-set(DAGMC_SRC_FILES ${DAGMC_SRC_FILES} ${CMAKE_CURRENT_LIST_DIR}/mcnp_funcs.cpp PARENT_SCOPE)
+set(MCNPFUNCS_SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/meshtal_funcs.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/mcnp_funcs.cpp)
 
 # dagmciface public headers
-set(DAGMC_PUB_HEADERS ${DAGMC_PUB_HEADERS} ${CMAKE_CURRENT_LIST_DIR}/mcnp_funcs.h PARENT_SCOPE)
+set(MCNPFUNCS_PUB_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/meshtal_funcs.h
+			  ${CMAKE_CURRENT_SOURCE_DIR}/mcnp_funcs.h)
+
+add_library(mcnp ${MCNPFUNCS_SRC_FILES})
+target_link_libraries(mcnp ${DAG_LINK_LIBS} c++)
+set(CMAKE_CXX_IMPLICIT_LINK_LIBRARIES "stdc++")
 
 # Build MCNP5
 if (BUILD_MCNP5)

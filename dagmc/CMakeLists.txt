@@ -13,7 +13,7 @@ include_directories(${MOAB_INCLUDE_DIRS})
 
 # Build dagmciface library
 add_library(dagmc ${LIB_TYPE} ${DAGMC_SRC_FILES})
-set_target_properties(dagmciface PROPERTIES PUBLIC_HEADER "${DAGMC_PUB_HEADERS}")
+set_target_properties(dagmc PROPERTIES PUBLIC_HEADER "${DAGMC_PUB_HEADERS}")
 install(TARGETS dagmc      LIBRARY       DESTINATION ${INSTALL_LIB_DIR}
                            ARCHIVE       DESTINATION ${INSTALL_LIB_DIR}
                            PUBLIC_HEADER DESTINATION ${INSTALL_INCLUDE_DIR}

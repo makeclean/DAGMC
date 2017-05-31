@@ -19,6 +19,7 @@ set(PUB_HEADERS DagSolid.hh)
 # Include directories
 include_directories(.)
 include_directories(build/include)
+include_directories(${PROJECT_SOURCE_DIR}/dagmc)
 include_directories(${HDF5_INCLUDE_DIRS})
 include_directories(${MOAB_INCLUDE_DIRS})
 include_directories(${GEANT4_DIR}/include/Geant4)
@@ -26,6 +27,7 @@ include_directories(${GEANT4_DIR}/include/Geant4)
 # Libraries
 LIST(APPEND LINK_LIBS ${Geant4_LIBRARIES})
 LIST(APPEND LINK_LIBS ${DAG_LINK_LIBS})
+LIST(APPEND LINK_LIBS dagmc)
 
 # Build DagSolid library
 add_library(dagsolid ${LIB_TYPE} ${SRC_FILES})
