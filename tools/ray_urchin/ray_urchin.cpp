@@ -162,14 +162,19 @@ Ray_History Ray_Urchin::get_ray_hist(const moab::CartVect dir,
   double dist = 0.0;
   moab::EntityHandle new_vol = vol;
   moab::EntityHandle surf = 0;
+
+  std::cout << dir << std::endl;
+
+  moab::DagMC::RayHistory hist;
   
   //   fire ray to get all intersections to graveyard : {dir => {cell => track length}}
   while (vol != graveyard_handle){
-    ret = dagmc->ray_fire( vol, start_position.array(), dir.array(), surf, dist);
+    ret = dagmc->ray_fire( vol, start_position.array(), dir.array(), surf, dist, &hist);
     MB_CHK_ERR_CONT(ret);
     ray_hist.push_back(std::make_pair(vol,dist));
     include_vols.insert(vol);
-
+    std::cout << vol << " " << dist << std::endl;
+    if(surf == 0) break;
     ret = dagmc->next_vol(surf,vol,new_vol);
     MB_CHK_ERR_CONT(ret);
     vol = new_vol;
@@ -258,11 +263,12 @@ void Ray_Urchin::write_hzetrn2015() {
 void Ray_Urchin::write_sectors() {
 
   // - write header
-  std::cout << "# " << ray_nums[0] << "\t" << ray_nums[1] << "\t" << ray_nums[2] << std::endl << std::endl;
+  std::cout << "# " << ray_nums[0] << "\t" << ray_nums[1] << "\t";
+  std::cout << ray_nums[2] << std::endl << std::endl;
   
   // - write start point & start cell
-  std::cout "# " << start_position[0] << "\t" << start_position[1] << "\t" << start_position[2] << "\t" << start_vol_id << std::endl << std::endl;
-  
+  std::cout << "# " << start_position[0] << "\t" << start_position[1] << "\t";
+  std::cout << start_position[2] << "\t" << start_vol_id << std::endl << std::endl;
   
   // - write number of rays
   for (std::vector< moab::CartVect >::iterator dir = ray_list.begin();
@@ -281,7 +287,10 @@ void Ray_Urchin::write_sectors() {
     for (Ray_History_iter slab = ray_hist[count].begin();
          slab != ray_hist[count].end();
          slab++) {
-      total_thickness += slab->second;
+      int id = dagmc->get_entity_id(slab->first);
+      std::string material = dmd->get_volume_property("material",id);
+      if(material != "mat:Vacuum" && material != "mat:Graveyard")
+	total_thickness += slab->second;
     }
     std::cout << total_thickness << std::endl;
   }  
@@ -361,7 +370,7 @@ int main(int argc, char* argv[] ){
   if(run == "hzetrn")
     urch->write_hzetrn2015();
   else if ( run == "sector" )
-    urch->write_sector();
+    urch->write_sectors();
   else {
     std::cout << "Unknown output type" << std::endl;
   }
