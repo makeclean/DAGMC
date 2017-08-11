@@ -27,6 +27,9 @@ public:
   // function to write output from urchin
   void write_hzetrn2015();
 
+  // function to write output for sectors analysis
+  void write_sectors();
+
 
 // private functions
 private:

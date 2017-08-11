@@ -254,6 +254,39 @@ void Ray_Urchin::write_hzetrn2015() {
   }  
 }
 
+// write sector thicknesses
+void Ray_Urchin::write_sectors() {
+
+  // - write header
+  std::cout << "# " << ray_nums[0] << "\t" << ray_nums[1] << "\t" << ray_nums[2] << std::endl << std::endl;
+  
+  // - write start point & start cell
+  std::cout "# " << start_position[0] << "\t" << start_position[1] << "\t" << start_position[2] << "\t" << start_vol_id << std::endl << std::endl;
+  
+  
+  // - write number of rays
+  for (std::vector< moab::CartVect >::iterator dir = ray_list.begin();
+       dir != ray_list.end();
+       dir++) {
+    
+    
+    // get the index of the current ray
+    int count = dir - ray_list.begin();
+
+    //  - write ray direction
+    moab::CartVect direction = *dir;
+    std::cout << direction << "\t";
+    //    - write track-map for that ray
+    double total_thickness = 0.0;
+    for (Ray_History_iter slab = ray_hist[count].begin();
+         slab != ray_hist[count].end();
+         slab++) {
+      total_thickness += slab->second;
+    }
+    std::cout << total_thickness << std::endl;
+  }  
+}
+
 // turn string into vector of double values assuming space delimiting
 std::vector<double> string_to_double_vec(std::string input) {
   // turn string into vector of strings
@@ -294,7 +327,9 @@ int main(int argc, char* argv[] ){
   // todo: optional volume ID as input
   int start_vol_id = -1;
   po.addOpt<int>("vols,V", "Volume ID of starting volume", &start_vol_id);
-  
+
+  std::string run = "";
+  po.addOpt<std::string>( "output", "Type of output hzetrn, sectors",&run); 
   po.parseCommandLine( argc, argv );
 
   // get the argument
@@ -322,9 +357,14 @@ int main(int argc, char* argv[] ){
   ret = urch->process_rays();
   MB_CHK_SET_ERR_CONT(ret,"Error During ray processing for Urchin.");
 
-  // write out all the ray data in hzetran format
-  urch->write_hzetrn2015();
-
+  // write out all the ray data
+  if(run == "hzetrn")
+    urch->write_hzetrn2015();
+  else if ( run == "sector" )
+    urch->write_sector();
+  else {
+    std::cout << "Unknown output type" << std::endl;
+  }
   delete urch;
   std::cout << "All Finished." << std::endl;
 }
