@@ -20,7 +20,8 @@ DagThreadManager *DTM;
 static const char input_file[] = "test_geom.h5m";
 
 #ifdef _OPENMP
-  int num_threads = omp_get_num_procs();
+//  int num_threads = omp_get_num_procs();
+  int num_threads = 8;
 #else
   int num_threads = 1;
 #endif
@@ -30,8 +31,9 @@ static const char input_file[] = "test_geom.h5m";
 class DagmcThreadTest : public ::testing::Test {
  protected:
   virtual void SetUp() {
+    
     // set the number of threads to be the number of procs
-    DTM = new DagThreadManager(omp_get_num_procs());
+    DTM = new DagThreadManager(num_threads);
   
     // get a dagmc instance to continue setup
     moab::DagMC *DAG = DTM->get_dagmc_instance(0);
@@ -40,6 +42,8 @@ class DagmcThreadTest : public ::testing::Test {
     // Create the OBB
     rval = DAG->init_OBBTree();
     assert(rval == moab::MB_SUCCESS);
+    //    DTM->setup_child_threads();
+    DTM->initialise_child_threads();
   }
   // clearout
   virtual void TearDown() {
@@ -53,16 +57,14 @@ class DagmcThreadTest : public ::testing::Test {
 // function that returns the EH of the volume the point is in
 moab::EntityHandle where_am_i(moab::DagMC *DAG,
 			      moab::DagMC::RayHistory *RayHist,
-			      double position[3]) {
+			      double position[3],double dir[3]) {
   int i = 0;
   int num_vols = DAG->num_entities(3);
   int inside = 0;
   for ( i = 1 ; i <= num_vols ; i++ ) {
     moab::EntityHandle eh = DAG->entity_by_index(3,i);
-    std::cout << eh << std::endl;
     moab::ErrorCode ec = DAG->point_in_volume(eh,position,inside,
-					      NULL,RayHist);
-    std::cout << inside << std::endl;
+					      dir,RayHist);
     if(inside) return eh;
   }
   return 0;
@@ -113,36 +115,43 @@ void transport_cycle(moab::DagMC *DAG,
 		     moab::DagMC::RayHistory *RayHistory,
 		     int nps,
 		     double start[3]) {
-  // where am i
-  moab::EntityHandle eh = where_am_i(DAG,RayHistory,start);
 
   std::vector<double> rand_dir = isotropic_dir(nps);
   double dir[3]; dir[0] = rand_dir[0], dir[1] = rand_dir[1], dir[2] = rand_dir[2];
+
+  double pos[3] = {start[0],start[1],start[2]};
   
+  // where am i
+  moab::EntityHandle eh = where_am_i(DAG,RayHistory,start,dir);
+
   // transport loop
   moab::EntityHandle next_surf = 1;
   while(next_surf) {
     // fire ray
     double dist = 0.;
-    std::cout << eh << std::endl;
     moab::EntityHandle surf = fire_ray(DAG,RayHistory,eh,start,dir,dist);
     // update particle position
-    start[0] += dir[0]*dist;
-    start[1] += dir[1]*dist;
-    start[2] += dir[2]*dist;
+    pos[0] += dir[0]*dist;
+    pos[1] += dir[1]*dist;
+    pos[2] += dir[2]*dist;
     // update the next surface
+    if(!surf) return; // if next surf is 0 we are done
+    // used instead of graveyard
     next_surf = surf;
     // update the volume that we are in
-    eh = next_volume(DAG,surf,eh);
-    //std::cout << dist << std::endl;
+    moab::EntityHandle next_vol = next_volume(DAG,surf,eh);
+
+    // reuse the loop variable
+    eh = next_vol;
   }
   // done
   return;
 }
 
 TEST_F(DagmcThreadTest, dagmc_point_in) {
-  int nps = 100000;
+  int nps = 500000;
   double start_pos[3] = {0.,0.,0.};
+  omp_set_num_threads(num_threads);
   #pragma omp parallel for
   //std::cout << omp_get_num_threads() << std::endl;
   for ( int i = 1 ; i <= nps ; i++ ) {
@@ -150,6 +159,7 @@ TEST_F(DagmcThreadTest, dagmc_point_in) {
     transport_cycle(DTM->get_dagmc_instance(omp_get_thread_num()),
 		    &(DTM->get_dagmc_raystate(omp_get_thread_num())->history),
 		    i,start_pos);               
-
+    // end of transport loop reset state
+    DTM->get_dagmc_raystate(omp_get_thread_num())->history.reset();
   }
 }

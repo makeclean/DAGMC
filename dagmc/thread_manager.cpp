@@ -70,6 +70,6 @@ void DagThreadManager::initialise_child_threads()
     moab::ErrorCode rval;
     //std::cout << i << std::endl;
     rval = get_dagmc_instance(i)->load_existing_contents();
-    // rval = get_dagmc_instance(i)->init_OBBTree();
+    rval = get_dagmc_instance(i)->init_OBBTree();
   }
 }
