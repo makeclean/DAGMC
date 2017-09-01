@@ -1,0 +1,155 @@
+#include <gtest/gtest.h>
+
+#include "moab/Interface.hpp"
+#include "moab/Core.hpp"
+#include "DagMC.hpp"
+#include "thread_manager.hpp"
+
+#ifdef _OPENMP
+ #include "omp.h"
+#endif
+
+#include <random>
+#include <iostream>
+
+using namespace moab;
+using moab::DagMC;
+
+DagThreadManager *DTM;
+
+static const char input_file[] = "test_geom.h5m";
+
+#ifdef _OPENMP
+  int num_threads = omp_get_num_procs();
+#else
+  int num_threads = 1;
+#endif
+
+#define TWO_PI 6.28318530718 // TODO need more sf
+
+class DagmcThreadTest : public ::testing::Test {
+ protected:
+  virtual void SetUp() {
+    // set the number of threads to be the number of procs
+    DTM = new DagThreadManager(omp_get_num_procs());
+  
+    // get a dagmc instance to continue setup
+    moab::DagMC *DAG = DTM->get_dagmc_instance(0);
+    moab::ErrorCode rloadval = DAG->load_file(input_file);
+    assert(rloadval == moab::MB_SUCCESS);
+    // Create the OBB
+    rval = DAG->init_OBBTree();
+    assert(rval == moab::MB_SUCCESS);
+  }
+  // clearout
+  virtual void TearDown() {
+    delete DTM;
+  }
+ protected:
+  moab::ErrorCode rloadval;
+  moab::ErrorCode rval;
+};
+
+// function that returns the EH of the volume the point is in
+moab::EntityHandle where_am_i(moab::DagMC *DAG,
+			      moab::DagMC::RayHistory *RayHist,
+			      double position[3]) {
+  int i = 0;
+  int num_vols = DAG->num_entities(3);
+  int inside = 0;
+  for ( i = 1 ; i <= num_vols ; i++ ) {
+    moab::EntityHandle eh = DAG->entity_by_index(3,i);
+    std::cout << eh << std::endl;
+    moab::ErrorCode ec = DAG->point_in_volume(eh,position,inside,
+					      NULL,RayHist);
+    std::cout << inside << std::endl;
+    if(inside) return eh;
+  }
+  return 0;
+}
+
+// given the surface and the current volume, where do we go next?
+moab::EntityHandle next_volume(moab::DagMC *DAG, moab::EntityHandle surf,
+			       moab::EntityHandle eh) {
+  moab::EntityHandle next_vol = 0;
+  moab::ErrorCode rval = DAG->next_vol(surf,eh,next_vol);
+  assert(rval == moab::MB_SUCCESS);
+  return next_vol;
+}
+
+std::vector<double> isotropic_dir(int nps) {
+  // see the rn
+ 
+  int stride = 123456;
+  // seed the generator for each nps - unique seed
+  std::mt19937 gen(nps*stride);
+  std::uniform_real_distribution<> rand(0,1);
+  double r1 = rand(gen);
+  double r2 = rand(gen);
+
+  std::vector<double> dir;
+  double u = 2.*r1 - 1.;
+  double v = std::sqrt(1.-(u*u))*cos(TWO_PI*r2);
+  double w = std::sqrt(1.-(u*u))*sin(TWO_PI*r2);
+  dir.push_back(u);
+  dir.push_back(v);
+  dir.push_back(w);
+  return dir;
+}
+
+// fire a ray frrom start along dir, which surf do we hit and what distance
+moab::EntityHandle fire_ray(moab::DagMC *DAG, moab::DagMC::RayHistory *RayHist,
+			    moab::EntityHandle eh, double start[3], double dir[3],
+			    double &distance) {
+  moab::EntityHandle next_surf = 0;
+  moab::ErrorCode rval = DAG->ray_fire(eh,start,dir,next_surf,
+				       distance,RayHist);
+  assert(rval == moab::MB_SUCCESS);
+  return next_surf;
+}
+
+// mimics the MCNP transport cycle
+void transport_cycle(moab::DagMC *DAG,
+		     moab::DagMC::RayHistory *RayHistory,
+		     int nps,
+		     double start[3]) {
+  // where am i
+  moab::EntityHandle eh = where_am_i(DAG,RayHistory,start);
+
+  std::vector<double> rand_dir = isotropic_dir(nps);
+  double dir[3]; dir[0] = rand_dir[0], dir[1] = rand_dir[1], dir[2] = rand_dir[2];
+  
+  // transport loop
+  moab::EntityHandle next_surf = 1;
+  while(next_surf) {
+    // fire ray
+    double dist = 0.;
+    std::cout << eh << std::endl;
+    moab::EntityHandle surf = fire_ray(DAG,RayHistory,eh,start,dir,dist);
+    // update particle position
+    start[0] += dir[0]*dist;
+    start[1] += dir[1]*dist;
+    start[2] += dir[2]*dist;
+    // update the next surface
+    next_surf = surf;
+    // update the volume that we are in
+    eh = next_volume(DAG,surf,eh);
+    //std::cout << dist << std::endl;
+  }
+  // done
+  return;
+}
+
+TEST_F(DagmcThreadTest, dagmc_point_in) {
+  int nps = 100000;
+  double start_pos[3] = {0.,0.,0.};
+  #pragma omp parallel for
+  //std::cout << omp_get_num_threads() << std::endl;
+  for ( int i = 1 ; i <= nps ; i++ ) {
+    //std::cout << i << std::endl;
+    transport_cycle(DTM->get_dagmc_instance(omp_get_thread_num()),
+		    &(DTM->get_dagmc_raystate(omp_get_thread_num())->history),
+		    i,start_pos);               
+
+  }
+}
