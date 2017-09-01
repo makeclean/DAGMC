@@ -2,10 +2,9 @@
 #include "thread_manager.hpp"
 
 // constructor
-DagThreadManager::DagThreadManager(int thread_count, moab::Interface *MBI)
-{
+DagThreadManager::DagThreadManager(int thread_count, moab::Interface* MBI) {
   // if the moab pointer is not null point to it
-  if(MBI != NULL) {
+  if (MBI != NULL) {
     MOAB = MBI;
   } else {
     // make new moab instance to share all DAGMC data
@@ -22,10 +21,9 @@ DagThreadManager::DagThreadManager(int thread_count, moab::Interface *MBI)
   setup_child_threads();
 }
 
-DagThreadManager::DagThreadManager(moab::Interface *MBI)
-{
+DagThreadManager::DagThreadManager(moab::Interface* MBI) {
   // if the moab pointer is not null point to it
-  if(MBI != NULL) {
+  if (MBI != NULL) {
     MOAB = MBI;
   } else {
     // make new moab instance to share all DAGMC data
@@ -37,9 +35,8 @@ DagThreadManager::DagThreadManager(moab::Interface *MBI)
 }
 
 // destructor
-DagThreadManager::~DagThreadManager()
-{
-  for ( int i = 0 ; i < num_threads ; i++ ) {
+DagThreadManager::~DagThreadManager() {
+  for (int i = 0 ; i < num_threads ; i++) {
     // delete each dagmc instance
     delete dagmc_instances[i];
     delete dagmc_rayhistories[i];
@@ -47,15 +44,13 @@ DagThreadManager::~DagThreadManager()
 }
 
 // set the number of threads
-void DagThreadManager::set_num_threads(int thread_count)
-{
+void DagThreadManager::set_num_threads(int thread_count) {
   num_threads = thread_count;
 }
 
-void DagThreadManager::setup_child_threads()
-{
+void DagThreadManager::setup_child_threads() {
   // loop over the number of threads and make a new DAGMC instance for each
-  for ( int i = 1 ; i < num_threads ; i++ ) {
+  for (int i = 1 ; i < num_threads ; i++) {
     // push back a vector of DAGMC instances
     dagmc_instances.push_back(new moab::DagMC(MOAB));
     // collection of ray histories for each thread
@@ -64,9 +59,8 @@ void DagThreadManager::setup_child_threads()
 }
 
 // initalise threads with the loaded data
-void DagThreadManager::initialise_child_threads()
-{
-  for ( int i = 1 ; i < num_threads ; i++ ) {
+void DagThreadManager::initialise_child_threads() {
+  for (int i = 1 ; i < num_threads ; i++) {
     moab::ErrorCode rval;
     //std::cout << i << std::endl;
     rval = get_dagmc_instance(i)->load_existing_contents();

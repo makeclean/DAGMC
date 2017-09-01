@@ -2,14 +2,13 @@
 #include "moab/Core.hpp"
 
 // Struct for storage of ray state
-class DagMCRayState
-{
+class DagMCRayState {
  public:
   // set some default values via constructor
   DagMCRayState() {
     last_uvw[0] = 0.;
     last_uvw[1] = 0.;
-    last_uvw[2]=0.;
+    last_uvw[2] = 0.;
     visited_surface = false;
     use_dist_limit = false;
     double dist_limit = 0.0;
@@ -29,11 +28,10 @@ class DagMCRayState
 
 };
 
-class DagThreadManager
-{
+class DagThreadManager {
  public:
-  DagThreadManager(int num_threads, moab::Interface *MBI = NULL);
-  DagThreadManager(moab::Interface *MBI = NULL);
+  DagThreadManager(int num_threads, moab::Interface* MBI = NULL);
+  DagThreadManager(moab::Interface* MBI = NULL);
   ~DagThreadManager();
 
   // setup the dagmc state for the threads
@@ -57,6 +55,6 @@ class DagThreadManager
   int num_threads; ///< Number of threads to be held by the manager
   std::vector<moab::DagMC*> dagmc_instances; ///< vector of dagmc instances
   std::vector<DagMCRayState*> dagmc_rayhistories; ///< vector to the associated ray history
-  moab::Interface *MOAB; ///< moab pointer
+  moab::Interface* MOAB; ///< moab pointer
 };
 
