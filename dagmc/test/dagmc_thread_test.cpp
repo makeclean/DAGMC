@@ -19,18 +19,16 @@ DagThreadManager* DTM;
 
 static const char input_file[] = "test_geom.h5m";
 
-#ifdef _OPENMP
-//  int num_threads = omp_get_num_procs();
-int num_threads = 8;
-#else
-int num_threads = 1;
-#endif
+extern int num_thread_to_run;
 
 #define TWO_PI 6.28318530718 // TODO need more sf
+
+int num_threads = 0;
 
 class DagmcThreadTest : public ::testing::Test {
  protected:
   virtual void SetUp() {
+    num_threads = num_thread_to_run;
 
     // set the number of threads to be the number of procs
     DTM = new DagThreadManager(num_threads);
@@ -112,7 +110,7 @@ moab::EntityHandle fire_ray(moab::DagMC* DAG, moab::DagMC::RayHistory* RayHist,
 }
 
 // mimics the MCNP transport cycle
-void transport_cycle(moab::DagMC* DAG,
+moab::EntityHandle transport_cycle(moab::DagMC* DAG,
                      moab::DagMC::RayHistory* RayHistory,
                      int nps,
                      double start[3]) {
@@ -137,7 +135,7 @@ void transport_cycle(moab::DagMC* DAG,
     pos[2] += dir[2] * dist;
     // update the next surface
     if (!surf)
-      return; // if next surf is 0 we are done
+      return next_surf; // if next surf is 0 we are done
     // used instead of graveyard
     next_surf = surf;
     // update the volume that we are in
@@ -147,21 +145,40 @@ void transport_cycle(moab::DagMC* DAG,
     eh = next_vol;
   }
   // done
-  return;
+  return 0;
 }
 
 TEST_F(DagmcThreadTest, dagmc_point_in) {
-  int nps = 500000;
+  int nps = 50000000;
   double start_pos[3] = {0., 0., 0.};
   omp_set_num_threads(num_threads);
-  #pragma omp parallel for
+  
+  std::map<moab::EntityHandle,int> score;
+  // for each surface in the problem initialise the score to 0;
+  int num_surf = DTM->get_dagmc_instance(0)->num_entities(2);
+  for ( int j = 1 ; j <= num_surf ; j++ ) {
+    moab::EntityHandle eh = DTM->get_dagmc_instance(0)->entity_by_index(2, j);
+    score[eh] = 0;
+  }
+  
+#pragma omp parallel for shared(score)
   //std::cout << omp_get_num_threads() << std::endl;
   for (int i = 1 ; i <= nps ; i++) {
     //std::cout << i << std::endl;
-    transport_cycle(DTM->get_dagmc_instance(omp_get_thread_num()),
-                    &(DTM->get_dagmc_raystate(omp_get_thread_num())->history),
-                    i, start_pos);
+    moab::EntityHandle eh = transport_cycle(DTM->get_dagmc_instance(omp_get_thread_num()),
+					    &(DTM->get_dagmc_raystate(omp_get_thread_num())->history),i, start_pos);
+    # pragma omp atomic
+    score[eh] +=1;
     // end of transport loop reset state
     DTM->get_dagmc_raystate(omp_get_thread_num())->history.reset();
   }
+
+  int sum = 0;
+  for ( int j = 1 ; j <= num_surf ; j++ ) {
+    moab::EntityHandle eh = DTM->get_dagmc_instance(0)->entity_by_index(2,j);
+    std::cout << eh << " " << score[eh] << std::endl;
+    sum += score[eh];
+  }
+  std::cout << "Total particle leaving " << sum << std::endl;
+  std::cout << "Total particles starting " << nps << std::endl;
 }

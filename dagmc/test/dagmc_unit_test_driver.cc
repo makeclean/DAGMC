@@ -3,8 +3,18 @@
 
 #include <gtest/gtest.h>
 
+int num_thread_to_run; // number of threads for the test
+
 int main(int argc, char* argv[]) {
-  for (int i = 0; i < argc; i++) {
+
+  // set the number of threads
+  if ( argc > 1 ) {
+    num_thread_to_run = std::atoi(argv[1]);
+  } else {
+    num_thread_to_run = 1;
+  }
+  
+  for (int i = 0; i < argc; i++) {   
     std::string arg = argv[i];
     if (arg == "--help") {
       std::cout << "GTest flags" << std::endl;
