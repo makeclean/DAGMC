@@ -149,7 +149,7 @@ moab::EntityHandle transport_cycle(moab::DagMC* DAG,
 }
 
 TEST_F(DagmcThreadTest, dagmc_point_in) {
-  int nps = 50000000;
+  int nps = 50000;
   double start_pos[3] = {0., 0., 0.};
   omp_set_num_threads(num_threads);
   
@@ -181,4 +181,22 @@ TEST_F(DagmcThreadTest, dagmc_point_in) {
   }
   std::cout << "Total particle leaving " << sum << std::endl;
   std::cout << "Total particles starting " << nps << std::endl;
+}
+
+TEST_F(DagmcThreadTest, obb_check) {
+  // set the number of threads to be the number of procs
+  DagThreadManager *dtm = new DagThreadManager(num_threads);
+  // get a dagmc instance to continue setup
+  moab::DagMC* DAG = dtm->get_dagmc_instance(0);
+  moab::ErrorCode rloadval = DAG->load_file(input_file);
+  assert(rloadval == moab::MB_SUCCESS);
+  // Create the OBB
+  rval = DAG->init_OBBTree();
+  rval = DAG->moab_instance()->write_mesh("test1.h5m");
+  assert(rval == moab::MB_SUCCESS);
+  //    DTM->setup_child_threads();
+  DTM->initialise_child_threads();
+  rval=DAG->moab_instance()->write_mesh("test2.h5m");
+  delete DAG;
+  delete dtm;
 }
