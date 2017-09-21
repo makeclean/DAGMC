@@ -10,6 +10,8 @@ std::ofstream povout;
 
 moab::Core *mbi;
 
+void write_header();
+
 void write_mesh(std::vector<moab::EntityHandle> triangles, std::set<moab::EntityHandle> vertices,
 		std::vector<double>,bool box = false);
 void add_camera(std::vector<double> origin, std::vector<double> look_at);
@@ -91,6 +93,8 @@ int main(int argc, char* argv[]) {
   // open the output file
   povout.open(output_file);
 
+  write_header();
+  
   // new moab instance
   mbi = new moab::Core(); 
   // load a file
@@ -166,6 +170,60 @@ void add_camera(std::vector<double> origin, std::vector<double> look_at) {
   return;
 }
 
+void write_header() {
+  povout << "#include \"colors.inc\""
+            "#include \"textures.inc\"" 
+            " "
+            "// Ambient light"
+            "global_settings{ambient_light Gray30}"
+            " "
+            "sky_sphere {"
+	    "pigment {"
+	    "	gradient y"
+	    "	color_map {"
+            "	[0.000 0.002	color rgb <0.2, 0.2, 1.0>"
+	    "				color rgb <0.2, 0.2, 1.0>]"
+   	    "	[0.002 0.200	color rgb <0.2, 0.1, 0.8>"
+	    "				color rgb <0.2, 0.2, 0.3>]"
+	    "	}"
+            "	scale 2"
+	    "	transla\te -1 "
+	    "}"
+	    "pigment {"
+	    "	bozo"
+	    "	turbulence 0.65"
+	    "	octaves 6"
+	    "	omega 0.7"
+	    "	lambda 2"
+	    "	color_map {"
+	    "	[ 0.0 0.1	color rgb <0.85, 0.85, 0.85> "
+	    "				color rgb <0.75, 0.75, 0.75>] "
+ 	    "	[ 0.1 0.5	color rgb <0.75, 0.75, 0.75> "
+	    "				color rgbt <1, 1, 1, 1>] "
+	    "	[ 0.5 1.0	color rgbt <1, 1, 1, 1> "
+	    "				color rgbt <1, 1, 1, 1>] "
+	    "	} "
+	    "	scale <0.2, 0.5, 0.2> "
+    	    "}"
+	    "rotate -135*x"
+            "}"
+            "// Light sources"
+	    "light_source { "
+	    "	<120,240,100> "
+	    "	color White "
+	    "} "
+	    " "
+	    "light_source {"
+	    "	<-100,240,50>"
+	    "	color Gray80"
+	    "	spotlight"
+	    "	radius 50"
+	    "	falloff 60"
+	    "	point_at <0,0,0>"
+	    " "
+            "}" << std::endl;
+}
+
 // writes a pov ray mesh object 
 void write_mesh(std::vector<moab::EntityHandle> triangles, std::set<moab::EntityHandle> vertices, 
 		std::vector<double> box_dims, bool box) {
@@ -216,6 +274,8 @@ void write_mesh(std::vector<moab::EntityHandle> triangles, std::set<moab::Entity
     povout << std::endl;
   }
   povout << "  }" << std::endl;
+
+  // note box is <lower corner coords, upper corner coords  
   if (box) {
     povout << "} " << std::endl;
     povout << "box { " << std::endl;
