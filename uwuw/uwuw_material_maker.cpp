@@ -121,6 +121,17 @@ int main(int argc, char* argv[])
     mat_lib[new_mat_name] = material;
     // orphan the /materials dataspace in the file.
 
+    // make a new material that is the sum of all materials
+    pyne::Material mat = pyne::Material();
+    std::map<std::string,pyne::Material>::iterator it;
+    for ( it = mat_lib.begin() ; it != mat_lib.end() ; ++it ) {
+      mat = mat + it->second;
+    }
+    // the reason we do this is to force the writing of the correct
+    // nucids to the appropriate section
+    mat.metadata["name"] = "";
+    mat.write_hdf5(out_file,"/materials");
+
     //Set file access properties so it closes cleanly                                                                            
     hid_t fapl;
     fapl = H5Pcreate(H5P_FILE_ACCESS);
@@ -131,21 +142,20 @@ int main(int argc, char* argv[])
 
     // datapaths to delete
     char* mat_path = "/materials";
-    char* nuc_path = "/nucid";
+    //    char* nuc_path = "/nucid";
     char* meta_path = "/materials_metadata";
 
     hid_t lapl = 0;
     // delete the links
     herr_t error = 0;
     error = H5Ldelete(id,mat_path,lapl);
-    error = H5Ldelete(id,nuc_path,lapl);
+    // error = H5Ldelete(id,nuc_path,lapl);
     error = H5Ldelete(id,meta_path,lapl);
 
     // close the hdf5 file
-    H5Fclose(id);
-
+    H5Fclose(id);  
+   
     // write the new materials
-    std::map<std::string,pyne::Material>::iterator it;
     for ( it = mat_lib.begin() ; it != mat_lib.end() ; ++it ) {
       it->second.write_hdf5(out_file,"/materials");
     }

@@ -14963,37 +14963,35 @@ pyne::Material pyne::Material::expand_elements() {
   int n, nabund, znuc, zabund;
   comp_map newcomp;
   std::map<int, double>::iterator abund_itr, abund_end;
+
   if (pyne::natural_abund_map.empty())
     pyne::_load_atomic_mass_map();
-  abund_itr = pyne::natural_abund_map.begin();
-  abund_end = pyne::natural_abund_map.end();
-  zabund = nucname::znum((*abund_itr).first);
+
+  abund_end = pyne::natural_abund_map.end(); // this never changes
+
+  // for each decriptor in the the composition
   for (comp_iter nuc = comp.begin(); nuc != comp.end(); nuc++) {
-    if (abund_itr == abund_end)
-      newcomp.insert(*nuc);
-    else if (0 == nucname::anum((*nuc).first)) {
-      n = (*nuc).first;
-      znuc = nucname::znum(n);
-      if (znuc < zabund) {
-        newcomp.insert(*nuc);
-        continue;
+    int nucid = nuc->first;
+    // if the descriptor already has a nucleon number append directly to
+    // new material composition
+    if ( nucname::anum(n) == 0 ) {
+      newcomp[nuc->first] = nuc->second;
+    } else {
+    // otherwise we need to expand the element into its nuclides
+      abund_itr = pyne::natural_abund_map.begin();
+      
+      int atomic_number = nucname::znum(nuc->first);
+      double atomic_mass_element = atomic_mass(nuc->first);
+      // loop over the natural abundance map, looking for matching atomic number
+      while( abund_itr != abund_end ) {
+	if( nucname::znum(abund_itr->first) == atomic_number ) {
+	  double descriptor_abund = nuc->second;
+	  newcomp[abund_itr->first] = abund_itr->second * nuc->second \
+	    atomic_mass_element / atomic_mass(abund_itr->first);
+	}
+	abund_itr++;
       }
-      while (zabund <= znuc) {
-        nabund = (*abund_itr).first;
-        if (zabund == znuc && 0 != nucname::anum(nabund) && 0.0 != (*abund_itr).second)
-          newcomp[nabund] = (*abund_itr).second * (*nuc).second * \
-                            atomic_mass(nabund) / atomic_mass(n);
-        else if (n == nabund && 0.0 == (*abund_itr).second)
-          newcomp.insert(*nuc);
-        abund_itr++;
-        if (abund_itr == abund_end) {
-          zabund = INT_MAX;
-          break;
-        }
-        zabund = nucname::znum(nabund);
-      }
-    } else
-      newcomp.insert(*nuc);
+    }
   }
   return Material(newcomp, mass, density, atoms_per_molecule, metadata);
 }

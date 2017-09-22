@@ -39,7 +39,7 @@ install(TARGETS uwuw_preproc DESTINATION ${INSTALL_BIN_DIR})
 
 add_executable(material_maker uwuw_material_maker.cpp)
 target_link_libraries(material_maker ${HDF5_hdf5_hl_LIBRARY} ${HDF5_hdf5_LIBRARY}
-  pyne_dagmc dagmciface)
+  pyne_dagmc dagmc)
 
 install(TARGETS uwuw_preproc DESTINATION ${INSTALL_BIN_DIR} PERMISSIONS ${PERMS})
 install(TARGETS material_maker DESTINATION ${INSTALL_BIN_DIR} PERMISSIONS ${PERMS})
