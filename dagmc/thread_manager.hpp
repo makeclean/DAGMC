@@ -56,5 +56,6 @@ class DagThreadManager {
   std::vector<moab::DagMC*> dagmc_instances; ///< vector of dagmc instances
   std::vector<DagMCRayState*> dagmc_rayhistories; ///< vector to the associated ray history
   moab::Interface* MOAB; ///< moab pointer
+  moab::GeomTopoTool *GTT; ///< GTT Pointer
 };
 

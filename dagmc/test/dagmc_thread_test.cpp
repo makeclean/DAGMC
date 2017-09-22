@@ -44,9 +44,9 @@ class DagmcThreadTest : public ::testing::Test {
     DTM->initialise_child_threads();
   }
   // clearout
-  virtual void TearDown() {
-    delete DTM;
-  }
+  //  virtual void TearDown() {
+  //  delete DTM;
+  //}
  protected:
   moab::ErrorCode rloadval;
   moab::ErrorCode rval;
@@ -149,7 +149,7 @@ moab::EntityHandle transport_cycle(moab::DagMC* DAG,
 }
 
 TEST_F(DagmcThreadTest, dagmc_point_in) {
-  int nps = 50000;
+  int nps = 5000000;
   double start_pos[3] = {0., 0., 0.};
   omp_set_num_threads(num_threads);
   
@@ -181,6 +181,8 @@ TEST_F(DagmcThreadTest, dagmc_point_in) {
   }
   std::cout << "Total particle leaving " << sum << std::endl;
   std::cout << "Total particles starting " << nps << std::endl;
+
+  delete DTM;
 }
 
 TEST_F(DagmcThreadTest, obb_check) {
@@ -197,6 +199,6 @@ TEST_F(DagmcThreadTest, obb_check) {
   //    DTM->setup_child_threads();
   DTM->initialise_child_threads();
   rval=DAG->moab_instance()->write_mesh("test2.h5m");
-  delete DAG;
+
   delete dtm;
 }

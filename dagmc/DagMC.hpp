@@ -61,6 +61,7 @@ class DagMC {
  public:
   // Constructor
   DagMC(Interface* mb_impl = NULL, double overlap_tolerance = 0., double numerical_precision = .001);
+  DagMC(GeomTopoTool * gtt, double overlap_tolerance = 0., double numerical_precision = .001);
   // Destructor
   ~DagMC();
 
@@ -392,6 +393,7 @@ class DagMC {
 
   Interface* MBI;
   bool moab_instance_created;
+  bool gtt_instance_created;
 
   GeomTopoTool* GTT;
   GeomQueryTool* GQT;

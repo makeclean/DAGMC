@@ -10,16 +10,21 @@ DagThreadManager::DagThreadManager(int thread_count, moab::Interface* MBI) {
     // make new moab instance to share all DAGMC data
     MOAB = new moab::Core();
   }
+
+  // make a new GTT for Thread manager
+  GTT = new moab::GeomTopoTool(MOAB,false);
+  
   // number of threads
   set_num_threads(thread_count);
 
   // set storage for master
-  dagmc_instances.push_back(new moab::DagMC(MOAB));
+  dagmc_instances.push_back(new moab::DagMC(GTT));
   dagmc_rayhistories.push_back(new DagMCRayState());
 
   // setup threads
   setup_child_threads();
 }
+
 
 DagThreadManager::DagThreadManager(moab::Interface* MBI) {
   // if the moab pointer is not null point to it
@@ -29,8 +34,12 @@ DagThreadManager::DagThreadManager(moab::Interface* MBI) {
     // make new moab instance to share all DAGMC data
     MOAB = new moab::Core();
   }
+
+  // make a new GTT
+  GTT = new moab::GeomTopoTool(MOAB,false);
+  
   // set storage for master
-  dagmc_instances.push_back(new moab::DagMC(MOAB));
+  dagmc_instances.push_back(new moab::DagMC(GTT));
   dagmc_rayhistories.push_back(new DagMCRayState());
 }
 
@@ -52,7 +61,7 @@ void DagThreadManager::setup_child_threads() {
   // loop over the number of threads and make a new DAGMC instance for each
   for (int i = 1 ; i < num_threads ; i++) {
     // push back a vector of DAGMC instances
-    dagmc_instances.push_back(new moab::DagMC(MOAB));
+    dagmc_instances.push_back(new moab::DagMC(GTT));
     // collection of ray histories for each thread
     dagmc_rayhistories.push_back(new DagMCRayState());
   }
