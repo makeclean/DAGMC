@@ -53,6 +53,7 @@
 #define DagSolid_hh 1
 
 #include "G4TessellatedSolid.hh"
+#include "G4QuadrangularFacet.hh"
 #include "G4VGraphicsScene.hh"
 #include "G4VPVParameterisation.hh"
 
@@ -117,9 +118,9 @@ class DagSolid : public G4TessellatedSolid {
 
   virtual void  DescribeYourselfTo(G4VGraphicsScene& scene) const;
 
-
-
- public:  // without description
+  private:
+    void Voxelize();
+  public:  // without description
 
   DagSolid(__void__&);
   // Fake default constructor for usage restricted to direct object
@@ -140,6 +141,7 @@ class DagSolid : public G4TessellatedSolid {
   G4GeometryType           geometryType;
   G4double                 cubicVolume;
   G4double                 surfaceArea;
+
   G4double                 xMinExtent;
   G4double                 xMaxExtent;
   G4double                 yMinExtent;
@@ -151,13 +153,16 @@ class DagSolid : public G4TessellatedSolid {
   G4String Myname;
 
   DagMC* fdagmc;
+  G4Voxelizer fVoxels; // pointer to the voxels
+  
   G4int fvolID;
   EntityHandle fvolEntity;
 
   mutable EntityHandle Last_sulf_hit;
   mutable G4int nVertices;
   EntityHandle My_sulf_hit;
-
+  G4double half_kCarTolerance = 0.5*kCarTolerance;
+  
 };
 
 #endif

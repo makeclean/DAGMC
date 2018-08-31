@@ -171,8 +171,8 @@ DagSolid::DagSolid(const G4String& name, DagMC* dagmc, int volID)
     }
   }
 
-//SetRandomVectorSet();
-
+  //SetRandomVectorSet();
+  Voxelize();
   SetSolidClosed(true);
 
 //  G4cout<<"Number Of Facets = "<<GetNumberOfFacets() <<G4endl;
@@ -206,6 +206,22 @@ DagSolid::DagSolid(__void__& a)
 DagSolid::~DagSolid()
 {}
 
+void DagSolid::Voxelize() {
+  double min[3],max[3];
+  fdagmc->getobb(fvolEntity,min,max);
+  std::vector<G4VFacet*> facets;
+  std::vector<G4ThreeVector> v(4);
+  v[0].set(min[0],min[1],min[2]);
+  v[1].set(max[0],min[1],max[2]);
+  v[2].set(max[0],max[1],max[2]);
+  v[3].set(min[0],max[1],min[2]);
+
+  // this is a hack that allows the G4VoxelBuilder to be aware of
+  // the obb of the volume
+  G4QuadrangularFacet *facet = new G4QuadrangularFacet(v[0],v[1],v[2],v[3],ABSOLUTE);
+  facets.push_back((G4VFacet*)facet);
+  fVoxels.Voxelize(facets);
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -238,9 +254,9 @@ EInside DagSolid::Inside(const G4ThreeVector& p) const {
   }
 
   ec = fdagmc->closest_to_location(fvolEntity, point, minDist);
-
+  
   // if on surface
-  if (minDist <= 0.5 * kCarTolerance) {
+  if (std::fabs(minDist) <= half_kCarTolerance) {
     return kSurface;
   } else {
     if (result == 0)
@@ -286,12 +302,12 @@ G4double DagSolid::DistanceToIn(const G4ThreeVector& p,
 
   // perform the ray fire with modified dag call
   fdagmc->ray_fire(fvolEntity, position, dir, next_surf, distance, &history, 0, -1);
-  history.reset();
-  distance *= cm; // convert back to mm
 
+  distance *= cm; // convert back to mm
+  
   if (next_surf == 0)   // no intersection
     return kInfinity;
-  else if (-kCarTolerance * 0.5 >= distance && distance <= kCarTolerance * 0.5)
+  else if (std::fabs(distance) < half_kCarTolerance) 
     return 0.0;
   else
     return distance;
@@ -308,16 +324,7 @@ G4double DagSolid::DistanceToIn(const G4ThreeVector& p,
 // Calculate distance to nearest surface of shape from an outside point p.
 
 G4double DagSolid::DistanceToIn(const G4ThreeVector& p) const {
-  G4double minDist = kInfinity;
-  G4double point[3] = {p.x() / cm, p.y() / cm, p.z() / cm}; // convert position to cm
-
-
-  fdagmc->closest_to_location(fvolEntity, point, minDist);
-  minDist *= cm; // convert back to mm
-  if (minDist <= kCarTolerance * 0.5)
-    return 0.0;
-  else
-    return minDist;
+  return 0.;
 }
 
 
@@ -353,7 +360,7 @@ G4double DagSolid::DistanceToOut(const G4ThreeVector& p,
   fdagmc->ray_fire(fvolEntity, position, dir, next_surf, next_dist, &history, 0, 1);
   history.reset();
   next_dist *= cm; // convert back to mm
-
+   
   // no more surfaces
   if (next_surf == 0)
     return kInfinity;
@@ -367,7 +374,7 @@ G4double DagSolid::DistanceToOut(const G4ThreeVector& p,
     minDist = next_dist;
 
   // particle considered to be on surface
-  if (minDist > 0.0 && minDist <= 0.5 * kCarTolerance) {
+  if ( (minDist > 0.0) && (minDist < half_kCarTolerance)) {
     return 0.0;
   } else if (minDist < kInfinity) {
     if (calcNorm) // if calc norm true,s should set validNorm true
@@ -385,15 +392,7 @@ G4double DagSolid::DistanceToOut(const G4ThreeVector& p,
 // Calculate distance to nearest surface of shape from an inside point.
 
 G4double DagSolid::DistanceToOut(const G4ThreeVector& p) const {
-  G4double minDist = kInfinity;
-  G4double point[3] = {p.x() / cm, p.y() / cm, p.z() / cm}; // convert to cm
-
-  fdagmc->closest_to_location(fvolEntity, point, minDist);
-  minDist *= cm; // convert back to mm
-  if (minDist < kCarTolerance / 2.0)
-    return 0.0;
-  else
-    return minDist;
+  return 0.;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
