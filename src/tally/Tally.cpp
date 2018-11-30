@@ -19,8 +19,10 @@ Tally::Tally(const TallyInput& input)
   // This is a placeholder for a future option to set t.e.b. false via the
   // TallyInput
   bool total_energy_bin = true;
+  std::cout << "Tally: tot bin " << total_energy_bin << std::endl;
 
   unsigned int num_energy_bins = input_data.energy_bin_bounds.size() - 1;
+  std::cout << "Tally: num_energy_bins " << num_energy_bins << std::endl;
 
   data = new TallyData(num_energy_bins, total_energy_bin);
 }

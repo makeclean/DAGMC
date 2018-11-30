@@ -124,6 +124,7 @@ void dagmc_fmesh_setup_mesh_(int* fm_ipt, int* id, int* fmesh_idx,
   std::cout << "DAGMC tally " << *id << " has these " << *n_energy_mesh
             << " energy bin boundaries: " << std::endl;
 
+  std::cout << "meshtal funcs: n_energy_mesh " << *n_energy_mesh << std::endl;
   for (int i = 0; i < *n_energy_mesh; ++i) {
     std::cout << "     " << energy_mesh[i] << std::endl;
   }
@@ -144,8 +145,10 @@ void dagmc_fmesh_setup_mesh_(int* fm_ipt, int* id, int* fmesh_idx,
   if (*n_energy_mesh > 2)
     bottom = 1;
   for (int i = bottom ; i < *n_energy_mesh; ++i) {
+    std::cout << "energy mesh[i] " << energy_mesh[i] << std::endl;
     energy_boundaries.push_back(energy_mesh[i]);
   }
+  std::cout << "meshtal funcs: size energy bounds " << energy_boundaries.size() << std::endl;
 
   // Parse FC card and create input data for MeshTally
   std::multimap<std::string, std::string> fc_settings;
