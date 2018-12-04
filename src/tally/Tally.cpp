@@ -19,11 +19,8 @@ Tally::Tally(const TallyInput& input)
   // This is a placeholder for a future option to set t.e.b. false via the
   // TallyInput
   bool total_energy_bin = true;
-  std::cout << "Tally: tot bin " << total_energy_bin << std::endl;
 
-//  unsigned int num_energy_bins = input_data.energy_bin_bounds.size() - 1;
   unsigned int num_energy_bins = input_data.energy_bin_bounds.size();
-  std::cout << "Tally: num_energy_bins " << num_energy_bins << std::endl;
 
   data = new TallyData(num_energy_bins, total_energy_bin);
 }
@@ -93,7 +90,6 @@ std::string Tally::get_tally_type() {
 bool Tally::get_energy_bin(double energy, unsigned int& ebin) {
   bool bin_exists = false;
  
-  //std::cout << "TD: input data ebin bound 174 " << input_data.energy_bin_bounds.at(174) << std::endl;
   if (energy_in_bounds(energy)) {
     // in bounds, energy bin index must exist
     bin_exists = true;
