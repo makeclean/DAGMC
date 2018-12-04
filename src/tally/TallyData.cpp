@@ -21,8 +21,8 @@ TallyData::TallyData(unsigned int num_energy_bins, bool total_energy_bin) {
     // Otherwise, pass through the value
     this->total_energy_bin = total_energy_bin;
   }
-  std::cout << "TD: total bin? " << total_energy_bin << std::endl;
-  std::cout << "TD: num_energy_bins " << num_energy_bins << std::endl;
+  std::cout << "TD: total bin? " << this->total_energy_bin << std::endl;
+  std::cout << "TD: num_energy_bins " << this->num_energy_bins << std::endl;
 
   //////////////////////////////////////////////////
   if (this->total_energy_bin) {
@@ -34,7 +34,7 @@ TallyData::TallyData(unsigned int num_energy_bins, bool total_energy_bin) {
     this->num_energy_bins = num_energy_bins;
   }
 
-  std::cout << "tally data: num_energy_bins " << num_energy_bins << std::endl;
+  std::cout << "tally data: num_energy_bins " << this->num_energy_bins << std::endl;
   this->num_tally_points = 0;
 }
 //---------------------------------------------------------------------------//

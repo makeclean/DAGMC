@@ -113,10 +113,11 @@ moab::ErrorCode MeshTally::setup_tags(moab::Interface* mbi, const char* prefix) 
   int tag_size = 1;
 
   unsigned int num_bins = data->get_num_energy_bins();
+  std::cout << "MT: num bins " << num_bins << std::endl;
   if (data->has_total_energy_bin())
     num_bins--;
 
-  std::cout << "meshtally: num_bins " << std::endl;
+  std::cout << "meshtally: num_bins " << num_bins << std::endl;
 
   std::string tag_name = pfx + "TALLY_TAG";
   std::string error_tag_name = pfx + "ERROR_TAG";
