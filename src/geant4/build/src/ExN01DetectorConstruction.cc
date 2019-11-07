@@ -41,6 +41,7 @@
 #include "../pyne/pyne.h"
 
 moab::DagMC* dagmc = new moab::DagMC(); // create dag instance
+moab::Interface *MBI = dagmc->moab_instance();
 dagmcMetaData* DMD;
 // constructor
 ExN01DetectorConstruction::ExN01DetectorConstruction(UWUW* uwuw_workflow_data)
@@ -50,6 +51,142 @@ ExN01DetectorConstruction::ExN01DetectorConstruction(UWUW* uwuw_workflow_data)
 
 // destructor
 ExN01DetectorConstruction::~ExN01DetectorConstruction() {
+}
+
+moab::Tag geometry_dimension_tag,category_tag,id_tag,sense2tag; 
+int highest_surf;
+const char geom_categories[][CATEGORY_TAG_SIZE] = {"Vertex\0",
+						   "Curve\0",
+						   "Surface\0",
+						   "Volume\0",
+						   "Group\0"};
+
+// make a new surface from the old one, remove all 
+// old parent child links, the new surface is the new
+// child and 
+moab::ErrorCode make_new_surface(const moab::EntityHandle volume, 
+                                 moab::EntityHandle surface) {
+
+  // get the child triangles
+  std::vector<moab::EntityHandle> triangles;
+  // get all the triangles 
+  moab::ErrorCode rval = MBI->get_entities_by_type(surface,moab::MBTRI,triangles);
+
+  // make a new meshset to contain the triangles of the new surface
+  moab::EntityHandle new_surface;
+  rval = MBI->create_meshset(moab::MESHSET_SET,surface);
+
+  moab::Range triangles_for_new_surface; 
+  // create new triangles
+  for ( moab::EntityHandle triangle : triangles) {
+    // get the connectivity and make a new triangle with the 
+    // oposite connectivity
+    moab::EntityHandle new_triangle;
+    int count;
+    std::vector<moab::EntityHandle> verts;
+    // get the connectivity of the triangle we want to copy
+    rval = MBI->get_connectivity(&triangle,1,verts);
+    std::reverse(verts.begin(),verts.end());
+    // make a new triangle
+    rval = MBI->create_element(moab::MBTRI,&(verts[0]),3,new_triangle);
+    // insert into range for the new surface
+    triangles_for_new_surface.insert(new_triangle);
+  }
+  // setup new links
+  rval = MBI->add_entities(new_surface,triangles_for_new_surface);
+  rval = MBI->add_parent_child(volume,new_surface);
+  rval = MBI->remove_parent_child(volume,surface);
+
+  // set the sense tag of the new surface
+  EntityHandle sense_data[2] = { 0, 0 };
+  rval = MBI->tag_get_data(sense2tag, &surface, 1, sense_data);
+  sense_data[1] = 0;
+  rval = MBI->tag_set_data(sense2tag,&surface,1,sense_data);
+
+  sense_data[0] = volume;
+  sense_data[1] = 0;
+  rval = MBI->tag_set_data(sense2tag,&new_surface,1,sense_data);
+  int two = 2;
+  const void* value_two = &two;
+  rval = MBI->tag_set_data(geometry_dimension_tag,&new_surface,1,value_two);
+  rval = MBI->tag_set_data(category_tag,&new_surface,1,geom_categories[2]);
+
+  highest_surf++;
+  const void* value = &highest_surf;
+  rval = MBI->tag_set_data(id_tag,&new_surface,1,value);
+
+  // set the id of the new surface
+  // set the geom tag of the new surface
+  // set the category tag of the new surface
+  return rval;
+}
+
+// prepare the DAGMC Geometry for Geant4
+// step through the geometry and amend the geometry 
+// when a volume has reverse sense with a volume
+// make some new triangles and surface with forward sense
+// removing the old links
+moab::ErrorCode prepare_geom_for_geant() {
+
+  moab::ErrorCode rval = moab::MB_SUCCESS; 
+
+  rval = MBI->tag_get_handle(GEOM_DIMENSION_TAG_NAME, 1, moab::MB_TYPE_INTEGER, geometry_dimension_tag, moab::MB_TAG_DENSE | moab::MB_TAG_ANY);
+  rval = MBI->tag_get_handle(GLOBAL_ID_TAG_NAME, 1, moab::MB_TYPE_INTEGER, id_tag, moab::MB_TAG_DENSE | moab::MB_TAG_ANY);
+  rval = MBI->tag_get_handle(CATEGORY_TAG_NAME, CATEGORY_TAG_SIZE, moab::MB_TYPE_OPAQUE, 
+         category_tag, moab::MB_TAG_SPARSE | moab::MB_TAG_ANY);
+  EntityHandle def_val[2] = {0, 0};
+  rval = MBI->tag_get_handle("GEOM_SENSE_2", 2,
+                                 moab::MB_TYPE_HANDLE, sense2tag, moab::MB_TAG_DENSE | moab::MB_TAG_ANY, def_val);
+
+
+
+  moab::Range volumes,surfaces;
+  const int three = 3;
+  const int two = 2;
+  const void* tag_value = &three;
+  const void* surf_value = &two;
+  rval = MBI->get_entities_by_type_and_tag(0,moab::MBENTITYSET,
+    &geometry_dimension_tag,&tag_value,1,volumes);
+  rval = MBI->get_entities_by_type_and_tag(0,moab::MBENTITYSET,
+    &geometry_dimension_tag,&surf_value,1,surfaces);
+
+  int surf_id = 0;
+  for ( moab::EntityHandle surf : surfaces) {
+    rval = MBI->tag_get_data(id_tag, &surf, 1, &surf_id);
+    // find the highest surf id
+    if ( surf_id > highest_surf ) highest_surf = surf_id;
+  }
+
+  // for each volume set
+  for ( moab::EntityHandle vol : volumes) {
+    std::vector<moab::EntityHandle> children;
+    rval = MBI->get_child_meshsets(vol,children);
+
+    std::vector<moab::EntityHandle> surfaces;
+
+    int dim = -1;
+    // pull only the surface sets
+    for ( moab::EntityHandle child : children ) {
+      rval = MBI->tag_get_data(geometry_dimension_tag,&child,1,&dim);
+      if ( dim == 2 ) surfaces.push_back(child);
+    }
+
+    // for each surface set
+    for ( moab::EntityHandle surface : surfaces) {
+      // if surface has reverse sense
+      //rval = MBI->get_sense(surface,vol,&sense);
+      EntityHandle sense_data[2] = { 0, 0 };
+      rval = MBI->tag_get_data(sense2tag, &surface, 1, sense_data);
+
+      // if the volume has -ve sense wrt to the surface
+      // i.e. it is the 2nd element in the array
+      if ( sense_data[1] == vol ) {
+        // make new surface
+        rval = make_new_surface(vol,surface);
+      }
+    }
+  }
+  return rval;
 }
 
 // the main method - takes the problem and loads
@@ -79,6 +216,9 @@ G4VPhysicalVolume* ExN01DetectorConstruction::Construct() {
     G4cout << "ERROR: Failed to load the DAGMC file " << uwuw_filename << G4endl;
     exit(1);
   }
+
+  // prepare the geometry for geant4 
+  rval = prepare_geom_for_geant();
 
   // build the trees
   rval = dagmc->init_OBBTree();
