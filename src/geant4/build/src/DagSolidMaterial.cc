@@ -16,10 +16,18 @@ std::map<std::string, G4Material*> load_uwuw_materials(UWUW* workflow_data) {
     material_library[it->first] = new_mat;
   }
 
+  // there may be no materials for a vacuum problem
+  if (material_library.size() == 0) {
+    std::map<std::string, G4Material*> material_map;
+    // Add vacuum
+    double z, a, density;
+    G4Material* Vacuum =
+      new G4Material("mat:Vacuum", z = 1., a = 1.0 * g / mole, density = 1.0e-20 * mg / cm3);
+    // add to lib
+    material_map["mat:Vacuum"] = Vacuum;
+    return material_map;
 
-  std::map<std::string, G4Material*> g4_mat_empty;
-  if (material_library.size() == 0)
-    return g4_mat_empty;
+  }
 
   // get all the nuclides in the problem
   std::map<int, G4Isotope*> g4_isotopes;

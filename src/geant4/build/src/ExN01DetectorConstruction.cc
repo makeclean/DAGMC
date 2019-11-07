@@ -204,6 +204,8 @@ G4VPhysicalVolume* ExN01DetectorConstruction::Construct() {
   G4double world_width  = 50000.0 * cm;
   G4GeometryManager::GetInstance()->SetWorldMaximumExtent(2.*world_width);
 
+  G4cout << material_lib["mat:Vacuum"] << G4endl;
+
   G4Box* world_volume = new G4Box("world_volume_box", world_width, world_width, world_width);
   world_volume_log = new G4LogicalVolume(world_volume, material_lib["mat:Vacuum"], "world_vol_log", 0, 0, 0);
   world_volume_log->SetVisAttributes(invis);
@@ -217,8 +219,13 @@ G4VPhysicalVolume* ExN01DetectorConstruction::Construct() {
     exit(1);
   }
 
-  // prepare the geometry for geant4 
-  rval = prepare_geom_for_geant();
+  bool fix = false;
+  if (fix) {
+    // prepare the geometry for geant4 
+    rval = prepare_geom_for_geant();
+    //
+    rval = MBI->write_mesh("mesh_fixed.h5m");
+  }
 
   // build the trees
   rval = dagmc->init_OBBTree();
