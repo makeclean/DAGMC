@@ -120,7 +120,7 @@ int main(int argc, char* argv[]) {
     
     // check for the input file argument
     // get it from the command line
-    if(argc >= 1) {
+    if(argc > 1) {
       // convert to std::string
       std::string chinpf_s(argv[1]);
       char chinpf[256] = "";
