@@ -16,7 +16,7 @@ dagmc_setup_build()
 
 dagmc_setup_options()
 
-if(BUILD_MCNP5 OR BUILD_MCNP6)
+if(BUILD_MCNP5 OR BUILD_MCNP6 OR BUILD_FLUKA)
   enable_language(Fortran)
 endif()
 
