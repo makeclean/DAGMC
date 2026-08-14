@@ -172,7 +172,7 @@ TEST_F(DagSolidWireMagneticFieldTest, sample_test) {
   
   // should be equal to mu0*I/2pi*r = 20
   EXPECT_NEAR(expected, sqrt(field[0]*field[0] + field[1]*field[1]), 1e-6);
-  EXPECT_NEAR(-expected, field[0],1e-6);
+  EXPECT_NEAR(-expected, field[0], 1e-6);
   EXPECT_EQ(0, field[1]);
   EXPECT_EQ(0.0, field[2]);
 
