@@ -25,7 +25,7 @@ void WireMagneticField::GetFieldValue(const G4double Point[4],
   } else if ( r == wireRadius ) {
     B = wireMu*wireCurrent/(2*CLHEP::pi*wireRadius);
   } else {
-    B = CLHEP::mu0*wireCurrent/(2*CLHEP::pi*r);
+    B = CLHEP::mu0*(henry/m)*wireCurrent/(2*CLHEP::pi*r);
   }
   
   G4cout << "r: " << r << G4endl;
