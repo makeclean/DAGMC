@@ -190,7 +190,7 @@ TEST_F(DagSolidWireMagneticFieldTest, sample_test) {
   EXPECT_EQ(0.0, field[2]);
 
   // test point further away
-  point[0] = 1000.0;
+  point[0] = -1000.0;
   point[1] = 0.0;
   point[2] = 0.0;
   magneticField->GetFieldValue(point,field);
