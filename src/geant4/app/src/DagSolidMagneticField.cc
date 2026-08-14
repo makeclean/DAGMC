@@ -27,13 +27,7 @@ void WireMagneticField::GetFieldValue(const G4double Point[4],
   } else {
     B = CLHEP::mu0/(henry/m)*wireCurrent/(2*CLHEP::pi*r/m);
   }
-  
-  G4cout << "r: " << r << G4endl;
-  G4cout << "mu0: " << CLHEP::mu0/(henry/mm) << G4endl;
-  G4cout << "wireCurrent: " << wireCurrent << G4endl;
-  G4cout << "CLHEP::pi " << CLHEP::pi << G4endl;
-  G4cout << "B: " << B << G4endl;
-  
+    
   if ( r == 0. ) {                       // wire axis: field is zero, no NaN
     field[0] = 0.; field[1] = 0.; field[2] = 0.;
     return;
@@ -42,8 +36,6 @@ void WireMagneticField::GetFieldValue(const G4double Point[4],
   field[0] = -Bt*Point[1]/r;             // azimuthal, tangent to circle
   field[1] =  Bt*Point[0]/r;
   field[2] = 0.;                         // Bz always zero
-
-  G4cout << "field: " << field[0] << " " << field[1] << " " << field[2] << G4endl;
 
   return;
 }

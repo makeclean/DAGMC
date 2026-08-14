@@ -189,6 +189,18 @@ TEST_F(DagSolidWireMagneticFieldTest, sample_test) {
   EXPECT_EQ(0.0, field[1]);
   EXPECT_EQ(0.0, field[2]);
 
+  // test point further away
+  point[0] = 1000.0;
+  point[1] = 0.0;
+  point[2] = 0.0;
+  magneticField->GetFieldValue(point,field);
+  expected = 0.2;
+
+  // should be equal to mu0*I/2pi*r = 2
+  EXPECT_NEAR(expected, sqrt(field[0]*field[0] + field[1]*field[1]), 1e-6);
+  EXPECT_EQ(0.0, field[0]);
+  EXPECT_NEAR(-expected, field[1],1e-6);
+  EXPECT_EQ(0.0, field[2]);
   
   return;
 }
