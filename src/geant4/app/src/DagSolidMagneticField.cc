@@ -29,7 +29,7 @@ void WireMagneticField::GetFieldValue(const G4double Point[4],
   }
   
   G4cout << "r: " << r << G4endl;
-  G4cout << "mu0: " << CLHEP::mu0 << G4endl;
+  G4cout << "mu0: " << CLHEP::mu0/(henry/mm) << G4endl;
   G4cout << "wireCurrent: " << wireCurrent << G4endl;
   G4cout << "CLHEP::pi " << CLHEP::pi << G4endl;
   G4cout << "B: " << B << G4endl;
